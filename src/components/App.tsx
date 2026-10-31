@@ -65,6 +65,7 @@ import Account from "./Account";
 import AccessInfo from "./AccessInfo";
 import Appearance from "./Appearance";
 import AdminMenu from "./AdminMenu";
+import DeletedKeys from "./DeletedKeys";
 import ProjectSnapshots from "./ProjectSnapshots";
 import { readPlural, references } from "../messages";
 const emptyStats = (): ProjectStats => ({
@@ -811,7 +812,7 @@ export default function App({
                             : (stats.totalKeys - completed).toLocaleString()}
                         </strong>
                         <small>
-                          {stats.outdatedKeys ?? 0} outdated · remaining missing
+                          {stats.outdatedKeys ?? 0} keys include outdated copy
                         </small>
                       </div>
                     </button>
@@ -1414,6 +1415,9 @@ export default function App({
                           onCancel={() => navigate(projectId)}
                         />
                         {manager && (
+                          <DeletedKeys project={project} notify={notify} />
+                        )}
+                        {manager && (
                           <ProjectSnapshots
                             project={project}
                             notify={notify}
@@ -1500,6 +1504,11 @@ export default function App({
             error={error}
             onSubmit={(data) => void saveKey(data)}
             onClose={closeModal}
+            onRestored={async () => {
+              await refreshKeys();
+              setModal(null);
+              notify("Translation restored.");
+            }}
             onReload={async () => {
               await refreshKeys();
               setModal(null);
@@ -1534,7 +1543,7 @@ export default function App({
       {modal === "delete" && (
         <ModalShell
           title={`Delete ${selected.size} ${selected.size === 1 ? "key" : "keys"}?`}
-          subtitle="This also removes all translations for these keys. This cannot be undone."
+          subtitle="Keys and their translations can be restored from Settings → Deleted keys for 30 days."
           onClose={closeModal}
         >
           <div className="dialog-body">

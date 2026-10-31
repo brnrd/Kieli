@@ -1,4 +1,13 @@
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
+import {
+  editChange,
+  keyState,
+  legacyKeyId,
+  type KeyEdit,
+  type DeletedKey,
+  type EditOrigin,
+} from "./key-history";
 import { getFileFormat } from "../formats";
 import { exportFiles } from "../formats/write";
 import {
@@ -190,6 +199,7 @@ export class KeyloService {
     }
   }
   private async persistKeys(
+    identity: Identity,
     id: string,
     changes: {
       old?: TranslationKey;
@@ -201,6 +211,7 @@ export class KeyloService {
     additionalChanges: Change[] = [],
     expectedProject?: Project,
     commitAuthorization?: () => Promise<Change[]>,
+    origin: EditOrigin = "browser",
   ) {
     for (let attempt = 0; attempt < 8; attempt++) {
       const project = await this.currentProject(id);
@@ -210,6 +221,60 @@ export class KeyloService {
       const previous = await this.stats(id);
       const next = structuredClone(previous);
       next.version++;
+      const lifecycle: Change[] = [];
+      for (const change of changes) {
+        if (change.next)
+          change.next = {
+            ...change.next,
+            id:
+              change.old?.id ??
+              change.next.id ??
+              (change.old ? legacyKeyId(id, change.old.name) : randomUUID()),
+          };
+        if (!change.old || !change.next) {
+          const name = (change.next ?? change.old)!.name,
+            sk = `KEY_GENERATION#${name}`;
+          const generation = await this.store.get<{
+            version: number;
+            lastVersion: number;
+          }>(`PROJECT#${id}`, sk);
+          if (change.next)
+            change.next.version = Math.max(
+              change.next.version,
+              (generation?.lastVersion ?? 0) + 1,
+            );
+          lifecycle.push({
+            pk: `PROJECT#${id}`,
+            sk,
+            value: {
+              version: (generation?.version ?? 0) + 1,
+              lastVersion: (change.next ?? change.old)!.version,
+            },
+            expectedVersion: generation?.version,
+          });
+        }
+        if (change.old && !change.next) {
+          const keyId = change.old.id ?? legacyKeyId(id, change.old.name);
+          const priorTrash = await this.store.get<DeletedKey>(
+            `PROJECT#${id}`,
+            `TRASH#${keyId}`,
+          );
+          lifecycle.push({
+            pk: `PROJECT#${id}`,
+            sk: `TRASH#${keyId}`,
+            expectedVersion: priorTrash?.version,
+            value: {
+              version: (priorTrash?.version ?? 0) + 1,
+              id: keyId,
+              key: keyState({ ...change.old, id: keyId }),
+              deletedAt: now(),
+              deletedBy: identity.name,
+              ttl: Math.floor(Date.now() / 1000) + 30 * 86400,
+              searchText: change.old.name.toLowerCase(),
+            },
+          });
+        }
+      }
       const graphNeeded =
         (previous.advancedKeys ?? 0) > 0 ||
         changes.some((change) => change.next && advancedKey(change.next));
@@ -232,7 +297,8 @@ export class KeyloService {
           change.next = {
             ...change.next,
             sourceRevision:
-              (change.old?.sourceRevision ?? 1) + (sourceChanged ? 1 : 0),
+              (change.old?.sourceRevision ?? change.next.sourceRevision ?? 1) +
+              (sourceChanged ? 1 : 0),
           };
           candidates.set(change.next.name, change.next);
         }
@@ -319,6 +385,10 @@ export class KeyloService {
         await this.store.transact([
           ...(commitAuthorization ? await commitAuthorization() : []),
           ...additionalChanges,
+          ...lifecycle,
+          ...changes.map((change) =>
+            editChange(id, identity, origin, change.old, change.next),
+          ),
           {
             pk: "WORKSPACE",
             sk: `PROJECT#${id}`,
@@ -668,6 +738,7 @@ export class KeyloService {
       });
     }
     await this.persistKeys(
+      identity,
       id,
       changes,
       [
@@ -681,6 +752,7 @@ export class KeyloService {
       ],
       project,
       () => new McpCredentials(this.store).writeGuards(identity, id),
+      "mcp",
     );
     return {
       saved: changes.map((change) => ({
@@ -717,7 +789,7 @@ export class KeyloService {
       updatedAt: now(),
       updatedBy: identity.name,
     });
-    await this.persistKeys(id, [{ next: key }], [], project);
+    await this.persistKeys(identity, id, [{ next: key }], [], project);
     return this.key(identity, id, key.name);
   }
   async updateKey(
@@ -805,6 +877,7 @@ export class KeyloService {
       plural: key.plural,
     });
     await this.persistKeys(
+      identity,
       id,
       [
         {
@@ -834,11 +907,178 @@ export class KeyloService {
     );
     if (!old) throw new HttpError(404, "Key not found.");
     await this.persistKeys(
+      identity,
       id,
       [{ old, expectedVersion: version }],
       [],
       project,
     );
+  }
+  async keyHistory(
+    identity: Identity,
+    id: string,
+    name: string,
+    options: PageOptions,
+  ) {
+    if (identity.mcp || identity.tokenProject)
+      throw new HttpError(403, "Sign in to view translation history.");
+    const key = await this.key(identity, id, name);
+    return this.store.page<KeyEdit>(
+      `PROJECT#${id}`,
+      `KEY_HISTORY#${key.id ?? legacyKeyId(id, name)}#`,
+      { limit: options.limit, cursor: options.cursor, reverse: true },
+    );
+  }
+  async restoreTranslation(
+    identity: Identity,
+    id: string,
+    name: string,
+    eventId: string,
+    input: unknown,
+  ) {
+    if (identity.mcp || identity.tokenProject)
+      throw new HttpError(403, "Sign in to restore translations.");
+    const data = z
+      .object({
+        version: z.number().int().positive(),
+        language: z.string().min(2).max(35),
+        side: z.enum(["before", "after"]),
+        expectedSourceContext: z
+          .string()
+          .regex(/^[a-f0-9]{64}$/)
+          .optional(),
+      })
+      .strict()
+      .parse(input);
+    const project = await this.project(identity, id),
+      current = await this.key(identity, id, name);
+    if (current.version !== data.version) throw new Conflict();
+    if (!project.languages.some((locale) => locale.code === data.language))
+      throw new HttpError(400, "Unknown language.");
+    if (data.language === project.sourceLanguage)
+      authorize(identity, id, "manager");
+    const event = await this.store.get<KeyEdit>(
+      `PROJECT#${id}`,
+      `KEY_HISTORY#${current.id ?? legacyKeyId(id, name)}#${z
+        .string()
+        .max(80)
+        .regex(/^[0-9TZ:._a-f-]+$/)
+        .parse(eventId)}`,
+    );
+    const state = event?.[data.side];
+    if (
+      !state ||
+      state.name !== name ||
+      !Object.hasOwn(state.translations, data.language)
+    )
+      throw new HttpError(404, "Historical translation not found.");
+    const translationSources = { ...current.translationSources };
+    if (state.translationSources?.[data.language])
+      translationSources[data.language] =
+        state.translationSources[data.language]!;
+    else delete translationSources[data.language];
+    const next = indexed({
+      ...current,
+      translations: {
+        ...current.translations,
+        [data.language]: state.translations[data.language]!,
+      },
+      translationSources,
+      version: current.version + 1,
+      updatedAt: now(),
+      updatedBy: identity.name,
+    });
+    keySchema.parse({
+      name: next.name,
+      namespace: next.namespace,
+      description: next.description,
+      tags: next.tags,
+      plural: next.plural,
+      translations: next.translations,
+    });
+    // Preserve the historical source anchor. Restoring old text cannot certify it for new source copy.
+    await this.persistKeys(
+      identity,
+      id,
+      [
+        {
+          old: current,
+          next,
+          expectedVersion: current.version,
+          translatedLocales: [],
+          expectedSourceContext: data.expectedSourceContext,
+        },
+      ],
+      [],
+      project,
+      undefined,
+      "restore",
+    );
+    return this.key(identity, id, name);
+  }
+  async deletedKeys(identity: Identity, id: string, options: PageOptions) {
+    authorize(identity, id, "manager");
+    await this.project(identity, id);
+    const page = await this.store.page<DeletedKey>(`PROJECT#${id}`, "TRASH#", {
+      limit: options.limit,
+      cursor: options.cursor,
+    });
+    return {
+      ...page,
+      items: page.items
+        .filter((item) => item.ttl > Date.now() / 1000)
+        .map(({ key, ...item }) => ({
+          ...item,
+          name: key.name,
+          languages: Object.keys(key.translations),
+        })),
+    };
+  }
+  async restoreDeletedKey(
+    identity: Identity,
+    id: string,
+    keyId: string,
+    input: unknown,
+  ) {
+    authorize(identity, id, "manager");
+    z.uuid().parse(keyId);
+    const { version } = z
+      .object({ version: z.number().int().positive() })
+      .strict()
+      .parse(input);
+    const project = await this.project(identity, id),
+      trash = await this.store.get<DeletedKey>(
+        `PROJECT#${id}`,
+        `TRASH#${keyId}`,
+      );
+    if (!trash || trash.ttl <= Date.now() / 1000)
+      throw new HttpError(404, "Deleted key is no longer recoverable.");
+    if (trash.version !== version) throw new Conflict();
+    const next = indexed({
+      ...trash.key,
+      id: keyId,
+      version: trash.key.version + 1,
+      updatedAt: now(),
+      updatedBy: identity.name,
+    });
+    keySchema.parse({
+      name: next.name,
+      namespace: next.namespace,
+      description: next.description,
+      tags: next.tags,
+      plural: next.plural,
+      translations: next.translations,
+    });
+    await this.persistKeys(
+      identity,
+      id,
+      [{ next, translatedLocales: [] }],
+      [{ pk: `PROJECT#${id}`, sk: `TRASH#${keyId}`, expectedVersion: version }],
+      project,
+      undefined,
+      "recovery",
+    );
+    return this.key(identity, id, next.name);
   }
   async startImport(identity: Identity, input: unknown) {
     if (!identity.admin)
@@ -916,7 +1156,16 @@ export class KeyloService {
         }),
       });
     }
-    if (changes.length) await this.persistKeys(id, changes, [], project);
+    if (changes.length)
+      await this.persistKeys(
+        identity,
+        id,
+        changes,
+        [],
+        project,
+        undefined,
+        "import",
+      );
     return { imported: changes.length, skipped };
   }
   async tokens(identity: Identity, id: string) {

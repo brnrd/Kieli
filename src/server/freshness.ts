@@ -68,7 +68,9 @@ export function stampFreshness(
   before: SourceContext | undefined,
   touched: string[],
 ) {
-  const translationSources = { ...previous?.translationSources };
+  const translationSources = {
+    ...next.translationSources,
+  };
   // Legacy values are current against the original source only; never bless a changed dependency.
   if (previous && before?.baseline)
     for (const [code, text] of Object.entries(previous.translations))

@@ -126,6 +126,7 @@ export class ProjectHistory {
     const before = await this.stamp(project);
     const keys = (await this.svc.keys(identity, id)).map((key) => ({
       ...keyInput(key),
+      id: key.id,
       sourceRevision: key.sourceRevision,
       translationSources: key.translationSources,
       version: key.version,
@@ -268,7 +269,12 @@ export class ProjectHistory {
       schema: 1,
       project: settings(snapshot.project),
       createdAt: snapshot.createdAt,
-      keys: keys.map(keyInput),
+      keys: keys.map((key) => ({
+        ...keyInput(key),
+        id: key.id,
+        sourceRevision: key.sourceRevision,
+        translationSources: key.translationSources,
+      })),
     };
   }
   async manifest(identity: Identity, id: string, snapshotId: string) {

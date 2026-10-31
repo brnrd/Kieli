@@ -122,6 +122,24 @@ export const ALL: APIRoute = async (context) => {
           await svc.updateProject(identity, id, await readJSON(request)),
         );
     }
+    if (parts[2] === "trash") {
+      if (parts.length === 3 && method === "GET")
+        return Response.json(
+          await svc.deletedKeys(identity, id, {
+            limit: 25,
+            cursor: url.searchParams.get("cursor") ?? undefined,
+          }),
+        );
+      if (parts.length === 5 && parts[4] === "restore" && method === "POST")
+        return Response.json(
+          await svc.restoreDeletedKey(
+            identity,
+            id,
+            parts[3]!,
+            await readJSON(request),
+          ),
+        );
+    }
     if (parts[2] === "keys") {
       if (parts.length === 3 && method === "GET") {
         const limit = Number(url.searchParams.get("limit") ?? 50);
@@ -153,6 +171,28 @@ export const ALL: APIRoute = async (context) => {
         return Response.json(
           await svc.createKey(identity, id, await readJSON(request)),
           { status: 201 },
+        );
+      if (parts.length === 5 && parts[4] === "history" && method === "GET")
+        return Response.json(
+          await svc.keyHistory(identity, id, parts[3]!, {
+            limit: 25,
+            cursor: url.searchParams.get("cursor") ?? undefined,
+          }),
+        );
+      if (
+        parts.length === 7 &&
+        parts[4] === "history" &&
+        parts[6] === "restore" &&
+        method === "POST"
+      )
+        return Response.json(
+          await svc.restoreTranslation(
+            identity,
+            id,
+            parts[3]!,
+            parts[5]!,
+            await readJSON(request),
+          ),
         );
       if (parts.length === 4 && parts[3]) {
         if (method === "GET")

@@ -28,6 +28,7 @@ export type Project = {
   };
 };
 export type TranslationKey = {
+  id?: string;
   name: string;
   description: string;
   namespace: string;

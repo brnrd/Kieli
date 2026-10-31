@@ -243,6 +243,50 @@ try {
     }),
   );
   assert.deepEqual(confirmed.outdatedLanguages, []);
+  const edits = await json(
+    await api("/api/projects/features/keys/freshness/history"),
+  );
+  assert.equal(edits.items[0].after.translations.fr, "Suspendre");
+  const restoredText = await json(
+    await api(
+      `/api/projects/features/keys/freshness/history/${encodeURIComponent(edits.items[0].id)}/restore`,
+      "POST",
+      {
+        version: confirmed.version,
+        language: "fr",
+        side: "before",
+        expectedSourceContext: confirmed.sourceContext,
+      },
+    ),
+  );
+  assert.equal(restoredText.translations.fr, "Annuler");
+  assert.deepEqual(restoredText.outdatedLanguages, ["fr"]);
+  const recoverable = await json(
+    await api("/api/projects/features/keys", "POST", {
+      name: "recoverable",
+      translations: { en: "Disposable", fr: "Test" },
+    }),
+    201,
+  );
+  assert.equal(
+    (
+      await api(
+        `/api/projects/features/keys/recoverable?version=${recoverable.version}`,
+        "DELETE",
+      )
+    ).status,
+    204,
+  );
+  const deleted = await json(await api("/api/projects/features/trash"));
+  const item = deleted.items.find((item) => item.name === "recoverable");
+  assert.ok(item);
+  const recovered = await json(
+    await api(`/api/projects/features/trash/${item.id}/restore`, "POST", {
+      version: item.version,
+    }),
+  );
+  assert.equal(recovered.id, recoverable.id);
+  assert.ok(recovered.version > recoverable.version);
   const archive = await api("/downloads/keylo-sdks.zip");
   assert.equal(archive.status, 200);
   assert.ok((await archive.arrayBuffer()).byteLength > 1000);

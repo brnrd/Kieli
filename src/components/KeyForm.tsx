@@ -1,6 +1,7 @@
 import { useState, type SyntheticEvent } from "react";
 import { Check, Loader2, ShieldCheck } from "lucide-react";
 import type { Project, TranslationKey } from "../shared";
+import KeyHistory from "./KeyHistory";
 import { LanguageMark } from "./ui";
 import PluralTranslation from "./PluralTranslation";
 import { translationComplete, readPlural } from "../messages";
@@ -13,6 +14,7 @@ export default function KeyForm({
   onSubmit,
   onClose,
   onReload,
+  onRestored,
 }: {
   project: Project;
   editing: TranslationKey | null;
@@ -22,6 +24,7 @@ export default function KeyForm({
   onSubmit: (data: Record<string, unknown>) => void;
   onClose: () => void;
   onReload: () => Promise<void>;
+  onRestored: () => Promise<void>;
 }) {
   const [name, setName] = useState(editing?.name ?? "");
   const [description, setDescription] = useState(editing?.description ?? "");
@@ -264,6 +267,14 @@ export default function KeyForm({
               {new Date(editing.updatedAt).toLocaleDateString("en-GB")} by{" "}
               {editing.updatedBy} · Version {editing.version}
             </p>
+          )}
+          {editing && (
+            <KeyHistory
+              project={project}
+              editing={editing}
+              manager={manager}
+              onRestored={onRestored}
+            />
           )}
           {error && (
             <div className="error-box" role="alert">
