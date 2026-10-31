@@ -1,139 +1,121 @@
+<div align="center">
+
 # Keylo
 
-A small, open-source home for product copy, keys, and manual translations. Astro frontend, TypeScript backend, built-in accounts, Okta OIDC or SAML SSO, and localization-file exports for apps and CI. MIT licensed.
+### Good words. Every language. Your infrastructure.
 
-No review workflows, screenshots, or built-in automatic translation. An optional Claude Code MCP connection lets you request translations using your own Claude client.
+An open-source workspace for product copy and translations.<br />Keep your keys organized, your translations current, and your releases moving.
 
-## Run locally
+[Get started](#get-started) · [Features](#a-focused-home-for-your-copy) · [Security](#built-for-control) · [Documentation](#documentation)
 
-Requires Node.js 24.2 or newer. No Docker, AWS, or Okta account is needed for the local demo.
+**Self-hosted · MIT licensed · Built-in accounts or SSO**
+
+</div>
+
+![Keylo translation editor showing source copy and stacked French and Dutch translations](docs/images/translation-editor.png)
+
+## A focused home for your copy
+
+Keylo gives product teams and developers a shared place to manage the words in their apps. Organize separate projects, work in several languages, and ship localization files through your existing build pipeline. The interface stays compact as your project directory and key lists grow.
+
+### Keep every language in view
+
+- **Project-based organization.** Source and target languages, namespaces, context and tags keep copy easy to find.
+- **A purposeful editor.** Stacked language values, search, filters and cursor pagination help you work through thousands of keys.
+- **Translation freshness.** See what is missing, current or outdated when source copy changes. Existing translations stay available for editing.
+- **Plurals and linked copy.** Unicode cardinal/ordinal forms, project-level overrides and reusable `[%key:other.key%]` references.
+- **Safer changes.** Argument checks, version conflicts, per-translation history, recoverable key deletion and project snapshots help protect your work.
+
+![Keylo project directory with separate product projects](docs/images/projects.png)
+
+### Fit your development workflow
+
+- **Bring existing copy.** Import Lokalise exports or supported localization files. Preview updates to existing projects and preserve populated translations by default.
+- **Use your app's formats.** JSON, YAML, JS/TS, PHP, properties, INI, RESX, keyed PO/POT, Apple strings/plist, Android XML, ARB, XLIFF and CSV. See [supported subsets and limits](docs/file-formats.md).
+- **Sync through CLI and CI.** Pull translation files or push source strings with separate scoped credentials. Use `--require-current` to stop a build when copy is missing, outdated or invalid.
+- **Connect Claude Code.** An optional MCP connection lets your Claude client read a project's context and save translations in selected target languages, with explicit overwrite permission.
+- **Deliver mobile copy updates.** Publish immutable releases for iOS, Android and Flutter, with channels, rollback and offline fallback. [Mobile SDKs and delivery](docs/ota.md).
+
+Keylo keeps the workflow small: manual editing and explicit publication, without translation-review stages or a built-in automatic translation service.
+
+## Built for control
+
+**Keep your copy on your infrastructure.** Keylo is designed for a self-hosted organizational workspace, with project access enforced by the backend.
+
+- **Choose how people sign in:** built-in email/password accounts, Okta OIDC or SAML SSO.
+- **Manage access centrally:** workspace administration, project roles, account disabling and revocable server-side sessions. SSO supports SCIM provisioning and optional Okta reconciliation.
+- **Scope integrations:** separate export, source-sync, MCP and mobile delivery credentials. Management capabilities stay behind administrator access.
+- **Protect changes:** atomic write batches, optimistic concurrency, placeholder validation and security audit events.
+- **Recover your work:** translation history, 30-day recoverable key deletion, and manual or scheduled project snapshots.
+
+![Keylo workspace administration with project and translation statistics](docs/images/workspace-admin.png)
+
+The [security model](SECURITY.md) documents credential lifecycles, trust boundaries and current limitations. SAML Single Logout is not implemented; Keylo logout does not end the identity-provider session. Local tests are not an independent security audit, and real IdP/AWS integrations need staging verification.
+
+## Get started
+
+Try the local demo with **Node.js 24.2 or newer**. No AWS or Okta account is required.
 
 ```sh
 npm ci
-npm run seed       # optional: 3 sample projects and 18 keys
+npm run seed # optional sample projects; omit for an empty workspace
 npm run dev
 ```
 
-Open the printed local URL (normally http://127.0.0.1:4321). SQLite data persists in `.data/keylo.sqlite`. Without the seed, start with an empty workspace. `.env.example` documents configuration; copy it to `.env` if needed. The demo identity has workspace admin access and is restricted to loopback outside production.
+Open the printed local URL. The demo runs only on loopback outside production; SQLite data persists in `.data/keylo.sqlite`.
 
-```sh
-npm run check
-npm test
-npm run build
-npm run smoke     # compiled HTTP server + real CLI, disposable local database
-npm run smoke:local # compiled local-account lifecycle + operator CLI
-npm run smoke:saml  # signed SAML HTTP round trip with disposable IdP fixtures (OpenSSL required)
-npm run smoke:mcp   # official MCP client against the compiled HTTP endpoint
-npm run smoke:install # extracted AWS ZIP + protected first-run setup
-```
+For your team, enable **built-in accounts** or **SSO**, set `APP_ORIGIN`, and follow the relevant setup guide. Production requires HTTPS and rejects demo authentication.
 
-## Built-in users, without Okta
+| Deployment | What you need |
+| --- | --- |
+| Local development | Node.js and SQLite, included with Node |
+| Container | The included Docker image and your authentication configuration |
+| AWS | Lambda, HTTP API Gateway and DynamoDB, using the included templates |
 
-Set `AUTH_MODE=local` in `.env`, set `APP_ORIGIN` to your local URL, then initialize the first administrator:
+A guided AWS installer and first-administrator setup are implemented. **No public install button is published yet:** release hosting needs an AWS account and artifact bucket. [AWS installation and upgrades](docs/aws-one-click.md).
 
-```sh
-npm run users:bootstrap -- --email admin@example.com --name "Workspace admin"
-```
+### Pull translations into your app
 
-Open the one-time activation link printed by the command and choose a password. Workspace admins get **People & access** to create users, assign project roles, disable accounts, issue activation/reset links, and revoke sessions. Users can update their own password under **Your account**. No email provider or Okta account is required. [Built-in account setup and recovery](docs/built-in-accounts.md).
-
-For the AWS install-button distribution, the stack generates a protected setup secret and opens a first-run administrator form instead of requiring the bootstrap CLI. The release packager, CloudFormation template generator, and optional publishing workflow are implemented. **A release AWS account/bucket is not configured yet, so no live install button is published.** See [AWS guided installation and release publishing](docs/aws-one-click.md).
-
-Production requires an HTTPS `APP_ORIGIN` and an explicit `AUTH_MODE=local`, `okta` (OIDC), or `saml`. For OIDC, configure the issuer, client credentials, and a 64-character hex `SESSION_SECRET` for the login-state cookie. For SAML, configure the trusted IdP issuer/SSO URL and signing certificates as described in [SAML setup](docs/saml.md). `NODE_ENV=production` **rejects demo authentication**. The Docker image and SAM template default to built-in accounts and set production mode explicitly.
-
-## What works
-
-- Separate projects with a source language and up to 30 configured languages; custom BCP 47 locales supported.
-- Dense project directory and searchable, scrollable navigation for hundreds of projects.
-- Auto/light/dark appearance, saved per browser and shared across tabs. Auto follows system changes; the theme is applied before the page paints.
-- Server-side keyset pagination (25, 50, or 100 rows), debounced search across names/copy/context/tags, namespaces, and missing-translation filters.
-- Multi-language key editor with source copy, context, tags, and optimistic concurrency control.
-- Missing/outdated/current translation states, source revisions and linked-source change detection, with freshness-aware completion and snapshot recovery.
-- Per-translation change history and restore, plus 30-day recoverable key deletion. [Recovery behavior and limits](docs/translation-history.md).
-- Previewed updates to existing projects, preserving targets by default, with explicit overwrite, conflict detection and retry receipts. [Project update behavior](docs/project-updates.md).
-- Portable CLI source push, repository JSON configuration and expiring project/prefix-scoped CI credentials. [Source synchronization](docs/source-sync.md).
-- Transactional project counters: reads of a key page do not fetch all translations to calculate progress.
-- Lokalise JSON ZIP and API-snapshot import with local preview, validation, explicit conversion warnings, and retryable atomic batches.
-- Optional built-in email/password accounts with Argon2id hashing, admin-issued activation/reset links, project-role assignments, account disabling, shared login throttling, and security events.
-- Okta OIDC Authorization Code + PKCE as an alternative, with revocable server-side sessions, opaque HttpOnly cookies, and project-scoped admin/manager/user permissions.
-- SAML 2.0 SP-initiated SSO, signed requests/metadata, pinned IdP certificates, signed responses/assertions, shared replay prevention, and stable issuer/subject identities. All auth modes keep roles server-side.
-- Expiring, revocable, read-only export tokens stored only as SHA-256 hashes.
-- Claude Code MCP: project/target-language-scoped credentials, bounded context tools, versioned atomic translation batches, overwrite opt-in, usage visibility, and security events.
-- Keyed file imports and exports: JSON, YAML, JavaScript/TypeScript, PHP arrays, properties, INI, RESX, keyed PO/POT, Apple strings/plist, Android XML, ARB, XLIFF 1.2 and CSV. ZIP downloads, optional source fallback, and a zero-dependency Node CLI. [Exact format support and limits](docs/file-formats.md).
-- One container and an AWS SAM template for Lambda, HTTP API Gateway, and DynamoDB. No VPC, NAT gateway, database server, or background worker.
-- A separate prebuilt AWS ZIP installer with automatic HTTPS origin, an AWS-secret-protected first-admin form, data retention, and versioned CloudFormation release/upgrade artifacts. Publishing is optional and unconfigured by default.
-
-## Import from Lokalise
-
-Choose **Admin → Import from Lokalise**. In Lokalise, download **JSON**, **one file per language**, with `%LANG_ISO%.json` filenames. Select all required languages, include all platform keys and untranslated strings, and keep missing values empty. Upload the downloaded ZIP, inspect the key/language counts and sample, choose the source language, then create the new project. For other keyed file formats, use **Admin → Import translation files**; [format support](docs/file-formats.md) describes the supported subsets.
-
-Nested JSON becomes dotted keys. Existing projects and their translations are never overwritten. Each batch of up to 20 keys commits atomically with its counters; an interrupted project import can be retried in the same open dialog. Completed batches remain saved. Keep the dialog open until completion; a project import is not one large transaction.
-
-API snapshots additionally preserve descriptions and tags. See [Lokalise import formats](docs/lokalise-import.md) for the snapshot shape, platform/plural handling, limits, and a sample fixture.
-
-## Pull translations
-
-Create an export token under the project's **Developers** tab. Save it in your shell environment or CI secret store as `KEYLO_TOKEN`.
+Create an export token in **Project → Developers**, then store it as `KEYLO_TOKEN` in your shell or CI secrets.
 
 ```sh
 node cli/keylo.mjs pull \
   --url https://copy.example.com \
   --project acme-website \
-  --out ./src/locales \
   --languages en,fr,nl \
-  --format nested
+  --format nested \
+  --out ./src/locales \
+  --require-current
 ```
 
-This writes `en.json`, `fr.json`, and `nl.json`. Omit `--languages` to export all languages. Add `--fallback` to fill missing translations from the source. Each locale file is replaced atomically; unrelated files are preserved. Source updates use the separate scoped push workflow described in [Source synchronization](docs/source-sync.md). Use `--demo` for local testing without a token.
+The standalone CLI uses Node built-ins and writes individual locale files. [Source push and repository configuration](docs/source-sync.md) use a separate source-sync credential.
 
-Choose another format with, for example, `--format strings`, `--format yaml`, `--format android`, or `--format xliff`. The **Developers** tab generates CLI and cURL examples for the selected format. Interactive exports download a ZIP containing individual locale files.
+## Documentation
 
-Example CI build step (after checkout and Node setup):
+| Work with Keylo | Operate Keylo |
+| --- | --- |
+| [Imports and file formats](docs/file-formats.md) | [Built-in accounts and recovery](docs/built-in-accounts.md) |
+| [Migrating from Lokalise](docs/lokalise-import.md) | [Okta OIDC](docs/okta.md) · [SAML](docs/saml.md) |
+| [Updating existing projects](docs/project-updates.md) | [Provisioning and offboarding](docs/sso-lifecycle.md) |
+| [Plurals, references and validation](docs/messages.md) | [Workspace administration](docs/workspace-admin.md) |
+| [Translation history and recovery](docs/translation-history.md) | [Snapshots and recovery](docs/project-history.md) |
+| [CLI and source sync](docs/source-sync.md) | [AWS deployment](docs/aws.md) |
+| [Claude Code MCP](docs/mcp.md) | [Architecture and API](docs/architecture.md) |
+| [Mobile delivery](docs/ota.md) · [SDKs](sdks/README.md) | [Security and vulnerability reporting](SECURITY.md) |
 
-```yaml
-- name: Pull copy
-  env:
-    KEYLO_TOKEN: ${{ secrets.KEYLO_TOKEN }}
-  run: node cli/keylo.mjs pull --url https://copy.example.com --project acme-website --out src/locales
-- run: npm run build
+The frontend uses Astro and React, with a small TypeScript service layer and SQLite or DynamoDB storage. See [.env.example](.env.example) for configuration.
+
+## Contribute
+
+Read [COLLABORATING.md](COLLABORATING.md) for development setup and contribution checks. [AGENTS.md](AGENTS.md) gives coding agents repository guidance; GitHub issue forms and a PR template help keep changes reviewable.
+
+```sh
+npm run check
+npm test
+npm run build
+npm run smoke
 ```
 
-The CLI file can be copied into a consuming repository; it uses Node built-ins only. Run it before the app build so an export failure stops the pipeline.
+See the [next essentials](docs/roadmap.md) for the implementation sequence. Keylo is released under the [MIT license](LICENSE).
 
-## Access and deployment
-
-To connect Claude Code, open **Developers → Claude Code**, issue a credential for selected target languages, and copy the `.mcp.json` template into your consuming repository. Set `KEYLO_MCP_TOKEN` in the environment that launches Claude Code. Source copy and key metadata remain protected; existing translations require explicit overwrite permission. See [MCP connection and lifecycle](docs/mcp.md). Local-account credentials last up to 30 days; SSO credentials are capped at the issuing sign-in's absolute expiry, within one hour.
-
-| Role                                       | Permissions                                                                          |
-| ------------------------------------------ | ------------------------------------------------------------------------------------ |
-| Workspace admin (`keylo-admin`)            | All projects, project creation, imports, keys, translations, settings, export tokens |
-| Project admin (`keylo:<project-id>:admin`) | Full access within the assigned project                                              |
-| Manager (`keylo:<project-id>:manager`)     | Project settings, key creation/deletion, all translations, export tokens             |
-| User (`keylo:<project-id>:user`)           | Read project copy, edit target translations, interactive export                      |
-| Export token                               | Only `GET /api/projects/<assigned-project>/export`                                   |
-| MCP credential                             | Only `/mcp`: read assigned project context and save selected target translations     |
-
-With built-in accounts, assign roles in **People & access**. Access edits and deactivation revoke previous sessions immediately; the last active local admin is protected. SSO uses a central issuer/subject directory with current permissions checked per authentication. Configure [SCIM provisioning and optional Okta reconciliation](docs/sso-lifecycle.md) for upstream offboarding and group synchronization. Admins can block/revoke access; users can sign out and revoke their personal connections. All modes use server-side sessions. Keylo sign-out does not end the IdP session; SAML Single Logout remains unsupported.
-
-- [Built-in accounts](docs/built-in-accounts.md)
-- [Okta setup](docs/okta.md)
-- [SAML 2.0 setup](docs/saml.md)
-- [Claude Code MCP](docs/mcp.md)
-- [AWS deployment](docs/aws.md)
-- [AWS install button and upgrades](docs/aws-one-click.md)
-- [API and architecture](docs/architecture.md)
-- [Security model and reporting](SECURITY.md)
-
-The included local checks exercise roles, isolation, concurrency, import retries and validation, 1,100-key pagination/search, token expiry/revocation, CLI files, and JSON export safety, plus local account activation, password reset, session revocation, last-admin races, and role changes. SAML checks use signed disposable IdP fixtures to verify replay prevention, tampering, certificate trust, browser binding, strict recipients, expiry, and session rotation. A live Okta tenant, real DynamoDB/Secrets Manager, the Docker image, and the SAM deployment need integration verification in your AWS account; local tests are not a security audit.
-
-Plural keys use Unicode cardinal/ordinal forms with project-level overrides. Linked copy uses `[%key:other.key%]` and resolves in previews, exports and published releases. See [message semantics and scale](docs/messages.md).
-
-Managers can create/download/restore [project snapshots](docs/project-history.md), including daily/weekly automatic snapshots. Both AWS templates include the authenticated scheduler. [Live app delivery](docs/ota.md) publishes immutable preview/production releases with rollback and read-only app credentials. Swift, Kotlin and Flutter mobile [client SDK sources](sdks/README.md) are downloadable from Developers. No review workflow or automatic translation service is introduced.
-
-## Contributing
-
-See [COLLABORATING.md](COLLABORATING.md) for setup, product scope and contribution checks. GitHub provides bug/feature issue forms and a pull request template. [AGENTS.md](AGENTS.md) gives coding agents repository-specific architecture, security and validation guidance.
-
-Builds can require current, complete translations with `node cli/keylo.mjs pull --config .keylo.json --require-current` (or export API `requireCurrent=true`). All write paths share server-side argument validation; see [message checks](docs/messages.md#shared-argument-validation) for supported syntax and draft/recovery behavior.
-
-The next implementation sequence is recorded in the [essentials roadmap](docs/roadmap.md), starting with editor navigation.
+*Screenshots use synthetic demonstration projects.*
