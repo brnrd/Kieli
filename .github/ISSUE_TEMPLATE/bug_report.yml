@@ -1,0 +1,50 @@
+name: Bug report
+description: Report a reproducible problem in Keylo.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use synthetic copy and remove credentials, customer data and personal information from examples and logs. For vulnerabilities, follow the security policy instead of opening a public issue.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the failure and what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include a minimal example, relevant file format and locales when applicable.
+      placeholder: |
+        1. Create a project with English and French.
+        2. Add a key with synthetic copy.
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Keylo version or commit
+      placeholder: A release version or Git commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      options:
+        - Local Node.js / development
+        - Docker
+        - AWS ZIP installer
+        - AWS SAM container
+        - Another setup
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and relevant logs
+      description: Include browser/OS, Node version, storage and authentication mode if relevant. Redact secrets and use synthetic data. Do not paste a full environment file.

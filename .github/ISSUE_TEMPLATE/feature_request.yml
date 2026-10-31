@@ -1,0 +1,23 @@
+name: Feature proposal
+description: Propose a focused improvement to Keylo.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Explain who encounters the problem and give a concrete example or current workaround.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful version. Include relevant formats or workflows, without real customer copy.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and scope
+      description: Mention alternatives considered, related issues, and what can wait for later. A competitor documentation link is useful when it explains the behavior.

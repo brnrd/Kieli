@@ -120,10 +120,13 @@ With built-in accounts, assign roles in **People & access**. Access edits and de
 - [AWS install button and upgrades](docs/aws-one-click.md)
 - [API and architecture](docs/architecture.md)
 - [Security model and reporting](SECURITY.md)
-- [Proposed self-hosted and SaaS model](docs/saas-model.md) (pricing/cost assumptions and required tenant architecture; not implemented)
 
 The included local checks exercise roles, isolation, concurrency, import retries and validation, 1,100-key pagination/search, token expiry/revocation, CLI files, and JSON export safety, plus local account activation, password reset, session revocation, last-admin races, and role changes. SAML checks use signed disposable IdP fixtures to verify replay prevention, tampering, certificate trust, browser binding, strict recipients, expiry, and session rotation. A live Okta tenant, real DynamoDB/Secrets Manager, the Docker image, and the SAM deployment need integration verification in your AWS account; local tests are not a security audit.
 
 Plural keys use Unicode cardinal/ordinal forms with project-level overrides. Linked copy uses `[%key:other.key%]` and resolves in previews, exports and published releases. See [message semantics and scale](docs/messages.md).
 
 Managers can create/download/restore [project snapshots](docs/project-history.md), including daily/weekly automatic snapshots. Both AWS templates include the authenticated scheduler. [Live app delivery](docs/ota.md) publishes immutable preview/production releases with rollback and read-only app credentials. Swift, Kotlin and Flutter mobile [client SDK sources](sdks/README.md) are downloadable from Developers. No review workflow or automatic translation service is introduced.
+
+## Contributing
+
+See [COLLABORATING.md](COLLABORATING.md) for setup, product scope and contribution checks. GitHub provides bug/feature issue forms and a pull request template. [AGENTS.md](AGENTS.md) gives coding agents repository-specific architecture, security and validation guidance.
