@@ -1,3 +1,4 @@
+import { Glossary } from "../src/server/glossary";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -349,8 +350,14 @@ test("MCP boundary rejects cookies/demo fallback, bad origins/hosts, oversized a
     413,
   );
 });
-test("official MCP client discovers only four tools, reads scoped context and saves translations", async () => {
+test("official MCP client discovers five scoped tools, reads scoped context and saves translations", async () => {
   const f = await fixture();
+  await new Glossary(f.store).save(admin, "website", {
+    source: "Hello",
+    translations: { fr: "Bonjour", nl: "Unpermitted glossary copy" },
+    notes: "A greeting.",
+  });
+
   const client = new Client({ name: "test-client", version: "1" });
   const transport = new StreamableHTTPClientTransport(
     new URL("http://localhost:4321/mcp"),
@@ -367,7 +374,13 @@ test("official MCP client discovers only four tools, reads scoped context and sa
     await client.connect(transport);
     assert.deepEqual(
       (await client.listTools()).tools.map((tool) => tool.name).sort(),
-      ["get_key", "get_project", "list_keys", "set_translations"],
+      [
+        "get_key",
+        "get_project",
+        "list_glossary",
+        "list_keys",
+        "set_translations",
+      ],
     );
     const call = async (name: string, args = {}) => {
       const response = await client.callTool({ name, arguments: args });
@@ -391,6 +404,23 @@ test("official MCP client discovers only four tools, reads scoped context and sa
     const key = await call("get_key", { key: "home.title" });
     assert.deepEqual(key.data.translations, { fr: "" });
     assert.equal(key.data.source, "Hello {name}");
+    assert.deepEqual(key.data.glossary.items[0].translations, {
+      fr: "Bonjour",
+    });
+    const terms = await call("list_glossary", { text: "Hello there" });
+    assert.equal(terms.data.items[0].source, "Hello");
+    assert.ok(!JSON.stringify(terms.data).includes("Unpermitted"));
+    assert.equal((await call("list_glossary", { language: "nl" })).error, true);
+    assert.equal(
+      (
+        await client.callTool({
+          name: "list_glossary",
+          arguments: { project: "other" },
+        })
+      ).isError,
+      true,
+    );
+
     assert.equal((await call("list_keys", { language: "nl" })).error, true);
     assert.equal(
       (await call("set_translations", { updates: [update()] })).error,

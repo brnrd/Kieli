@@ -57,6 +57,7 @@ After building, run the HTTP smoke checks affected by your change:
 | --------------------------------------- | ------------------------ |
 | Core API, export and CLI                | `npm run smoke`          |
 | Messages, snapshots and delivery        | `npm run smoke:features` |
+| Project glossary and term exchange      | `npm run smoke:glossary` |
 | Built-in accounts                       | `npm run smoke:local`    |
 | SAML authentication                     | `npm run smoke:saml`     |
 | SCIM and SSO lifecycle                  | `npm run smoke:sso`      |

@@ -117,18 +117,43 @@ try {
     ).status,
     401,
   );
+  assert.equal(
+    (
+      await api("/api/projects/mcp-smoke/glossary", "POST", {
+        source: "Hello",
+        translations: { fr: "Bonjour" },
+        notes: "Greeting",
+      })
+    ).status,
+    201,
+  );
   await client.connect(
     new StreamableHTTPClientTransport(new URL(origin + "/mcp"), {
       requestInit: { headers },
     }),
   );
-  assert.equal((await client.listTools()).tools.length, 4);
+  assert.equal((await client.listTools()).tools.length, 5);
   const read = await client.callTool({
     name: "get_key",
     arguments: { key: "home.title" },
   });
   const key = JSON.parse(read.content[0].text);
   assert.equal(key.source, "Hello {name}");
+  assert.equal(key.glossary.items[0].translations.fr, "Bonjour");
+  const glossaryResult = await client.callTool({
+    name: "list_glossary",
+    arguments: { text: "Hello again" },
+  });
+  assert.equal(
+    JSON.parse(glossaryResult.content[0].text).items[0].source,
+    "Hello",
+  );
+  assert.equal(
+    (await api("/api/projects/mcp-smoke/glossary", "GET", undefined, headers))
+      .status,
+    401,
+  );
+
   const mismatch = await client.callTool({
     name: "set_translations",
     arguments: {

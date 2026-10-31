@@ -17,13 +17,13 @@ Original scope: Make working through thousands of keys practical without adding 
 
 Acceptance: a translator can open a filtered result, save a target, move to the next matching key across a page boundary and return to the same list position without losing edits. Concurrent changes and an empty remaining result have clear behavior. Authorization stays in existing services; no additional infrastructure.
 
-## 2. Shared glossary — next
+## 2. Shared glossary — completed
 
-After editor navigation, add project-scoped terms with source term, target terms, notes and optional case sensitivity. Managers maintain terms; translators can consult them next to copy. Start with manual lookup and deterministic matching, not blocking terminology enforcement.
+Implemented project-scoped source and target terms, notes, case sensitivity, searchable terminology beside the editor, previewed add-only JSON import/export and audited manager changes. MCP can read terminology within its existing project/language grant. See [shared glossary](glossary.md) for matching, limits and separate backup requirements.
 
 Acceptance: terms are searchable, safely importable/exportable, audited and protected by project roles. MCP reads terms only within its project scope. Existing translation publication remains independent of any approval process.
 
-## 3. Manual reuse of previous translations
+## 3. Manual reuse of previous translations — next
 
 Use existing history as a starting point for project-scoped translation-memory suggestions. Begin with exact source matches; measure whether fuzzy matching is useful before adding it. Suggestions are explicitly applied by a translator and pass the same placeholder/version checks as typed copy.
 

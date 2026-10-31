@@ -1,0 +1,205 @@
+.glossary-heading {
+  display: flex;
+  gap: 20px;
+  align-items: start;
+  justify-content: space-between;
+  margin: 24px 0;
+}
+.glossary-heading h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+.glossary-heading p {
+  color: var(--text-muted);
+  font-size: 13px;
+  max-width: 65ch;
+  line-height: 1.6;
+}
+.glossary-table {
+  width: 100%;
+  min-width: 580px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: left;
+}
+.glossary-table th {
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.glossary-table th:first-child {
+  width: 32%;
+}
+.glossary-table th:nth-child(2) {
+  width: 40%;
+}
+.glossary-table th:nth-child(3) {
+  width: 16%;
+}
+.glossary-table td {
+  padding: 14px 12px;
+  vertical-align: top;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-wrap: anywhere;
+}
+.glossary-table td > strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.glossary-target {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 4px 0;
+  font-size: 12px;
+}
+.glossary-target > span:first-child {
+  color: var(--text-muted);
+  background: var(--surface-subtle);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.glossary-target > span:last-child {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.glossary-actions {
+  display: flex;
+  gap: 3px;
+}
+.glossary-case {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.glossary-notes {
+  font-size: 11px;
+  margin-top: 10px;
+  color: var(--text-muted);
+}
+.glossary-notes summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.glossary-notes p,
+.glossary-lookup-term p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.glossary-file {
+  cursor: pointer;
+  position: relative;
+}
+.glossary-file input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.glossary-file:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.glossary-file.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.glossary-target-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+.glossary-hint {
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 12px 0 20px;
+}
+.glossary-term-dialog .dialog-footer {
+  position: sticky;
+  bottom: 0;
+}
+.glossary-import-preview {
+  list-style: none;
+  margin: 20px 0;
+  padding: 0;
+  max-height: 240px;
+  overflow: auto;
+}
+.glossary-import-preview li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+  font-size: 12px;
+}
+.glossary-import-preview span {
+  color: var(--text-muted);
+}
+.glossary-lookup {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  margin: 16px 0 22px;
+  background: var(--surface-subtle);
+}
+.glossary-lookup > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+.glossary-lookup > summary::after {
+  content: "+";
+  margin-left: auto;
+}
+.glossary-lookup[open] > summary::after {
+  content: "−";
+}
+.glossary-lookup > summary span {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.glossary-lookup-content {
+  padding: 0 12px 14px;
+}
+.glossary-lookup-content > p {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.glossary-lookup-content .search-field {
+  width: 100%;
+}
+.glossary-lookup-term {
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+  font-size: 12px;
+}
+.glossary-lookup-term > strong {
+  margin-right: 10px;
+}
+@media (max-width: 760px) {
+  .glossary-heading {
+    flex-direction: column;
+  }
+  .glossary-heading .heading-actions {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 480px) {
+  .glossary-target-fields {
+    grid-template-columns: 1fr;
+  }
+}

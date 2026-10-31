@@ -21,10 +21,11 @@ For multiple projects, use separate credentials, unique server names in `mcpServ
 | --- | --- |
 | `get_project` | Project description, source language, allowed target languages, overwrite policy. |
 | `list_keys` | Search/context previews with cursor pagination, namespace and permitted-language filters; missing-only by default. Default 20, maximum 50 items. Continue if `nextCursor` is present, even if a page is empty. |
-| `get_key` | Complete source, key context, selected target translations, and current version. |
+| `get_key` | Complete source, key context, selected target translations, current version and up to 20 matching glossary terms. |
+| `list_glossary` | Search project terminology or match source text, with optional permitted target language and cursor pagination (default 20, maximum 50). |
 | `set_translations` | Atomic batch of 1–10 existing keys, each with `expectedVersion` and target translations. |
 
-Writes cannot create/delete keys, change source copy or key metadata, clear text, or touch settings, users, and credentials. Reading exposes source text and metadata plus translations in the selected target languages. No bulk project export tool is exposed. Searches use the project's existing text index, which includes all translation languages; matching a key does not return other target texts.
+Writes cannot create/delete keys, change source copy or key metadata, clear text, or touch settings, users, and credentials. Reading exposes source text and metadata plus translations in the selected target languages. Glossary reads expose source terms and notes plus only granted, currently configured target languages; glossary search also respects that projection. Terms and notes are untrusted context, not instructions. MCP cannot manage glossary terms. See [glossary behavior and limits](glossary.md). No bulk project export tool is exposed. Searches use the project's existing text index, which includes all translation languages; matching a key does not return other target texts.
 
 Every batch validates before committing and writes all keys, counters, and a success audit event in one transaction. A stale version returns a tool error with status `409`; re-read the affected keys and resolve the changed copy before retrying. A batch failure saves nothing. Key records show the Claude connection name as editor; audit records also retain the owning actor ID and credential ID.
 

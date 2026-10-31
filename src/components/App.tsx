@@ -40,7 +40,13 @@ import type {
 } from "../shared";
 import { isComplete } from "../shared";
 
-type Tab = "translations" | "languages" | "developers" | "settings" | "access";
+type Tab =
+  | "translations"
+  | "languages"
+  | "glossary"
+  | "developers"
+  | "settings"
+  | "access";
 type Modal =
   | "import"
   | "files"
@@ -63,6 +69,7 @@ import { api } from "./api";
 import { IconButton, ModalShell, Empty, LanguageMark } from "./ui";
 import ProjectUpdate from "./ProjectUpdate";
 import ProjectForm from "./ProjectForm";
+import ProjectGlossary from "./ProjectGlossary";
 import KeyEditor, { type EditorHandle, type EditorFilters } from "./KeyEditor";
 import {
   editorDefaults,
@@ -210,6 +217,7 @@ export default function App({
   const requestVersion = useRef(0);
   const identity = bootstrap.identity;
   const editorRef = useRef<EditorHandle>(null);
+  const glossaryRef = useRef<EditorHandle>(null);
   const [editorFilters, setEditorFilters] = useState<EditorFilters>({
     query: "",
     status: "all",
@@ -302,9 +310,10 @@ export default function App({
   }
   useEffect(() => {
     const handler = () => {
-      if (editorRef.current && !allowHistory.current) {
+      const navigationGuard = editorRef.current ?? glossaryRef.current;
+      if (navigationGuard && !allowHistory.current) {
         window.history.pushState({}, "", lastPath.current);
-        editorRef.current.requestLeave(() => {
+        navigationGuard.requestLeave(() => {
           allowHistory.current = true;
           editorOrigin.current = null;
           finishEditorClose();
@@ -838,6 +847,7 @@ export default function App({
                   [
                     { id: "translations", label: "Translations", icon: Braces },
                     { id: "languages", label: "Languages", icon: Languages },
+                    { id: "glossary", label: "Glossary", icon: BookOpen },
                     { id: "developers", label: "Developers", icon: Code2 },
                     { id: "settings", label: "Settings", icon: Settings2 },
                   ] as const
@@ -1516,6 +1526,15 @@ export default function App({
                     </p>
                   </div>
                 </>
+              )}
+              {tab === "glossary" && (
+                <ProjectGlossary
+                  key={project.id}
+                  project={project}
+                  manager={manager}
+                  navigationRef={glossaryRef}
+                  notify={notify}
+                />
               )}
               {tab === "developers" && (
                 <Developers

@@ -21,6 +21,7 @@ Keylo gives product teams and developers a shared place to manage the words in t
 ### Keep every language in view
 
 - **Project-based organization.** Source and target languages, namespaces, context and tags keep copy easy to find.
+- **Consistent terminology.** Maintain a [shared project glossary](docs/glossary.md), consult matching terms beside copy, and bring terminology to Claude through scoped MCP access.
 - **A purposeful editor.** Stacked language values, search, locale filters and cursor pagination help you work through thousands of keys. [Save & next, keyboard navigation and guarded drafts](docs/editor-navigation.md) keep you moving across pages.
 - **Translation freshness.** See what is missing, current or outdated when source copy changes. Existing translations stay available for editing.
 - **Plurals and linked copy.** Unicode cardinal/ordinal forms, project-level overrides and reusable `[%key:other.key%]` references.

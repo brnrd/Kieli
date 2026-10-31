@@ -1,3 +1,4 @@
+import { Glossary } from "../../server/glossary";
 import { workspaceOverview } from "../../server/workspace";
 import type { APIRoute } from "astro";
 import { SyncCredentials } from "../../server/sync-credentials";
@@ -50,6 +51,46 @@ export const ALL: APIRoute = async (context) => {
       );
     const id = parts[1];
     if (!id) throw new HttpError(404, "Endpoint not found.");
+    if (parts[2] === "glossary") {
+      const glossary = new Glossary(await getStore());
+      if (parts.length === 3 && method === "GET")
+        return Response.json(
+          await glossary.list(identity, id, {
+            query: url.searchParams.get("q") ?? "",
+            limit: Number(url.searchParams.get("limit") ?? 50),
+            cursor: url.searchParams.get("cursor") ?? undefined,
+          }),
+        );
+      if (parts.length === 3 && method === "POST")
+        return Response.json(
+          await glossary.save(identity, id, await readJSON(request)),
+          { status: 201 },
+        );
+      if (parts.length === 4 && parts[3] === "lookup" && method === "POST")
+        return Response.json(
+          await glossary.list(identity, id, await readJSON(request)),
+        );
+      if (parts.length === 4 && parts[3] === "import" && method === "POST")
+        return Response.json(
+          await glossary.import(identity, id, await readJSON(request)),
+        );
+      if (parts.length === 4 && parts[3] === "export" && method === "GET")
+        return Response.json(await glossary.export(identity, id));
+      if (parts.length === 4 && method === "PATCH")
+        return Response.json(
+          await glossary.save(identity, id, await readJSON(request), parts[3]!),
+        );
+      if (parts.length === 4 && method === "DELETE") {
+        await glossary.remove(
+          identity,
+          id,
+          parts[3]!,
+          Number(url.searchParams.get("version")),
+        );
+        return new Response(null, { status: 204 });
+      }
+      throw new HttpError(404, "Glossary endpoint not found.");
+    }
     const history = new ProjectHistory(await getStore());
     if (parts[2] === "snapshots") {
       if (parts.length === 3 && method === "GET")

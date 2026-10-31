@@ -27,7 +27,8 @@
     "snapshots:run": "node --env-file-if-exists=.env scripts/snapshots.mjs",
     "identities:reconcile": "node --env-file-if-exists=.env scripts/snapshots.mjs identities",
     "smoke:features": "node scripts/smoke-features.mjs",
-    "smoke:sync": "node scripts/smoke-sync.mjs"
+    "smoke:sync": "node scripts/smoke-sync.mjs",
+    "smoke:glossary": "node scripts/smoke-glossary.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",

@@ -1,3 +1,4 @@
+import GlossaryLookup from "./GlossaryLookup";
 import { sameTranslation } from "./editor-draft";
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { Check, Loader2, ShieldCheck } from "lucide-react";
@@ -240,6 +241,23 @@ export default function KeyForm({
               Changing the source will mark unchanged target translations as
               outdated. Their copy will be kept.
             </p>
+          )}
+          {editing && (
+            <GlossaryLookup
+              project={project}
+              language={focusLanguage}
+              source={
+                sameTranslation(
+                  translations[project.sourceLanguage] ?? "",
+                  editing.translations[project.sourceLanguage] ?? "",
+                  plural,
+                )
+                  ? (editing.resolvedTranslations?.[project.sourceLanguage] ??
+                    translations[project.sourceLanguage] ??
+                    "")
+                  : (translations[project.sourceLanguage] ?? "")
+              }
+            />
           )}
           {project.languages.map((l) => (
             <div

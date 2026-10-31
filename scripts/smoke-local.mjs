@@ -198,6 +198,57 @@ try {
   });
   assert.equal(accepted.status, 200, await accepted.clone().text());
   let member = cookie(accepted);
+  const glossaryTerm = await json(
+    "/api/projects/local-smoke/glossary",
+    "POST",
+    { source: "workspace", translations: { fr: "espace de travail" } },
+    admin,
+    201,
+  );
+  assert.equal(
+    (await request("/projects/local-smoke/glossary", "GET", undefined, member))
+      .status,
+    200,
+  );
+  assert.equal(
+    (await json("/api/projects/local-smoke/glossary", "GET", undefined, member))
+      .items[0].source,
+    "workspace",
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/projects/local-smoke/glossary",
+        "POST",
+        { source: "forbidden" },
+        member,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        `/api/projects/local-smoke/glossary/${glossaryTerm.id}`,
+        "PATCH",
+        { source: "changed", version: 1 },
+        member,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        `/api/projects/local-smoke/glossary/${glossaryTerm.id}?version=1`,
+        "DELETE",
+        undefined,
+        member,
+      )
+    ).status,
+    403,
+  );
+
   assert.equal(
     (await request("/api/workspace/overview", "GET", undefined, member)).status,
     403,
