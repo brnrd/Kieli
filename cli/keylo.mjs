@@ -10,37 +10,136 @@ import {
 import { resolve, join, dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { pathToFileURL } from "node:url";
+import { stripVTControlCharacters } from "node:util";
 
-const help = `keylo — synchronize source copy and translations
+const help = `keylo — good words, every language
 
-Usage:
-  KEYLO_TOKEN=… node cli/keylo.mjs pull --url https://copy.example.com --project website --out ./locales
+Commands:
+  pull                  Bring translation files into your app
+  push                  Preview source changes; add --apply to save
 
-Options:
+Start here:
+  node cli/keylo.mjs pull --config .keylo.json --require-current
+  node cli/keylo.mjs push --config .keylo.json
+
+Connection:
   --config <file>       JSON config (default: .keylo.json when present)
-  --source <file>       Source JSON for push (flat or nested)
-  --language <code>     Source locale for push (default: en)
-  --namespace <name>    Namespace for new pushed keys (default: general)
-  --apply               Apply a source push; push defaults to dry-run
-  --dry-run             Preview source changes without applying
   --url <origin>        Keylo origin (or KEYLO_URL)
   --project <id>        Project ID (or KEYLO_PROJECT)
+  --demo                Local pull without a token; loopback only
+
+Pull:
   --out <directory>     Destination directory (default: ./locales)
   --languages <codes>   Comma-separated codes; defaults to all project languages
   --format <format>     flat (default), nested, yaml, js, ts, php, properties,
                         ini, resx, po, pot, strings, plist, android, arb, xliff, csv
-  --require-current     Fail pull if copy is missing, outdated or invalid
+  --require-current     Stop if copy is missing, outdated or invalid
   --fallback            Use source copy for missing translations
-  --demo                Allow a local demo server without a token
+
+Push:
+  --source <file>       Source JSON (flat or nested)
+  --language <code>     Source locale (default: en)
+  --namespace <name>    Namespace for new keys (default: general)
+  --apply               Save the previewed source changes
+  --dry-run             Preview only; this is the default
+
+Appearance:
+  --plain               Plain output, without the character, color or progress
+  --no-color            Disable color; also respects NO_COLOR
   --help                Show this help
 
-Set KEYLO_TOKEN through your environment or CI secret store. Never pass it on the command line.
-Push requires KEYLO_SYNC_TOKEN; it cannot write target translations.
-  KEYLO_SYNC_TOKEN=… node cli/keylo.mjs push --config .keylo.json --apply
-Each locale is written as <code>.<extension>. Existing unrelated files are preserved.
+Credentials belong in environment variables or your CI secret store:
+  KEYLO_TOKEN           Read-only project export token for pull
+  KEYLO_SYNC_TOKEN      Source-only project credential for push
+
+No config yet? Pass --url and --project with your command.
+Push defaults to a dry-run. Existing target translations stay protected.
+Each locale is written as <code>.<extension>; unrelated files are preserved.
 `;
+
+/**
+ * Terminal decoration stays in this portable file: the CLI can still be copied
+ * into another repository without installing packages or companion modules.
+ * @param {{stdout?: {write: (text: string) => unknown, isTTY?: boolean, columns?: number}, stderr?: {write: (text: string) => unknown}, env?: Record<string, string | undefined>, plain?: boolean, noColor?: boolean}} [options]
+ */
+export function createReporter({
+  stdout = process.stdout,
+  stderr = process.stderr,
+  env = process.env,
+  plain = false,
+  noColor = false,
+} = {}) {
+  const ci = !!env.CI && !["0", "false"].includes(env.CI.toLowerCase());
+  const human = !!stdout.isTTY && !ci && env.TERM !== "dumb" && !plain;
+  const color = human && !noColor && env.NO_COLOR === undefined;
+  const secrets = [
+    env.KEYLO_TOKEN,
+    env.KEYLO_SYNC_TOKEN,
+    env.KEYLO_MCP_TOKEN,
+  ].filter(Boolean);
+  const started = performance.now();
+  function clean(value) {
+    let text = String(value);
+    for (const secret of secrets) text = text.split(secret).join("[redacted]");
+    text = stripVTControlCharacters(text);
+    return text.replace(
+      /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g,
+      "",
+    );
+  }
+  const paint = (text, code) => (color ? `\x1b[${code}m${text}\x1b[0m` : text);
+  function banner() {
+    if (!human) return;
+    if ((stdout.columns ?? 80) < 54) {
+      stdout.write(`\n  ${paint("keylo", "1;32")}\n\n`);
+      return;
+    }
+    stdout.write(
+      `\n   ${paint(".--.", "32")}\n  ${paint("(o  o)---+", "32")}  ${paint("keylo", "1;32")}\n   ${paint("'--'   |", "32")}   Your words, ready to travel.\n\n`,
+    );
+  }
+  return {
+    human,
+    clean,
+    banner,
+    help: () => {
+      banner();
+      stdout.write(help);
+    },
+    context: (project, command) => {
+      if (human)
+        stdout.write(
+          `  ${paint(clean(project), "1")}  ${paint(clean(command), "2")}\n\n`,
+        );
+    },
+    step: (message) => {
+      if (human) stdout.write(`  ${paint(">", "32")} ${clean(message)}\n`);
+    },
+    success: (message) =>
+      stdout.write(
+        `${human ? "\n  " + paint("+", "32") + " " : ""}${clean(message)}\n`,
+      ),
+    file: (path) =>
+      stdout.write(`  ${human ? paint("|", "2") + " " : ""}${clean(path)}\n`),
+    note: (message) => stdout.write(`${human ? "  " : ""}${clean(message)}\n`),
+    finish: () => {
+      if (human)
+        stdout.write(
+          `\n  ${paint(`Done in ${((performance.now() - started) / 1000).toFixed(1)}s.`, "2")}\n`,
+        );
+    },
+    failure: (error) =>
+      stderr.write(
+        `${human ? paint("  x keylo", "31") : "keylo"}: ${clean(error instanceof Error ? error.message : "Unable to complete this command.")}\n`,
+      ),
+  };
+}
 export function parseArgs(args, defaults = {}) {
-  if (args.includes("--help") || !args.length) return { help: true };
+  if (
+    args.includes("--help") ||
+    args.every((arg) => ["--plain", "--no-color"].includes(arg))
+  )
+    return { help: true };
   if (!["pull", "push"].includes(args[0]))
     throw new Error("Expected pull or push. Use --help for usage.");
   const options = {
@@ -60,6 +159,8 @@ export function parseArgs(args, defaults = {}) {
     "require-current": defaults.requireCurrent ?? false,
     fallback: false,
     demo: false,
+    plain: false,
+    "no-color": false,
   };
   const valued = new Set([
     "url",
@@ -77,9 +178,15 @@ export function parseArgs(args, defaults = {}) {
     if (!args[i]?.startsWith("--"))
       throw new Error(`Unexpected argument: ${args[i]}`);
     if (
-      ["fallback", "demo", "apply", "dry-run", "require-current"].includes(
-        option,
-      )
+      [
+        "fallback",
+        "demo",
+        "apply",
+        "dry-run",
+        "require-current",
+        "plain",
+        "no-color",
+      ].includes(option)
     )
       options[option] = true;
     else if (valued.has(option)) {
@@ -142,11 +249,16 @@ export function parseArgs(args, defaults = {}) {
     throw new Error("Push options cannot be used with pull.");
   return { ...options, url: url.origin };
 }
-export async function pull(options, token = process.env.KEYLO_TOKEN) {
+export async function pull(
+  options,
+  token = process.env.KEYLO_TOKEN,
+  onProgress = (_message) => {},
+) {
   if (!token && !options.demo)
     throw new Error(
       "Set KEYLO_TOKEN to a project export token, or use --demo on loopback.",
     );
+  onProgress("Fetching translations…");
   const url = new URL(`/api/projects/${options.project}/export`, options.url);
   url.search = new URLSearchParams({
     format: options.format,
@@ -245,6 +357,9 @@ export async function pull(options, token = process.env.KEYLO_TOKEN) {
     )
       throw new Error("Invalid translations in export response.");
   }
+  onProgress(
+    `Writing ${entries.length} locale ${entries.length === 1 ? "file" : "files"}…`,
+  );
   const directory = resolve(options.out);
   await mkdir(directory, { recursive: true });
   for (const { code, name, content } of entries) {
@@ -463,11 +578,16 @@ async function syncRequest(options, path, body, token) {
     }
   }
 }
-export async function push(options, token = process.env.KEYLO_SYNC_TOKEN) {
+export async function push(
+  options,
+  token = process.env.KEYLO_SYNC_TOKEN,
+  onProgress = (_message) => {},
+) {
   if (!token)
     throw new Error(
       "Set KEYLO_SYNC_TOKEN to a source-sync credential. Export tokens cannot push.",
     );
+  onProgress("Reading source files…");
   const files = options.source
     ? [
         {
@@ -521,6 +641,9 @@ export async function push(options, token = process.env.KEYLO_SYNC_TOKEN) {
     });
   }
   for (const name of byName.keys()) visit(name);
+  onProgress(
+    `Previewing ${keys.length} source ${keys.length === 1 ? "key" : "keys"}…`,
+  );
   const groups = [];
   let group = [],
     bytes = 0;
@@ -565,6 +688,10 @@ export async function push(options, token = process.env.KEYLO_SYNC_TOKEN) {
     }
   }
   if (options.apply)
+    onProgress(
+      `Applying ${plans.length} ${plans.length === 1 ? "batch" : "batches"}…`,
+    );
+  if (options.apply)
     for (const plan of plans)
       try {
         await syncRequest(options, `apply/${plan.id}`, {}, token);
@@ -577,35 +704,53 @@ export async function push(options, token = process.env.KEYLO_SYNC_TOKEN) {
 }
 
 export async function main(args = process.argv.slice(2)) {
+  const report = createReporter({
+    plain: args.includes("--plain"),
+    noColor: args.includes("--no-color"),
+  });
   try {
-    const options = parseArgs(args, await loadConfig(args));
-    if (options.help) {
-      console.log(help);
+    const helpOnly =
+      args.includes("--help") ||
+      args.every((arg) => ["--plain", "--no-color"].includes(arg));
+    if (helpOnly) {
+      report.help();
       return;
     }
+    const options = parseArgs(args, await loadConfig(args));
+    if (options.help) {
+      report.help();
+      return;
+    }
+    report.banner();
+    report.context(
+      options.project,
+      options.command === "push"
+        ? options.apply
+          ? "push · apply"
+          : "push · dry-run"
+        : "pull",
+    );
     if (options.command === "push") {
-      if (
-        args.some((arg) =>
-          ["--out", "--languages", "--fallback", "--require-current"].includes(
-            arg,
-          ),
-        )
-      )
-        throw new Error("Pull options cannot be used with push.");
-      const result = await push(options);
-      console.log(
+      const result = await push(
+        options,
+        process.env.KEYLO_SYNC_TOKEN,
+        report.step,
+      );
+      report.success(
         `${options.apply ? "Applied" : "Dry run"}: ${result.created} new, ${result.updated} updated, ${result.unchanged} unchanged source keys in ${options.project}.`,
       );
       if (!options.apply)
-        console.log("No live copy changed. Run with --apply to save.");
-      return;
+        report.note("No live copy changed. Run with --apply to save.");
+    } else {
+      const files = await pull(options, process.env.KEYLO_TOKEN, report.step);
+      report.success(
+        `Pulled ${files.length} ${files.length === 1 ? "language" : "languages"} from ${options.project}:`,
+      );
+      for (const path of files) report.file(path);
     }
-    const files = await pull(options);
-    console.log(
-      `Pulled ${files.length} ${files.length === 1 ? "language" : "languages"} from ${options.project}:\n${files.map((p) => `  ${p}`).join("\n")}`,
-    );
+    report.finish();
   } catch (error) {
-    console.error(`keylo: ${error.message}`);
+    report.failure(error);
     process.exitCode = 1;
   }
 }

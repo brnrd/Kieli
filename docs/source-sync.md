@@ -51,3 +51,30 @@ Requests require the dedicated bearer credential, matching configured public Hos
 Run `npm run smoke:sync` after building to verify config paths, dry-run/apply, target protection, credential separation, repeat behavior and revocation using disposable local fixtures.
 
 For a build that must contain only current, complete translations, use `node cli/keylo.mjs pull --config .keylo.json --require-current`. This also checks argument contracts in existing copy and fails before writing locale files. It can be set as `pull.requireCurrent: true` in repository configuration. Ordinary pulls retain their existing fallback/export behavior.
+
+## A friendlier terminal
+
+Interactive terminals show **Kip**, Keylo's little key character, with a restrained green header, short progress stages, file paths and a timed completion summary. The character is original ASCII artwork and needs no fonts, downloaded assets or extra packages.
+
+```text
+   .--.
+  (o  o)---+  keylo
+   '--'   |   Your words, ready to travel.
+
+  website  pull
+
+  > Fetching translations…
+  > Writing 2 locale files…
+
+  + Pulled 2 languages from website:
+  | /your/app/locales/en.json
+  | /your/app/locales/fr.json
+
+  Done in 0.4s.
+```
+
+Use `node cli/keylo.mjs --help` for grouped commands and examples. Help works even if the repository configuration is malformed. This presentation does not add an interactive setup wizard, prompts, telemetry or implicit writes; source push still defaults to dry-run.
+
+Piped output, CI and `TERM=dumb` automatically use plain output, retaining the existing pull/push result lines and nonzero failure exit codes. Add `--plain` to opt out in a terminal. `--no-color` or the presence of `NO_COLOR` disables ANSI color while keeping the interactive character and stage lines; narrow terminals use a compact header. No animation or cursor-control sequences are emitted.
+
+Displayed dynamic paths and errors have terminal control characters removed, and configured Keylo credential values are redacted. Set credentials through environment variables as described above, never in command-line arguments or configuration files. The CLI remains a single file using Node built-ins only.

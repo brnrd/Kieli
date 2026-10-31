@@ -88,6 +88,8 @@ node cli/keylo.mjs pull \
   --require-current
 ```
 
+The terminal CLI adds Kip, a small original key character, clear progress stages and a concise summary. CI and piped output stay plain; use `--plain` or `--no-color` to choose your style. Run `node cli/keylo.mjs --help` to explore.
+
 The standalone CLI uses Node built-ins and writes individual locale files. [Source push and repository configuration](docs/source-sync.md) use a separate source-sync credential.
 
 ## Documentation
