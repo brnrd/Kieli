@@ -425,3 +425,70 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.editor-navigation {
+  padding: 16px 26px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-subtle);
+}
+.editor-navigation-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.editor-navigation p {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 8px 0 0;
+}
+.editor-shortcuts {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.editor-shortcuts summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.editor-shortcuts kbd {
+  font: inherit;
+  color: var(--text);
+}
+.editor-navigation .editor-notice {
+  color: var(--text-strong);
+  font-weight: 500;
+}
+@media (max-width: 640px) {
+  .editor-navigation {
+    padding: 12px 16px;
+  }
+}
+.key-editor-dialog .editor-navigation {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.key-editor-dialog .dialog-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+.table-filters {
+  flex-wrap: wrap;
+}
+@media (max-width: 1080px) {
+  .table-toolbar {
+    flex-wrap: wrap;
+  }
+}
+.editor-current-key {
+  display: block;
+  font:
+    600 12px ui-monospace,
+    monospace;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+  margin-bottom: 10px;
+}

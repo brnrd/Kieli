@@ -397,6 +397,41 @@ try {
     ).status,
     401,
   );
+  for (const [name, translations] of [
+    ["nav.a", { en: "A" }],
+    ["nav.b", { en: "B", fr: "B" }],
+  ])
+    assert.equal(
+      (
+        await request("/api/projects/smoke/keys", "POST", {
+          name,
+          translations,
+        })
+      ).status,
+      201,
+    );
+  const missingFrench = await (
+    await request("/api/projects/smoke/keys?language=fr&status=missing")
+  ).json();
+  assert.equal(missingFrench.items[0].name, "nav.a");
+  const neighbor = async (name, direction, status = "all") =>
+    (
+      await request(
+        `/api/projects/smoke/keys/${name}/navigation?direction=${direction}&language=fr&status=${status}`,
+      )
+    ).json();
+  assert.equal((await neighbor("nav.a", "next")).key.name, "nav.b");
+  assert.equal((await neighbor("nav.b", "previous")).key.name, "nav.a");
+  assert.equal((await neighbor("home.title", "attention")).key.name, "nav.a");
+  assert.equal((await neighbor("nav.a", "next", "missing")).key, null);
+  assert.equal(
+    (
+      await request(
+        "/api/projects/smoke/keys/nav.a/navigation?direction=next&language=xx",
+      )
+    ).status,
+    400,
+  );
   console.log(
     "HTTP smoke passed: CSP, origins, roles, bounded bodies, pagination, version conflicts, token scope/revocation, shared argument checks, strict freshness gates and real CLI export.",
   );

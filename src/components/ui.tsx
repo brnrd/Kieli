@@ -32,27 +32,34 @@ export function ModalShell({
   subtitle,
   onClose,
   wide = false,
+  className = "",
 }: {
   children: ReactNode;
   title: string;
   subtitle?: string;
   onClose: () => void;
   wide?: boolean;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
     const dialog = ref.current;
+    const previous =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     dialog?.showModal();
     return () => {
       dialog?.close();
+      if (previous?.isConnected) previous.focus({ preventScroll: true });
     };
   }, []);
   return (
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      className={`dialog ${wide ? "dialog-wide" : ""}`}
+      className={`dialog ${wide ? "dialog-wide" : ""} ${className}`}
       onCancel={(event) => {
         event.preventDefault();
         onClose();

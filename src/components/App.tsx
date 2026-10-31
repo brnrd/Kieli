@@ -62,8 +62,13 @@ const initials = (name: string) =>
 import { api } from "./api";
 import { IconButton, ModalShell, Empty, LanguageMark } from "./ui";
 import ProjectUpdate from "./ProjectUpdate";
-import KeyForm from "./KeyForm";
 import ProjectForm from "./ProjectForm";
+import KeyEditor, { type EditorHandle, type EditorFilters } from "./KeyEditor";
+import {
+  editorDefaults,
+  editorPreferenceKey,
+  parseEditorPreferences,
+} from "./editor-preferences";
 import ExportForm from "./ExportForm";
 import Developers from "./Developers";
 import ProjectDirectory from "./ProjectDirectory";
@@ -136,10 +141,43 @@ export default function App({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState<string>(editorDefaults.status);
   const [namespace, setNamespace] = useState("all");
-  const [page, setPage] = useState(1);
+  const [focusLanguage, setFocusLanguage] = useState("all");
+  const filterLanguage = project?.languages.some(
+    (locale) => locale.code === focusLanguage,
+  )
+    ? focusLanguage
+    : "all";
   const [pageSize, setPageSize] = useState(50);
+  const [preferencesReady, setPreferencesReady] = useState(false);
+  useEffect(() => {
+    try {
+      const stored = parseEditorPreferences(
+        JSON.parse(localStorage.getItem(editorPreferenceKey) ?? "null"),
+      );
+      setStatus(stored.status);
+      setFocusLanguage(stored.language);
+      setPageSize(stored.pageSize);
+    } catch {
+      /* Storage may be unavailable; keep defaults. */
+    }
+    setPreferencesReady(true);
+  }, []);
+  useEffect(() => {
+    if (!preferencesReady) return;
+    try {
+      localStorage.setItem(
+        editorPreferenceKey,
+        JSON.stringify(
+          parseEditorPreferences({ status, language: focusLanguage, pageSize }),
+        ),
+      );
+    } catch {
+      /* Preferences are optional. */
+    }
+  }, [preferencesReady, status, focusLanguage, pageSize]);
+  const [page, setPage] = useState(1);
   const [cursor, setCursor] = useState<string>();
   const [nextCursor, setNextCursor] = useState<string>();
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
@@ -171,6 +209,41 @@ export default function App({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const requestVersion = useRef(0);
   const identity = bootstrap.identity;
+  const editorRef = useRef<EditorHandle>(null);
+  const [editorFilters, setEditorFilters] = useState<EditorFilters>({
+    query: "",
+    status: "all",
+    namespace: "all",
+    language: "all",
+  });
+  const editorOrigin = useRef<{
+    element: HTMLElement | null;
+    scroll: number;
+  } | null>(null);
+  const lastPath = useRef(`/${initialPath}`);
+  const allowHistory = useRef(false);
+  useEffect(() => {
+    lastPath.current = window.location.pathname;
+  });
+  useEffect(() => {
+    if (modal || !editorOrigin.current) return;
+    const origin = editorOrigin.current;
+    editorOrigin.current = null;
+    const frame = requestAnimationFrame(() => {
+      const target = origin.element?.isConnected
+        ? origin.element
+        : document.getElementById("key-list-heading");
+      target?.focus({ preventScroll: true });
+      window.scrollTo(0, origin.scroll);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [modal]);
+  function finishEditorClose() {
+    setModal(null);
+    setEditing(null);
+    setError("");
+  }
+
   function notify(message: string) {
     setToast(message);
   }
@@ -181,6 +254,10 @@ export default function App({
     }
   }, [toast]);
   function closeModal() {
+    if (modal === "key" && editorRef.current) {
+      editorRef.current.requestClose();
+      return;
+    }
     if (!busy) {
       setModal(null);
       setEditing(null);
@@ -188,6 +265,16 @@ export default function App({
     }
   }
   function openModal(value: Modal) {
+    if (value === "key") {
+      editorOrigin.current = {
+        element:
+          document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null,
+        scroll: window.scrollY,
+      };
+      setEditorFilters({ query, status, namespace, language: filterLanguage });
+    }
     setError("");
     setModal(value);
   }
@@ -198,7 +285,6 @@ export default function App({
       setLoading(true);
       setSelected(new Set());
       setSearch("");
-      setStatus("all");
       setNamespace("all");
       setQuery("");
       setStats(emptyStats());
@@ -216,6 +302,17 @@ export default function App({
   }
   useEffect(() => {
     const handler = () => {
+      if (editorRef.current && !allowHistory.current) {
+        window.history.pushState({}, "", lastPath.current);
+        editorRef.current.requestLeave(() => {
+          allowHistory.current = true;
+          editorOrigin.current = null;
+          finishEditorClose();
+          window.history.back();
+        });
+        return;
+      }
+      allowHistory.current = false;
       const parts = window.location.pathname.split("/").filter(Boolean);
       if (
         parts[0] === "users" ||
@@ -249,6 +346,7 @@ export default function App({
         q: query,
         status,
         ...(namespace !== "all" ? { namespace } : {}),
+        ...(filterLanguage !== "all" ? { language: filterLanguage } : {}),
         ...(cursor ? { cursor } : {}),
       });
       const data = await api<KeyPage>(`projects/${id}/keys?${params}`);
@@ -284,6 +382,7 @@ export default function App({
     namespace,
     cursor,
     pageSize,
+    filterLanguage,
     overview,
     workspacePage,
   ]);
@@ -338,24 +437,6 @@ export default function App({
   function editKey(key: TranslationKey) {
     setEditing(key);
     openModal("key");
-  }
-  async function saveKey(data: Record<string, unknown>) {
-    setBusy(true);
-    setError("");
-    try {
-      await api<TranslationKey>(
-        `projects/${projectId}/keys${editing ? `/${encodeURIComponent(editing.name)}` : ""}`,
-        { method: editing ? "PATCH" : "POST", body: JSON.stringify(data) },
-      );
-      await refreshKeys();
-      notify(editing ? "Translations saved." : "New key added.");
-      setModal(null);
-      setEditing(null);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
   }
   async function saveProject(data: Record<string, unknown>, existing = false) {
     setBusy(true);
@@ -879,7 +960,7 @@ export default function App({
                   >
                     <div className="section-title">
                       <div>
-                        <h2>
+                        <h2 id="key-list-heading" tabIndex={-1}>
                           All the right words
                           <span>{stats.totalKeys.toLocaleString()}</span>
                         </h2>
@@ -912,6 +993,25 @@ export default function App({
                         )}
                       </label>
                       <div className="table-filters">
+                        <label className="select-filter">
+                          <Languages size={13} />
+                          <select
+                            aria-label="Focus language"
+                            value={filterLanguage}
+                            onChange={(event) => {
+                              setFocusLanguage(event.target.value);
+                              resetPage();
+                            }}
+                          >
+                            <option value="all">All languages</option>
+                            {project.languages.map((locale) => (
+                              <option value={locale.code} key={locale.code}>
+                                {locale.name} ({locale.code})
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown size={12} />
+                        </label>
                         <label className="select-filter">
                           <SlidersHorizontal size={14} />
                           <select
@@ -1561,6 +1661,7 @@ export default function App({
       )}
       {modal === "key" && project && (
         <ModalShell
+          className="key-editor-dialog"
           title={
             editing ? "A place for this word." : "Make room for a new word."
           }
@@ -1572,25 +1673,16 @@ export default function App({
           onClose={closeModal}
           wide
         >
-          <KeyForm
-            key={editing?.name ?? "new"}
+          <KeyEditor
+            ref={editorRef}
             project={project}
-            editing={editing}
+            initial={editing}
             manager={manager}
-            busy={busy}
-            error={error}
-            onSubmit={(data) => void saveKey(data)}
-            onClose={closeModal}
-            onRestored={async () => {
-              await refreshKeys();
-              setModal(null);
-              notify("Translation restored.");
-            }}
-            onReload={async () => {
-              await refreshKeys();
-              setModal(null);
-              notify("Latest translations loaded. Reopen the key to continue.");
-            }}
+            filters={editorFilters}
+            onSaved={() => refreshKeys()}
+            onClose={finishEditorClose}
+            onBusyChange={setBusy}
+            notify={notify}
           />
         </ModalShell>
       )}

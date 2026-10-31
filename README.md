@@ -21,7 +21,7 @@ Keylo gives product teams and developers a shared place to manage the words in t
 ### Keep every language in view
 
 - **Project-based organization.** Source and target languages, namespaces, context and tags keep copy easy to find.
-- **A purposeful editor.** Stacked language values, search, filters and cursor pagination help you work through thousands of keys.
+- **A purposeful editor.** Stacked language values, search, locale filters and cursor pagination help you work through thousands of keys. [Save & next, keyboard navigation and guarded drafts](docs/editor-navigation.md) keep you moving across pages.
 - **Translation freshness.** See what is missing, current or outdated when source copy changes. Existing translations stay available for editing.
 - **Plurals and linked copy.** Unicode cardinal/ordinal forms, project-level overrides and reusable `[%key:other.key%]` references.
 - **Safer changes.** Argument checks, version conflicts, per-translation history, recoverable key deletion and project snapshots help protect your work.
@@ -97,6 +97,7 @@ The standalone CLI uses Node built-ins and writes individual locale files. [Sour
 | [Imports and file formats](docs/file-formats.md) | [Built-in accounts and recovery](docs/built-in-accounts.md) |
 | [Migrating from Lokalise](docs/lokalise-import.md) | [Okta OIDC](docs/okta.md) · [SAML](docs/saml.md) |
 | [Updating existing projects](docs/project-updates.md) | [Provisioning and offboarding](docs/sso-lifecycle.md) |
+| [Editor navigation and shortcuts](docs/editor-navigation.md) | [Workspace administration](docs/workspace-admin.md) |
 | [Plurals, references and validation](docs/messages.md) | [Workspace administration](docs/workspace-admin.md) |
 | [Translation history and recovery](docs/translation-history.md) | [Snapshots and recovery](docs/project-history.md) |
 | [CLI and source sync](docs/source-sync.md) | [AWS deployment](docs/aws.md) |

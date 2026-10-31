@@ -1,4 +1,5 @@
-import { useState, type SyntheticEvent } from "react";
+import { sameTranslation } from "./editor-draft";
+import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { Check, Loader2, ShieldCheck } from "lucide-react";
 import type { Project, TranslationKey } from "../shared";
 import KeyHistory from "./KeyHistory";
@@ -15,13 +16,17 @@ export default function KeyForm({
   onClose,
   onReload,
   onRestored,
+  onDirtyChange,
+  focusLanguage = "all",
 }: {
   project: Project;
   editing: TranslationKey | null;
   manager: boolean;
   busy: boolean;
   error: string;
-  onSubmit: (data: Record<string, unknown>) => void;
+  onSubmit: (data: Record<string, unknown>, advance?: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
+  focusLanguage?: string;
   onClose: () => void;
   onReload: () => Promise<void>;
   onRestored: () => Promise<void>;
@@ -35,18 +40,72 @@ export default function KeyForm({
     editing?.translations ?? {},
   );
   const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
+  const formRef = useRef<HTMLFormElement>(null);
+  const initialDraft = useRef(
+    JSON.stringify({
+      name,
+      description,
+      namespace,
+      tags,
+      plural,
+    }),
+  );
+  const dirty =
+    initialDraft.current !==
+      JSON.stringify({
+        name,
+        description,
+        namespace,
+        tags,
+        plural,
+      }) ||
+    confirmed.size > 0 ||
+    project.languages.some(
+      (locale) =>
+        !sameTranslation(
+          editing?.translations[locale.code] ?? "",
+          translations[locale.code] ?? "",
+          plural,
+        ),
+    );
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+  useEffect(() => {
+    if (!editing) return;
+    const code =
+      focusLanguage !== "all"
+        ? focusLanguage
+        : (project.languages.find(
+            (locale) => locale.code !== project.sourceLanguage,
+          )?.code ?? project.sourceLanguage);
+    const frame = requestAnimationFrame(() => {
+      const field = formRef.current?.querySelector<HTMLElement>(
+        `[data-language="${code}"] textarea:not(:disabled)`,
+      );
+      field?.focus();
+      field?.scrollIntoView({ block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const sourceChanged =
     !!editing &&
-    ((translations[project.sourceLanguage] ?? "") !==
-      (editing.translations[project.sourceLanguage] ?? "") ||
+    (!sameTranslation(
+      translations[project.sourceLanguage] ?? "",
+      editing.translations[project.sourceLanguage] ?? "",
+      plural,
+    ) ||
       plural !== !!editing.plural);
   const draftOutdated = project.languages
     .filter(
       (locale) =>
         locale.code !== project.sourceLanguage &&
         !!translations[locale.code]?.trim() &&
-        (translations[locale.code] ?? "") ===
-          (editing?.translations[locale.code] ?? "") &&
+        sameTranslation(
+          translations[locale.code] ?? "",
+          editing?.translations[locale.code] ?? "",
+          plural,
+        ) &&
         (sourceChanged ||
           (!!editing?.outdatedLanguages?.includes(locale.code) &&
             !confirmed.has(locale.code))),
@@ -59,33 +118,41 @@ export default function KeyForm({
         ([code, text]) =>
           (manager || code !== project.sourceLanguage) &&
           (!editing ||
-            text !== (editing.translations[code] ?? "") ||
+            !sameTranslation(text, editing.translations[code] ?? "", plural) ||
             confirmed.has(code)),
       ),
     );
-    onSubmit({
-      ...(editing
-        ? {
-            version: editing.version,
-            expectedSourceContext: editing.sourceContext,
-          }
-        : { name }),
-      ...(manager
-        ? {
-            description,
-            namespace,
-            plural,
-            tags: tags
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean),
-          }
-        : {}),
-      translations: targetTranslations,
-    });
+    const advance =
+      (event.nativeEvent as SubmitEvent).submitter instanceof
+        HTMLButtonElement &&
+      ((event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement)
+        .value === "next";
+    onSubmit(
+      {
+        ...(editing
+          ? {
+              version: editing.version,
+              expectedSourceContext: editing.sourceContext,
+            }
+          : { name }),
+        ...(manager
+          ? {
+              description,
+              namespace,
+              plural,
+              tags: tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean),
+            }
+          : {}),
+        translations: targetTranslations,
+      },
+      advance,
+    );
   }
   return (
-    <form onSubmit={submit}>
+    <form ref={formRef} onSubmit={submit}>
       <fieldset disabled={busy} className="form-fieldset">
         <div className="dialog-body key-form">
           <label className="field-label">
@@ -175,7 +242,11 @@ export default function KeyForm({
             </p>
           )}
           {project.languages.map((l) => (
-            <div className="translation-field" key={l.code}>
+            <div
+              className="translation-field"
+              key={l.code}
+              data-language={l.code}
+            >
               <div className="translation-language-heading">
                 <LanguageMark code={l.code} small />
                 <strong>{l.name}</strong>
@@ -309,6 +380,11 @@ export default function KeyForm({
             )}{" "}
             {editing ? "Save changes" : "Add key"}
           </button>
+          {editing && (
+            <button type="submit" value="next" className="button primary">
+              Save &amp; next
+            </button>
+          )}
         </div>
       </fieldset>
     </form>

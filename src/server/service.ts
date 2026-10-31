@@ -518,13 +518,23 @@ export class KeyloService {
   ): Promise<KeyPage> {
     const project = await this.project(identity, id);
     const stats = await this.stats(id);
+    const languages = options.languages?.length
+      ? options.languages
+      : (identity.mcp?.languages ??
+        project.languages.map((locale) => locale.code));
+    if (
+      languages.some(
+        (code) => !project.languages.some((locale) => locale.code === code),
+      )
+    )
+      throw new HttpError(400, "Unknown filter language.");
+    if (
+      identity.mcp &&
+      languages.some((code) => !identity.mcp!.languages.includes(code))
+    )
+      throw new HttpError(403, "Language is outside this credential's scope.");
     if (stats.advancedKeys) {
       const keys = await this.effectiveKeys(project, stats);
-      const languages = identity.mcp
-        ? (options.languages ?? identity.mcp.languages).filter((code) =>
-            identity.mcp!.languages.includes(code),
-          )
-        : project.languages.map((locale) => locale.code);
       let after = "";
       if (options.cursor) {
         try {
@@ -545,7 +555,8 @@ export class KeyloService {
       const filtered = keys
         .filter(
           (key) =>
-            (!after || key.name > after) &&
+            (!after ||
+              (options.reverse ? key.name < after : key.name > after)) &&
             (!options.namespace || key.namespace === options.namespace) &&
             (!options.query ||
               [
@@ -592,7 +603,11 @@ export class KeyloService {
                         !key.referenceErrors?.[code],
                     ))),
         )
-        .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+        .sort(
+          (a, b) =>
+            (a.name < b.name ? -1 : a.name > b.name ? 1 : 0) *
+            (options.reverse ? -1 : 1),
+        );
       const items = filtered.slice(0, options.limit);
       return {
         items: items.map(({ searchText, filledLanguages, ...key }) => key),
@@ -614,11 +629,7 @@ export class KeyloService {
       `${dataPrefix(project)}KEY#`,
       {
         ...options,
-        languages: identity.mcp
-          ? (options.languages ?? identity.mcp.languages).filter((code) =>
-              identity.mcp!.languages.includes(code),
-            )
-          : project.languages.map((l) => l.code),
+        languages,
       },
     );
     return {
@@ -628,6 +639,57 @@ export class KeyloService {
       ),
       stats,
     };
+  }
+  async keyNeighbor(
+    identity: Identity,
+    id: string,
+    name: string,
+    input: unknown,
+  ) {
+    if (identity.mcp || identity.tokenProject || identity.sync)
+      throw new HttpError(403, "Sign in to navigate the editor.");
+    const project = await this.project(identity, id);
+    keyNameSchema.parse(name);
+    const data = z
+      .object({
+        direction: z.enum(["previous", "next", "attention"]),
+        query: z.string().max(200).default(""),
+        namespace: z.string().max(60).optional(),
+        language: z.string().min(2).max(35).optional(),
+        status: z
+          .enum(["all", "missing", "outdated", "incomplete", "complete"])
+          .default("all"),
+      })
+      .strict()
+      .parse(input);
+    if (
+      data.language &&
+      !project.languages.some((locale) => locale.code === data.language)
+    )
+      throw new HttpError(400, "Unknown filter language.");
+    // Attention intersects the current filters; a Current-only result has no attention items.
+    if (data.direction === "attention" && data.status === "complete")
+      return { key: null };
+    const result = await this.keyPage(identity, id, {
+      limit: 1,
+      query: data.query,
+      namespace: data.namespace,
+      languages: data.language ? [data.language] : undefined,
+      status:
+        data.direction === "attention" && data.status === "all"
+          ? "incomplete"
+          : data.status === "all"
+            ? undefined
+            : data.status,
+      reverse: data.direction === "previous",
+      cursor: Buffer.from(
+        JSON.stringify({
+          pk: `PROJECT#${id}`,
+          sk: `${dataPrefix(project)}KEY#${name}`,
+        }),
+      ).toString("base64url"),
+    });
+    return { key: result.items[0] ?? null };
   }
   async summary(identity: Identity, id: string) {
     const project = await this.project(identity, id);

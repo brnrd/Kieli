@@ -153,6 +153,16 @@ export const ALL: APIRoute = async (context) => {
         );
     }
     if (parts[2] === "keys") {
+      if (parts.length === 5 && parts[4] === "navigation" && method === "GET")
+        return Response.json(
+          await svc.keyNeighbor(identity, id, parts[3]!, {
+            direction: url.searchParams.get("direction"),
+            query: url.searchParams.get("q") ?? "",
+            status: url.searchParams.get("status") ?? "all",
+            namespace: url.searchParams.get("namespace") ?? undefined,
+            language: url.searchParams.get("language") ?? undefined,
+          }),
+        );
       if (parts.length === 3 && method === "GET") {
         const limit = Number(url.searchParams.get("limit") ?? 50);
         const query = url.searchParams.get("q") ?? "";
@@ -176,6 +186,9 @@ export const ALL: APIRoute = async (context) => {
             query,
             status: status === "all" ? undefined : status,
             namespace: url.searchParams.get("namespace") ?? undefined,
+            languages: url.searchParams.has("language")
+              ? [url.searchParams.get("language")!]
+              : undefined,
           }),
         );
       }

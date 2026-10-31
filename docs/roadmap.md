@@ -2,11 +2,13 @@
 
 The first essentials pass is implemented: translation freshness, per-key history and recoverable deletion, previewed updates into existing projects, source-only CLI/CI sync, and shared argument validation with a strict export gate. Contributor guidance and GitHub issue/PR templates are also in place.
 
-Continue one feature at a time, verify it, and commit it before starting the next. The items below are plans, not shipped capabilities.
+Continue one feature at a time, verify it, and commit it before starting the next. The completed item records shipped capabilities; the remaining items are plans.
 
-## 1. Editor navigation and efficiency
+## 1. Editor navigation and efficiency — completed
 
-Start here. Make working through thousands of keys practical without adding a workflow layer.
+Implemented with cursor-based previous/next, next needing attention, Save & next, focus-language filters, guarded drafts, keyboard shortcuts and browser preferences. See [editor navigation](editor-navigation.md). Verified locally with a 3,001-key, six-language fixture and RTL copy.
+
+Original scope: Make working through thousands of keys practical without adding a workflow layer.
 
 - Add previous/next key and next-needs-attention actions that retain the active search, namespace, locale and status filters across database pages.
 - Add discoverable keyboard shortcuts, with no interference while typing in inputs or plural editors. Preserve focus and unsaved-change protection.
@@ -15,7 +17,7 @@ Start here. Make working through thousands of keys practical without adding a wo
 
 Acceptance: a translator can open a filtered result, save a target, move to the next matching key across a page boundary and return to the same list position without losing edits. Concurrent changes and an empty remaining result have clear behavior. Authorization stays in existing services; no additional infrastructure.
 
-## 2. Shared glossary
+## 2. Shared glossary — next
 
 After editor navigation, add project-scoped terms with source term, target terms, notes and optional case sensitivity. Managers maintain terms; translators can consult them next to copy. Start with manual lookup and deterministic matching, not blocking terminology enforcement.
 
