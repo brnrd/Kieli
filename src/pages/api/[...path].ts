@@ -134,7 +134,9 @@ export const ALL: APIRoute = async (context) => {
           limit > 100 ||
           query.length > 200 ||
           (cursor?.length ?? 0) > 1024 ||
-          !["all", "missing", "complete"].includes(status)
+          !["all", "missing", "complete", "outdated", "incomplete"].includes(
+            status,
+          )
         )
           throw new HttpError(400, "Invalid pagination or filter parameters.");
         return Response.json(

@@ -31,17 +31,42 @@ export default function KeyForm({
   const [translations, setTranslations] = useState<Record<string, string>>(
     editing?.translations ?? {},
   );
+  const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
+  const sourceChanged =
+    !!editing &&
+    ((translations[project.sourceLanguage] ?? "") !==
+      (editing.translations[project.sourceLanguage] ?? "") ||
+      plural !== !!editing.plural);
+  const draftOutdated = project.languages
+    .filter(
+      (locale) =>
+        locale.code !== project.sourceLanguage &&
+        !!translations[locale.code]?.trim() &&
+        (translations[locale.code] ?? "") ===
+          (editing?.translations[locale.code] ?? "") &&
+        (sourceChanged ||
+          (!!editing?.outdatedLanguages?.includes(locale.code) &&
+            !confirmed.has(locale.code))),
+    )
+    .map((locale) => locale.code);
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
-    const targetTranslations = manager
-      ? translations
-      : Object.fromEntries(
-          Object.entries(translations).filter(
-            ([code]) => code !== project.sourceLanguage,
-          ),
-        );
+    const targetTranslations = Object.fromEntries(
+      Object.entries(translations).filter(
+        ([code, text]) =>
+          (manager || code !== project.sourceLanguage) &&
+          (!editing ||
+            text !== (editing.translations[code] ?? "") ||
+            confirmed.has(code)),
+      ),
+    );
     onSubmit({
-      ...(editing ? { version: editing.version } : { name }),
+      ...(editing
+        ? {
+            version: editing.version,
+            expectedSourceContext: editing.sourceContext,
+          }
+        : { name }),
       ...(manager
         ? {
             description,
@@ -140,6 +165,12 @@ export default function KeyForm({
               )}
             </p>
           )}
+          {sourceChanged && (
+            <p className="field-warning">
+              Changing the source will mark unchanged target translations as
+              outdated. Their copy will be kept.
+            </p>
+          )}
           {project.languages.map((l) => (
             <div className="translation-field" key={l.code}>
               <div className="translation-language-heading">
@@ -149,8 +180,15 @@ export default function KeyForm({
                 {l.code === project.sourceLanguage && (
                   <span className="source-pill">SOURCE</span>
                 )}
+                {draftOutdated.includes(l.code) && (
+                  <span className="freshness-badge">Outdated</span>
+                )}
                 {translationComplete(
-                  { translations, plural } as TranslationKey,
+                  {
+                    translations,
+                    plural,
+                    outdatedLanguages: draftOutdated,
+                  } as TranslationKey,
                   l,
                 ) && <Check size={14} className="translation-check" />}
               </div>
@@ -190,6 +228,29 @@ export default function KeyForm({
                   disabled={!manager && l.code === project.sourceLanguage}
                 />
               )}
+              {editing?.outdatedLanguages?.includes(l.code) &&
+                l.code !== project.sourceLanguage && (
+                  <label className="checkbox-label freshness-confirm">
+                    <input
+                      type="checkbox"
+                      checked={confirmed.has(l.code)}
+                      disabled={sourceChanged}
+                      onChange={(event) =>
+                        setConfirmed((current) => {
+                          const next = new Set(current);
+                          if (event.target.checked) next.add(l.code);
+                          else next.delete(l.code);
+                          return next;
+                        })
+                      }
+                    />
+                    <span>
+                      {sourceChanged
+                        ? "Save the source change before confirming existing translations."
+                        : "Use this translation for the current source"}
+                    </span>
+                  </label>
+                )}
               {editing?.referenceErrors?.[l.code] && (
                 <p className="field-warning">
                   {editing.referenceErrors[l.code]}

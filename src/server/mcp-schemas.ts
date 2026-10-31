@@ -19,6 +19,10 @@ export const translationBatchSchema = z
           .object({
             key: keyNameSchema,
             expectedVersion: z.number().int().positive(),
+            expectedSourceContext: z
+              .string()
+              .regex(/^[a-f0-9]{64}$/)
+              .optional(),
             translations: translationSchema.refine(
               (value) => Object.keys(value).length > 0,
               "Provide at least one translation.",

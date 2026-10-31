@@ -777,7 +777,7 @@ export default function App({
                     <div className="stat completion-stat">
                       <span>
                         <CheckCheck size={15} />
-                        Translated
+                        Current translations
                       </span>
                       <div>
                         <strong>{loading ? "—" : `${percent}%`}</strong>
@@ -792,14 +792,16 @@ export default function App({
                       />
                     </div>
                     <button
-                      className={`stat missing-stat ${status === "missing" ? "stat-selected" : ""}`}
+                      className={`stat missing-stat ${status === "incomplete" ? "stat-selected" : ""}`}
                       onClick={() =>
-                        changeStatus(status === "missing" ? "all" : "missing")
+                        changeStatus(
+                          status === "incomplete" ? "all" : "incomplete",
+                        )
                       }
                     >
                       <span>
                         <span className="status-dot amber-dot" />
-                        Missing translations
+                        Needs attention
                         <ArrowUpRight size={14} />
                       </span>
                       <div>
@@ -808,7 +810,9 @@ export default function App({
                             ? "—"
                             : (stats.totalKeys - completed).toLocaleString()}
                         </strong>
-                        <small>keys need a little love</small>
+                        <small>
+                          {stats.outdatedKeys ?? 0} outdated · remaining missing
+                        </small>
                       </div>
                     </button>
                   </section>
@@ -859,7 +863,11 @@ export default function App({
                             onChange={(e) => changeStatus(e.target.value)}
                           >
                             <option value="all">All statuses</option>
-                            <option value="complete">Translated</option>
+                            <option value="complete">Current</option>
+                            <option value="incomplete">Needs attention</option>
+                            <option value="outdated">
+                              Outdated translations
+                            </option>
                             <option value="missing">
                               Missing translations
                             </option>
@@ -1059,12 +1067,14 @@ export default function App({
                                       ))}
                                     </div>
                                     <span
-                                      className={`key-status status-badge ${isComplete(key, project) ? "complete" : "missing"}`}
+                                      className={`key-status status-badge ${isComplete(key, project) ? "complete" : key.outdatedLanguages?.length ? "outdated" : "missing"}`}
                                     >
                                       <span />
                                       {isComplete(key, project)
-                                        ? "Translated"
-                                        : "Missing"}
+                                        ? "Current"
+                                        : key.outdatedLanguages?.length
+                                          ? "Outdated"
+                                          : "Missing"}
                                     </span>
                                   </td>
                                   <td className="translations-column">
@@ -1084,6 +1094,13 @@ export default function App({
                                               </span>
                                             )}
                                           </div>
+                                          {key.outdatedLanguages?.includes(
+                                            l.code,
+                                          ) && (
+                                            <span className="freshness-badge">
+                                              Outdated
+                                            </span>
+                                          )}
                                           <button
                                             onClick={() => editKey(key)}
                                             aria-label={`Edit ${l.name} translation for ${key.name}`}

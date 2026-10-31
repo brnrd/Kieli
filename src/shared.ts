@@ -40,6 +40,11 @@ export type TranslationKey = {
   searchText?: string;
   filledLanguages?: string[];
   importId?: string;
+  sourceRevision?: number;
+  sourceContext?: string;
+  translationSources?: Record<string, string>;
+  outdatedLanguages?: string[];
+  populatedLanguages?: string[];
   plural?: boolean;
   resolvedTranslations?: Record<string, string>;
   referenceErrors?: Record<string, string>;
@@ -51,6 +56,8 @@ export type ProjectStats = {
   namespaces: Record<string, number>;
   version: number;
   advancedKeys?: number;
+  outdatedByLanguage?: Record<string, number>;
+  outdatedKeys?: number;
   messageVersion?: number;
 };
 export type KeyPage = {

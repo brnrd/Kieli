@@ -48,6 +48,7 @@ Production requires an HTTPS `APP_ORIGIN` and an explicit `AUTH_MODE=local`, `ok
 - Auto/light/dark appearance, saved per browser and shared across tabs. Auto follows system changes; the theme is applied before the page paints.
 - Server-side keyset pagination (25, 50, or 100 rows), debounced search across names/copy/context/tags, namespaces, and missing-translation filters.
 - Multi-language key editor with source copy, context, tags, and optimistic concurrency control.
+- Missing/outdated/current translation states, source revisions and linked-source change detection, with freshness-aware completion and snapshot recovery.
 - Transactional project counters: reads of a key page do not fetch all translations to calculate progress.
 - Lokalise JSON ZIP and API-snapshot import with local preview, validation, explicit conversion warnings, and retryable atomic batches.
 - Optional built-in email/password accounts with Argon2id hashing, admin-issued activation/reset links, project-role assignments, account disabling, shared login throttling, and security events.

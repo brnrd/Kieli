@@ -13,6 +13,7 @@ import type {
 } from "../shared";
 import { projectSchema, keySchema } from "../validation";
 import { mcpAudit } from "./mcp-credentials";
+import { freshnessView } from "./freshness";
 import { resolveProject, translationComplete } from "../messages";
 
 import { compileMessage, compileRules } from "./ota-messages";
@@ -125,6 +126,8 @@ export class ProjectHistory {
     const before = await this.stamp(project);
     const keys = (await this.svc.keys(identity, id)).map((key) => ({
       ...keyInput(key),
+      sourceRevision: key.sourceRevision,
+      translationSources: key.translationSources,
       version: key.version,
       createdAt: key.createdAt,
       updatedAt: key.updatedAt,
@@ -337,7 +340,10 @@ export class ProjectHistory {
         (max, key) => Math.max(max, key.version),
         Date.now(),
       ) + 1;
-    const staged = keys.map((key) => indexed({ ...key, version }));
+    const staged = freshnessView(
+      keys.map((key) => ({ ...key, version })),
+      restored,
+    ).map(indexed);
     resolveProject(staged, restored, true);
     for (const key of staged) count(stats, key, 1);
     await this.store.put(pk(id), `CLEANUP#${revision}`, {
@@ -420,7 +426,10 @@ export class ProjectHistory {
     const snapshot = await this.create(identity, id, data.label, "release");
     const captured = await this.read(identity, id, snapshot.id);
     const project = captured.snapshot.project;
-    const keys = resolveProject(captured.keys, captured.snapshot.project);
+    const keys = freshnessView(
+      resolveProject(captured.keys, captured.snapshot.project),
+      captured.snapshot.project,
+    );
     const release: Release = {
       id: randomUUID(),
       label: data.label,

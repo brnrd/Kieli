@@ -38,6 +38,7 @@ import {
   type PageOptions,
   type Change,
 } from "./store";
+import { freshnessView, sourceContexts, stampFreshness } from "./freshness";
 import { validatePlaceholders } from "./placeholder-validation";
 import { McpCredentials } from "./mcp-credentials";
 import { mcpAudit } from "./mcp-credentials";
@@ -57,7 +58,9 @@ export const emptyStats = (): ProjectStats => ({
   coverage: {},
   namespaces: {},
   version: 1,
-  messageVersion: 1,
+  messageVersion: 2,
+  outdatedByLanguage: {},
+  outdatedKeys: 0,
 });
 export function indexed(key: TranslationKey): TranslationKey {
   const { resolvedTranslations, referenceErrors, ...raw } = key;
@@ -71,8 +74,15 @@ export function indexed(key: TranslationKey): TranslationKey {
     ]
       .join("\n")
       .toLowerCase(),
-    filledLanguages: Object.keys(key.translations)
+    populatedLanguages: Object.keys(key.translations)
       .filter((code) => key.translations[code]?.trim())
+      .sort(),
+    filledLanguages: Object.keys(key.translations)
+      .filter(
+        (code) =>
+          key.translations[code]?.trim() &&
+          !key.outdatedLanguages?.includes(code),
+      )
       .sort(),
   };
 }
@@ -86,6 +96,11 @@ export function count(stats: ProjectStats, key: TranslationKey, delta: number) {
     if (!map[id]) delete map[id];
   };
   filled.forEach((code) => increment(stats.byLanguage, code));
+  stats.outdatedByLanguage ??= {};
+  for (const code of key.outdatedLanguages ?? [])
+    increment(stats.outdatedByLanguage, code);
+  stats.outdatedKeys =
+    (stats.outdatedKeys ?? 0) + (key.outdatedLanguages?.length ? delta : 0);
   increment(stats.coverage, filled.join(",") || "-");
   increment(stats.namespaces, key.namespace || "general");
 }
@@ -136,7 +151,7 @@ export class KeyloService {
       `PROJECT#${id}`,
       `${prefix}STATS`,
     );
-    if (existing?.messageVersion === 1) return existing;
+    if (existing?.messageVersion === 2) return existing;
     // One-time migration for local workspaces created before paginated keys.
     const initial = emptyStats();
     if (existing) initial.version = existing.version + 1;
@@ -180,6 +195,8 @@ export class KeyloService {
       old?: TranslationKey;
       next?: TranslationKey;
       expectedVersion?: number;
+      translatedLocales?: string[];
+      expectedSourceContext?: string;
     }[],
     additionalChanges: Change[] = [],
     expectedProject?: Project,
@@ -193,23 +210,86 @@ export class KeyloService {
       const previous = await this.stats(id);
       const next = structuredClone(previous);
       next.version++;
+      const graphNeeded =
+        (previous.advancedKeys ?? 0) > 0 ||
+        changes.some((change) => change.next && advancedKey(change.next));
+      const originals = graphNeeded
+        ? await this.store.list<TranslationKey>(
+            `PROJECT#${id}`,
+            `${prefix}KEY#`,
+          )
+        : changes.flatMap((change) => (change.old ? [change.old] : []));
+      const beforeContexts = sourceContexts(originals, project);
+      const candidates = new Map(originals.map((key) => [key.name, key]));
       for (const change of changes) {
-        if (change.old) count(next, change.old, -1);
+        if (change.old) candidates.delete(change.old.name);
+        if (change.next) {
+          const sourceChanged =
+            !!change.old &&
+            (change.old.translations[project.sourceLanguage] !==
+              change.next.translations[project.sourceLanguage] ||
+              !!change.old.plural !== !!change.next.plural);
+          change.next = {
+            ...change.next,
+            sourceRevision:
+              (change.old?.sourceRevision ?? 1) + (sourceChanged ? 1 : 0),
+          };
+          candidates.set(change.next.name, change.next);
+        }
+      }
+      const contexts = sourceContexts([...candidates.values()], project);
+      for (const change of changes) {
+        if (
+          change.old &&
+          change.translatedLocales?.some(
+            (code) => code !== project.sourceLanguage,
+          ) &&
+          references(change.old.translations[project.sourceLanguage] ?? "")
+            .length &&
+          !change.expectedSourceContext
+        )
+          throw new HttpError(
+            400,
+            "Linked source copy requires expectedSourceContext from the latest key read.",
+          );
+        if (
+          change.expectedSourceContext &&
+          change.expectedSourceContext !==
+            beforeContexts.get(change.old!.name)?.token
+        )
+          throw new Conflict();
+        if (change.next) {
+          change.next = stampFreshness(
+            change.old,
+            change.next,
+            project,
+            contexts.get(change.next.name)!,
+            change.old ? beforeContexts.get(change.old.name) : undefined,
+            change.translatedLocales ??
+              (!change.old ? Object.keys(change.next.translations) : []),
+          );
+          candidates.set(change.next.name, change.next);
+        }
+      }
+      const decorated = new Map(
+        freshnessView([...candidates.values()], project).map((key) => [
+          key.name,
+          key,
+        ]),
+      );
+      for (const change of changes) {
+        if (change.next)
+          change.next = indexed(decorated.get(change.next.name)!);
+        if (change.old)
+          count(
+            next,
+            originals.find((key) => key.name === change.old!.name) ??
+              change.old,
+            -1,
+          );
         if (change.next) count(next, change.next, 1);
       }
-      if ((previous.advancedKeys ?? 0) > 0 || (next.advancedKeys ?? 0) > 0) {
-        const candidates = new Map(
-          (
-            await this.store.list<TranslationKey>(
-              `PROJECT#${id}`,
-              `${prefix}KEY#`,
-            )
-          ).map((key) => [key.name, key]),
-        );
-        for (const change of changes) {
-          if (change.old) candidates.delete(change.old.name);
-          if (change.next) candidates.set(change.next.name, change.next);
-        }
+      if (graphNeeded) {
         try {
           const affected = new Set(
             changes.map((change) => (change.next ?? change.old)!.name),
@@ -390,17 +470,38 @@ export class KeyloService {
                 .toLowerCase()
                 .includes(options.query.toLowerCase())) &&
             (!options.status ||
-              (options.status === "complete") ===
-                languages.every(
-                  (code) =>
-                    completeMessage(
-                      key.resolvedTranslations?.[code] ??
-                        key.translations[code] ??
-                        "",
-                      project.languages.find((locale) => locale.code === code)!,
-                      !!key.plural,
-                    ) && !key.referenceErrors?.[code],
-                )),
+              (options.status === "outdated"
+                ? languages.some((code) =>
+                    key.outdatedLanguages?.includes(code),
+                  )
+                : options.status === "missing"
+                  ? languages.some(
+                      (code) =>
+                        !completeMessage(
+                          key.resolvedTranslations?.[code] ??
+                            key.translations[code] ??
+                            "",
+                          project.languages.find(
+                            (locale) => locale.code === code,
+                          )!,
+                          !!key.plural,
+                        ) || !!key.referenceErrors?.[code],
+                    )
+                  : (options.status === "complete") ===
+                    languages.every(
+                      (code) =>
+                        !key.outdatedLanguages?.includes(code) &&
+                        completeMessage(
+                          key.resolvedTranslations?.[code] ??
+                            key.translations[code] ??
+                            "",
+                          project.languages.find(
+                            (locale) => locale.code === code,
+                          )!,
+                          !!key.plural,
+                        ) &&
+                        !key.referenceErrors?.[code],
+                    ))),
         )
         .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
       const items = filtered.slice(0, options.limit);
@@ -433,7 +534,9 @@ export class KeyloService {
     );
     return {
       ...page,
-      items: page.items.map(({ searchText, filledLanguages, ...key }) => key),
+      items: freshnessView(page.items, project).map(
+        ({ searchText, filledLanguages, ...key }) => key,
+      ),
       stats,
     };
   }
@@ -457,7 +560,7 @@ export class KeyloService {
       return (await this.effectiveKeys(project, stats)).find(
         (item) => item.name === name,
       )!;
-    return key;
+    return freshnessView([key], project)[0]!;
   }
   async setMcpTranslations(identity: Identity, id: string, input: unknown) {
     const project = await this.project(identity, id);
@@ -560,6 +663,8 @@ export class KeyloService {
           updatedBy: identity.name,
         }),
         expectedVersion: update.expectedVersion,
+        translatedLocales: Object.keys(update.translations),
+        expectedSourceContext: update.expectedSourceContext,
       });
     }
     await this.persistKeys(
@@ -613,7 +718,7 @@ export class KeyloService {
       updatedBy: identity.name,
     });
     await this.persistKeys(id, [{ next: key }], [], project);
-    return key;
+    return this.key(identity, id, key.name);
   }
   async updateKey(
     identity: Identity,
@@ -627,6 +732,10 @@ export class KeyloService {
     const parsed = z
       .object({
         version: z.number().int().positive(),
+        expectedSourceContext: z
+          .string()
+          .regex(/^[a-f0-9]{64}$/)
+          .optional(),
         translations: translationSchema,
         description: z.string().max(1000).optional(),
         tags: z.array(z.string().trim().min(1).max(30)).max(12).optional(),
@@ -677,7 +786,8 @@ export class KeyloService {
           );
       }
     }
-    const { version, translations, ...metadata } = parsed;
+    const { version, translations, expectedSourceContext, ...metadata } =
+      parsed;
     const key = indexed({
       ...previous,
       ...metadata,
@@ -696,11 +806,19 @@ export class KeyloService {
     });
     await this.persistKeys(
       id,
-      [{ old: previous, next: key, expectedVersion: version }],
+      [
+        {
+          old: previous,
+          next: key,
+          expectedVersion: version,
+          translatedLocales: Object.keys(translations),
+          expectedSourceContext,
+        },
+      ],
       [],
       project,
     );
-    return key;
+    return this.key(identity, id, key.name);
   }
   async deleteKey(
     identity: Identity,

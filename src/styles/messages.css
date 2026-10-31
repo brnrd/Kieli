@@ -312,3 +312,24 @@
   line-height: 1.5;
   margin: 8px 12px;
 }
+
+.freshness-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 10px;
+  font-weight: 600;
+  width: fit-content;
+}
+.status-badge.outdated {
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+.freshness-confirm {
+  margin-top: 6px;
+  font-size: 12px;
+}

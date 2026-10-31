@@ -253,6 +253,7 @@ export function resolveProject(
 }
 export function translationComplete(key: TranslationKey, locale: Locale) {
   return (
+    !key.outdatedLanguages?.includes(locale.code) &&
     !key.referenceErrors?.[locale.code] &&
     completeMessage(
       key.resolvedTranslations?.[locale.code] ??

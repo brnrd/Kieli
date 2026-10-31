@@ -1,4 +1,5 @@
 import type { Project, ProjectStats, TranslationKey } from "../shared";
+import { freshnessView } from "./freshness";
 import { translationComplete, resolveProject } from "../messages";
 export const dataPrefix = (project: Project) =>
   project.dataRevision ? `REV#${project.dataRevision}#` : "";
@@ -9,7 +10,12 @@ export function viewStats(
 ): ProjectStats {
   const byLanguage: Record<string, number> = {},
     coverage: Record<string, number> = {};
+  const outdatedByLanguage: Record<string, number> = {};
+  let outdatedKeys = 0;
   for (const key of keys) {
+    if (key.outdatedLanguages?.length) outdatedKeys++;
+    for (const code of key.outdatedLanguages ?? [])
+      outdatedByLanguage[code] = (outdatedByLanguage[code] ?? 0) + 1;
     const filled = project.languages
       .filter((locale) => translationComplete(key, locale))
       .map((locale) => locale.code)
@@ -18,7 +24,7 @@ export function viewStats(
     const signature = filled.join(",") || "-";
     coverage[signature] = (coverage[signature] ?? 0) + 1;
   }
-  return { ...raw, byLanguage, coverage };
+  return { ...raw, byLanguage, coverage, outdatedByLanguage, outdatedKeys };
 }
 const scopes = new WeakMap<
   object,
@@ -41,7 +47,7 @@ export function cachedView(
     const entry = cache.get(key);
     return entry && Date.now() - entry.time < 30000 ? entry.keys : undefined;
   }
-  const keys = resolveProject(raw, project);
+  const keys = freshnessView(resolveProject(raw, project), project);
   const bytes = Buffer.byteLength(JSON.stringify(keys));
   for (const [old, entry] of cache)
     if (Date.now() - entry.time > 30000 || old.startsWith(`${id}:`))

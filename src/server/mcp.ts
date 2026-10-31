@@ -111,12 +111,16 @@ export function translationServer(store: Store, identity: Identity) {
         const page = await svc.keyPage(identity, grant.projectId, {
           ...args,
           languages,
-          status: args.missingOnly ? "missing" : undefined,
+          status: args.missingOnly ? "incomplete" : undefined,
         });
         return {
           items: page.items.map((key) => ({
             key: key.name,
             version: key.version,
+            sourceContext: key.sourceContext,
+            outdatedLanguages: (key.outdatedLanguages ?? []).filter((code) =>
+              grant.languages.includes(code),
+            ),
             description: key.description,
             namespace: key.namespace,
             tags: key.tags,
@@ -152,6 +156,10 @@ export function translationServer(store: Store, identity: Identity) {
         return {
           key: key.name,
           version: key.version,
+          sourceContext: key.sourceContext,
+          outdatedLanguages: (key.outdatedLanguages ?? []).filter((code) =>
+            grant.languages.includes(code),
+          ),
           description: key.description,
           namespace: key.namespace,
           tags: key.tags,
@@ -172,7 +180,7 @@ export function translationServer(store: Store, identity: Identity) {
     "set_translations",
     {
       description:
-        "Atomically save translations for 1–10 existing keys in permitted target languages. Include each key's expectedVersion from get_key. Source copy, metadata, blank values, key creation, and deletion are forbidden. Existing values require both overwrite permission and overwriteExisting: true. On any failure nothing is saved.",
+        "Atomically save translations for 1–10 existing keys in permitted target languages. Include each key's expectedVersion and expectedSourceContext from get_key. Source copy, metadata, blank values, key creation, and deletion are forbidden. Existing values require both overwrite permission and overwriteExisting: true. On any failure nothing is saved.",
       inputSchema: translationBatchSchema,
       annotations: {
         readOnlyHint: false,

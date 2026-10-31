@@ -214,6 +214,35 @@ try {
     ).status,
     401,
   );
+  await json(
+    await api("/api/projects/features/keys", "POST", {
+      name: "freshness",
+      translations: { en: "Cancel subscription", fr: "Annuler" },
+    }),
+    201,
+  );
+  const outdated = await json(
+    await api("/api/projects/features/keys/freshness", "PATCH", {
+      version: 1,
+      translations: { en: "Pause subscription" },
+    }),
+  );
+  assert.deepEqual(outdated.outdatedLanguages, ["fr"]);
+  const stalePage = await json(
+    await api("/api/projects/features/keys?status=outdated"),
+  );
+  assert.deepEqual(
+    stalePage.items.map((key) => key.name),
+    ["freshness"],
+  );
+  const confirmed = await json(
+    await api("/api/projects/features/keys/freshness", "PATCH", {
+      version: outdated.version,
+      expectedSourceContext: outdated.sourceContext,
+      translations: { fr: "Suspendre" },
+    }),
+  );
+  assert.deepEqual(confirmed.outdatedLanguages, []);
   const archive = await api("/downloads/keylo-sdks.zip");
   assert.equal(archive.status, 200);
   assert.ok((await archive.arrayBuffer()).byteLength > 1000);

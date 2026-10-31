@@ -161,12 +161,22 @@ export async function sqliteStore(path: string): Promise<Store> {
         args.push(options.namespace);
       }
       if (options.status && options.languages?.length) {
+        const field =
+          options.status === "outdated"
+            ? "outdatedLanguages"
+            : options.status === "missing"
+              ? "populatedLanguages"
+              : "filledLanguages";
+        const expression =
+          field === "populatedLanguages"
+            ? "COALESCE(json_extract(records.data, '$.populatedLanguages'), json_extract(records.data, '$.filledLanguages'))"
+            : `json_extract(records.data, '$.${field}')`;
         const tests = options.languages.map((code) => {
           args.push(code);
-          return "EXISTS (SELECT 1 FROM json_each(json_extract(records.data, '$.filledLanguages')) WHERE value = ?)";
+          return `EXISTS (SELECT 1 FROM json_each(${expression}) WHERE value = ?)`;
         });
         clauses.push(
-          `${options.status === "missing" ? "NOT " : ""}(${tests.join(" AND ")})`,
+          `${["missing", "incomplete"].includes(options.status) ? "NOT " : ""}(${tests.join(options.status === "outdated" ? " OR " : " AND ")})`,
         );
       }
       args.push(options.limit + 1);
@@ -344,13 +354,22 @@ async function dynamoStore(): Promise<Store> {
         filters.push("#data.#namespace = :namespace");
       }
       if (options.status && options.languages?.length) {
-        names["#filled"] = "filledLanguages";
+        const field =
+          options.status === "outdated"
+            ? "outdatedLanguages"
+            : options.status === "missing"
+              ? "populatedLanguages"
+              : "filledLanguages";
+        names["#state"] = field;
+        if (options.status === "missing") names["#filled"] = "filledLanguages";
         const tests = options.languages.map((code, i) => {
           values[`:l${i}`] = code;
-          return `contains(#data.#filled, :l${i})`;
+          return options.status === "missing"
+            ? `(contains(#data.#state, :l${i}) OR (attribute_not_exists(#data.#state) AND contains(#data.#filled, :l${i})))`
+            : `contains(#data.#state, :l${i})`;
         });
         filters.push(
-          `${options.status === "missing" ? "NOT " : ""}(${tests.join(" AND ")})`,
+          `${["missing", "incomplete"].includes(options.status) ? "NOT " : ""}(${tests.join(options.status === "outdated" ? " OR " : " AND ")})`,
         );
       }
       if (filters.length) names["#data"] = "data";
