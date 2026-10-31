@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { projectNameChanges } from "./project-names";
 import { SyncCredentials } from "./sync-credentials";
 import { ProjectUpdates, type KeyChange } from "./project-updates";
 import { randomUUID } from "node:crypto";
@@ -461,6 +462,7 @@ export class KeyloService {
       ...(importId ? { importId, importedBy: identity.sub } : {}),
     };
     await this.store.transact([
+      ...(await projectNameChanges(this.store, project.id, project.name)),
       { pk: "WORKSPACE", sk: `PROJECT#${project.id}`, value: value(project) },
       { pk: `PROJECT#${project.id}`, sk: "STATS", value: value(emptyStats()) },
     ]);
@@ -491,7 +493,15 @@ export class KeyloService {
       version: version + 1,
       updatedAt: now(),
     };
-    await this.store.put("WORKSPACE", `PROJECT#${id}`, value(next), version);
+    await this.store.transact([
+      ...(await projectNameChanges(this.store, id, next.name, project)),
+      {
+        pk: "WORKSPACE",
+        sk: `PROJECT#${id}`,
+        value: value(next),
+        expectedVersion: version,
+      },
+    ]);
     return next;
   }
   async keys(identity: Identity, id: string) {

@@ -157,6 +157,12 @@ try {
   const peoplePage = await request("/users", "GET", undefined, admin);
   assert.equal(peoplePage.status, 200);
   assert.match(await peoplePage.text(), /People &amp; access/);
+  for (const path of ["/admin", "/admin/people", "/admin/security"])
+    assert.equal((await request(path, "GET", undefined, admin)).status, 200);
+  assert.equal(
+    (await request("/api/workspace/overview", "GET", undefined, admin)).status,
+    200,
+  );
   const accounts = await json("/api/users", "GET", undefined, admin);
   assert.equal(accounts.items.length, 1);
   assert.equal(JSON.stringify(accounts).includes("passwordHash"), false);
@@ -192,6 +198,16 @@ try {
   });
   assert.equal(accepted.status, 200, await accepted.clone().text());
   let member = cookie(accepted);
+  assert.equal(
+    (await request("/api/workspace/overview", "GET", undefined, member)).status,
+    403,
+  );
+  assert.equal((await request("/admin", "GET", undefined, member)).status, 404);
+  assert.equal(
+    (await request("/admin/people", "GET", undefined, member)).status,
+    404,
+  );
+
   assert.equal(
     (await request("/api/users", "GET", undefined, member)).status,
     403,

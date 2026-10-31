@@ -1138,3 +1138,119 @@
     margin-top: 0;
   }
 }
+
+.field-error {
+  color: var(--danger, #b54747);
+  font-size: 12px;
+  margin: -8px 0 16px;
+}
+.workspace-admin .tabs {
+  margin-bottom: 24px;
+}
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 20px 0 14px;
+}
+.admin-toolbar h2,
+.admin-panel h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.admin-stats > div,
+.admin-panel {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 20px;
+  background: var(--surface);
+}
+.admin-stats span {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.admin-stats strong {
+  display: block;
+  font-size: 28px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.admin-stat-note {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.admin-panel {
+  margin-top: 24px;
+}
+.admin-panel p {
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 75ch;
+}
+.admin-project-id {
+  display: block;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.admin-facts {
+  margin: 20px 0;
+}
+.admin-facts > div {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  border-bottom: 1px solid var(--border);
+  gap: 20px;
+  padding: 16px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.admin-facts dt {
+  font-weight: 600;
+}
+.admin-facts dd {
+  margin: 0;
+  color: var(--text-muted);
+}
+.workspace-admin .account-page > .page-heading {
+  margin-top: 0;
+}
+.workspace-admin .account-page h2 {
+  font-size: 22px;
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .admin-toolbar {
+    flex-wrap: wrap;
+  }
+  .admin-facts > div {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}
+.workspace-admin .admin-project-table {
+  min-width: 650px;
+}
+.workspace-admin .admin-project-table th {
+  width: 12%;
+  font-size: 11px;
+}
+.workspace-admin .admin-project-table th:first-child {
+  width: 40%;
+}
+.workspace-admin .admin-project-table td {
+  font-size: 12px;
+}
+.workspace-admin .admin-project-table td:last-child {
+  padding-left: 14px;
+  padding-right: 14px;
+}

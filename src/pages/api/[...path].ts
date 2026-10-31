@@ -1,3 +1,4 @@
+import { workspaceOverview } from "../../server/workspace";
 import type { APIRoute } from "astro";
 import { SyncCredentials } from "../../server/sync-credentials";
 import { z, ZodError } from "zod";
@@ -26,6 +27,8 @@ export const ALL: APIRoute = async (context) => {
     const svc = await service();
     const parts = (params.path ?? "").split("/").map(decodeURIComponent);
     const method = request.method;
+    if (parts.join("/") === "workspace/overview" && method === "GET")
+      return Response.json(await workspaceOverview(identity, await getStore()));
     if (parts[0] === "bootstrap" && parts.length === 1 && method === "GET")
       return Response.json(await svc.bootstrap(identity));
     if (

@@ -26,11 +26,14 @@ type Listing = {
 };
 export default function SsoUserManagement({
   identity,
+  embedded = false,
   notify,
 }: {
   identity: Identity;
+  embedded?: boolean;
   notify: (message: string) => void;
 }) {
+  const Heading = embedded ? "h2" : "h1";
   const [listing, setListing] = useState<Listing>(),
     [query, setQuery] = useState(""),
     [after, setAfter] = useState(""),
@@ -67,7 +70,7 @@ export default function SsoUserManagement({
     <section className="account-page">
       <div className="page-heading">
         <div>
-          <h1>People &amp; access</h1>
+          <Heading>People &amp; access</Heading>
           <p>
             SSO groups manage project roles. Block access or revoke a person's
             Keylo sessions and personal connections here.

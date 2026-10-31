@@ -6,7 +6,7 @@ const identity = Astro.locals.identity;
 if (!identity) return Astro.redirect('/login');
 const bootstrap = await (await service()).bootstrap(identity);
 const path = Astro.params.page ?? '';
-if (path && !['users','account'].includes(path) && !/^projects\/[a-z0-9-]+(?:\/(?:languages|settings|developers|access))?$/.test(path)) return new Response('Not found', { status: 404 });
-if (path === 'users' && (!identity.admin || bootstrap.authMode === 'demo')) return new Response('Not found', { status: 404 });
+if (path && !['users','account','admin','admin/people','admin/security'].includes(path) && !/^projects\/[a-z0-9-]+(?:\/(?:languages|settings|developers|access))?$/.test(path)) return new Response('Not found', { status: 404 });
+if ((path === 'admin' || path.startsWith('admin/') || path === 'users') && !identity.admin) return new Response('Not found', { status: 404 });
 ---
 <Layout><App client:load bootstrap={bootstrap} initialPath={path} /></Layout>

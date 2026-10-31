@@ -205,10 +205,26 @@ export function generateToken(projectId: string) {
 export function checkOrigin(request: Request) {
   const origin = request.headers.get("origin");
   const expected = config().origin;
-  const local =
-    config().authMode === "demo" &&
-    origin &&
-    ["http://localhost:4321", "http://127.0.0.1:4321"].includes(origin);
+  const requestUrl = new URL(request.url);
+  const loopback = ["localhost", "127.0.0.1", "[::1]"];
+  let local = false;
+  if (config().authMode === "demo" && !config().production && origin) {
+    try {
+      const supplied = new URL(origin);
+      local =
+        origin === supplied.origin &&
+        supplied.protocol === "http:" &&
+        requestUrl.protocol === "http:" &&
+        loopback.includes(requestUrl.hostname) &&
+        loopback.includes(supplied.hostname) &&
+        supplied.port === requestUrl.port;
+    } catch {
+      /* Invalid origins fail the exact check below. */
+    }
+  }
   if (origin !== expected && !local)
-    throw new HttpError(403, "Invalid request origin.");
+    throw new HttpError(
+      403,
+      "Invalid request origin. Open Keylo at its configured APP_ORIGIN.",
+    );
 }

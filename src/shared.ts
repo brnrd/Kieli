@@ -168,3 +168,26 @@ export function progress(keys: TranslationKey[], language: string) {
 export function isComplete(key: TranslationKey, project: Project) {
   return project.languages.every((l) => translationComplete(key, l));
 }
+
+export type WorkspaceOverview = {
+  generatedAt: string;
+  authMode: AuthMode;
+  storage: "sqlite" | "dynamodb";
+  totals: {
+    keys: number;
+    current: number;
+    outdated: number;
+    missing: number;
+    targetSlots: number;
+  };
+  projects: {
+    id: string;
+    name: string;
+    keys: number;
+    languages: number;
+    current: number;
+    outdated: number;
+    missing: number;
+    targetSlots: number;
+  }[];
+};

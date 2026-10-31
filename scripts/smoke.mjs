@@ -77,6 +77,21 @@ try {
     403,
   );
   assert.equal((await request("/api/projects", "POST", metadata)).status, 201);
+  const duplicateName = await request("/api/projects", "POST", {
+    ...metadata,
+    id: "duplicate",
+    name: "  HTTP  SMOKE ",
+  });
+  assert.equal(duplicateName.status, 409);
+  assert.match((await duplicateName.json()).error, /name already exists/);
+  assert.equal(
+    (await request("/api/projects", "POST", { ...metadata, name: "Another" }))
+      .status,
+    409,
+  );
+  for (const path of ["/admin", "/admin/people", "/admin/security", "/users"])
+    assert.equal((await request(path)).status, 200);
+
   const created = await request("/api/projects/smoke/keys", "POST", {
     name: "home.title",
     translations: { en: "Hello", fr: "Bonjour" },
@@ -125,6 +140,12 @@ try {
   assert.ok(!csp.includes("'unsafe-inline'"));
   assert.equal(response.headers.get("X-Frame-Options"), "DENY");
   assert.equal(response.headers.get("Cache-Control"), "no-store");
+  const workspaceStats = await (
+    await request("/api/workspace/overview")
+  ).json();
+  assert.equal(workspaceStats.projects.length, 1);
+  assert.equal(workspaceStats.totals.keys, 1);
+  assert.equal(workspaceStats.totals.current, 1);
   const tokenResponse = await request("/api/projects/smoke/tokens", "POST", {
     name: "Disposable smoke token",
     expiresInDays: 1,
@@ -132,6 +153,16 @@ try {
   assert.equal(tokenResponse.status, 201);
   const token = await tokenResponse.json();
   const authorization = { Authorization: `Bearer ${token.secret}` };
+  assert.equal(
+    (await request("/api/workspace/overview", "GET", undefined, authorization))
+      .status,
+    403,
+  );
+  assert.equal(
+    (await request("/admin", "GET", undefined, authorization)).status,
+    403,
+  );
+
   assert.equal(
     (
       await request(

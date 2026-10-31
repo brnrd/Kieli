@@ -1,3 +1,4 @@
+import { projectConflicts } from "../project-names";
 import { useState, type SyntheticEvent } from "react";
 import { Check, Loader2, Plus, X } from "lucide-react";
 import type { Project, Locale } from "../shared";
@@ -13,10 +14,12 @@ export default function ProjectForm({
   busy,
   error,
   readOnly = false,
+  projects = [],
   onSave,
   onCancel,
 }: {
   project?: Project;
+  projects?: { id: string; name: string }[];
   busy: boolean;
   error: string;
   readOnly?: boolean;
@@ -36,6 +39,7 @@ export default function ProjectForm({
   const [customName, setCustomName] = useState("");
   const [localError, setLocalError] = useState("");
   const [custom, setCustom] = useState(false);
+  const conflicts = projectConflicts(projects, name, id, project?.id);
   function addLanguage() {
     setLocalError("");
     let locale = LANGUAGES.find((l) => l.code === adding);
@@ -62,6 +66,7 @@ export default function ProjectForm({
   }
   function submit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (conflicts.name || conflicts.id || busy || readOnly) return;
     onSave({
       id,
       name,
@@ -79,6 +84,10 @@ export default function ProjectForm({
           <label className="field-label">
             Project name
             <input
+              aria-invalid={conflicts.name || undefined}
+              aria-describedby={
+                conflicts.name ? "project-name-conflict" : undefined
+              }
               autoFocus={!project}
               value={name}
               onChange={(e) => {
@@ -97,10 +106,19 @@ export default function ProjectForm({
               maxLength={80}
             />
           </label>
+          {conflicts.name && (
+            <p className="field-error" id="project-name-conflict" role="status">
+              A project with this name already exists. Choose another name.
+            </p>
+          )}
           <label className="field-label">
             Project ID
             <span>Used in API requests, CLI commands, and Okta groups.</span>
             <input
+              aria-invalid={conflicts.id || undefined}
+              aria-describedby={
+                conflicts.id ? "project-id-conflict" : undefined
+              }
               value={id}
               onChange={(e) => setId(e.target.value)}
               required
@@ -111,6 +129,11 @@ export default function ProjectForm({
               placeholder="acme-website"
             />
           </label>
+          {conflicts.id && (
+            <p className="field-error" id="project-id-conflict" role="status">
+              This project ID is already in use.
+            </p>
+          )}
           <label className="field-label">
             Description <small>optional</small>
             <textarea
@@ -323,7 +346,11 @@ export default function ProjectForm({
             <button type="button" className="button" onClick={onCancel}>
               Cancel
             </button>
-            <button className="button primary" type="submit">
+            <button
+              className="button primary"
+              type="submit"
+              disabled={busy || conflicts.name || conflicts.id}
+            >
               {busy ? (
                 <Loader2 size={16} className="spin" />
               ) : (

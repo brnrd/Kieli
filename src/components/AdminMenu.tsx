@@ -3,11 +3,13 @@ import { ChevronDown, ShieldCheck, Upload, Users } from "lucide-react";
 
 export default function AdminMenu({
   manageUsers,
+  onWorkspace,
   onImport,
   onFiles,
   onUsers,
 }: {
   manageUsers: boolean;
+  onWorkspace: () => void;
   onImport: () => void;
   onFiles: () => void;
   onUsers: () => void;
@@ -47,6 +49,10 @@ export default function AdminMenu({
       </summary>
       <nav className="admin-menu-panel" aria-label="Administration">
         <span className="admin-menu-label">Workspace administration</span>
+        <button onClick={() => select(onWorkspace)}>
+          <ShieldCheck size={15} />
+          Workspace overview
+        </button>
         {manageUsers && (
           <button onClick={() => select(onUsers)}>
             <Users size={15} />

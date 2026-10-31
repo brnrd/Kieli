@@ -33,7 +33,7 @@ export function config() {
     production,
     authMode: authMode as AuthMode,
     origin,
-    driver,
+    driver: driver as "sqlite" | "dynamodb",
   };
 }
 export function required(name: string): string {

@@ -253,12 +253,15 @@ function UserForm({
 export default function UserManagement({
   projects,
   identity,
+  embedded = false,
   notify,
 }: {
   projects: ProjectSummary[];
   identity: Identity;
+  embedded?: boolean;
   notify: (message: string) => void;
 }) {
+  const Heading = embedded ? "h2" : "h1";
   const [mode, setMode] = useState<"users" | "audit">("users");
   const [page, setPage] = useState<UserPage>({ items: [] });
   const [events, setEvents] = useState<{
@@ -366,7 +369,7 @@ export default function UserManagement({
     <section className="users-page">
       <div className="page-heading">
         <div>
-          <h1>People & access</h1>
+          <Heading>People &amp; access</Heading>
           <p>Built-in accounts, workspace roles, and project access.</p>
         </div>
         <button

@@ -1,3 +1,4 @@
+import { projectNameChanges } from "./project-names";
 import { canonicalJSON } from "../canonical-json";
 import { randomUUID, createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
@@ -324,6 +325,12 @@ export class ProjectHistory {
     const { snapshot, keys } = await this.read(identity, id, snapshotId);
     const current = await this.svc.project(identity, id);
     if (current.version !== expectedVersion) throw new Conflict();
+    const nameChanges = await projectNameChanges(
+      this.store,
+      id,
+      snapshot.project.name,
+      current,
+    );
     const before = await this.stamp(current);
     const safety = await this.create(
       identity,
@@ -368,6 +375,7 @@ export class ProjectHistory {
       })),
     );
     await this.store.transact([
+      ...nameChanges,
       {
         pk: pk(id),
         sk: `${dataPrefix(current)}STATS`,

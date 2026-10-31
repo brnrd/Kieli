@@ -68,8 +68,7 @@ import ExportForm from "./ExportForm";
 import Developers from "./Developers";
 import ProjectDirectory from "./ProjectDirectory";
 import LokaliseImport from "./LokaliseImport";
-import UserManagement from "./UserManagement";
-import SsoUserManagement from "./SsoUserManagement";
+import WorkspaceAdmin from "./WorkspaceAdmin";
 import Account from "./Account";
 import AccessInfo from "./AccessInfo";
 import Appearance from "./Appearance";
@@ -97,19 +96,36 @@ export default function App({
   const [projectId, setProjectId] = useState(initialId);
   const [overview, setOverview] = useState(!initialPath);
   const [workspacePage, setWorkspacePage] = useState<
-    "projects" | "users" | "account"
+    "projects" | "admin" | "account"
   >(
-    initialPath === "users"
-      ? "users"
+    initialPath === "users" || initialPath.startsWith("admin")
+      ? "admin"
       : initialPath === "account"
         ? "account"
         : "projects",
   );
-  function workspaceNavigate(page: "users" | "account") {
-    setWorkspacePage(page);
+  const [adminSection, setAdminSection] = useState(
+    initialPath === "users"
+      ? "people"
+      : initialPath.split("/")[1] || "overview",
+  );
+  function workspaceNavigate(
+    page: "users" | "account" | "admin",
+    section = "overview",
+  ) {
+    const admin = page !== "account";
+    const nextSection = page === "users" ? "people" : section;
+    setWorkspacePage(admin ? "admin" : "account");
+    if (admin) setAdminSection(nextSection);
     setOverview(false);
     setSidebarOpen(false);
-    window.history.pushState({}, "", `/${page}`);
+    window.history.pushState(
+      {},
+      "",
+      admin
+        ? `/admin${nextSection === "overview" ? "" : `/${nextSection}`}`
+        : "/account",
+    );
   }
   const [tab, setTab] = useState<Tab>(
     (initialPath.split("/")[2] as Tab) || "translations",
@@ -201,8 +217,15 @@ export default function App({
   useEffect(() => {
     const handler = () => {
       const parts = window.location.pathname.split("/").filter(Boolean);
-      if (parts[0] === "users" || parts[0] === "account") {
-        setWorkspacePage(parts[0]);
+      if (
+        parts[0] === "users" ||
+        parts[0] === "admin" ||
+        parts[0] === "account"
+      ) {
+        setWorkspacePage(parts[0] === "account" ? "account" : "admin");
+        setAdminSection(
+          parts[0] === "users" ? "people" : parts[1] || "overview",
+        );
         setOverview(false);
       } else if (parts[0] === "projects" && parts[1]) {
         setWorkspacePage("projects");
@@ -482,6 +505,15 @@ export default function App({
           )}
         </nav>
         <div className="sidebar-bottom">
+          {identity.admin && (
+            <button
+              className={`nav-item ${workspacePage === "admin" ? "active" : ""}`}
+              onClick={() => workspaceNavigate("admin")}
+            >
+              <ShieldCheck size={16} />
+              Workspace admin
+            </button>
+          )}
           <button
             className={`nav-item ${workspacePage === "account" ? "active" : ""}`}
             onClick={() => workspaceNavigate("account")}
@@ -543,8 +575,8 @@ export default function App({
               <>
                 <ChevronRight size={13} />
                 <span>
-                  {workspacePage === "users"
-                    ? "People & access"
+                  {workspacePage === "admin"
+                    ? "Workspace admin"
                     : "Your account"}
                 </span>
               </>
@@ -571,6 +603,7 @@ export default function App({
             {identity.admin && (
               <AdminMenu
                 manageUsers={bootstrap.authMode !== "demo"}
+                onWorkspace={() => workspaceNavigate("admin")}
                 onImport={() => openModal("import")}
                 onFiles={() => openModal("files")}
                 onUsers={() => workspaceNavigate("users")}
@@ -585,20 +618,22 @@ export default function App({
               mode={bootstrap.authMode}
               notify={notify}
             />
-          ) : workspacePage === "users" ? (
-            identity.admin && bootstrap.authMode === "local" ? (
-              <UserManagement
-                identity={identity}
+          ) : workspacePage === "admin" ? (
+            identity.admin ? (
+              <WorkspaceAdmin
+                bootstrap={bootstrap}
                 projects={projects}
+                section={adminSection}
+                onSection={(section) => workspaceNavigate("admin", section)}
+                onProject={(id) => navigate(id)}
+                onImport={() => openModal("import")}
+                onFiles={() => openModal("files")}
                 notify={notify}
               />
-            ) : identity.admin &&
-              ["okta", "saml"].includes(bootstrap.authMode) ? (
-              <SsoUserManagement identity={identity} notify={notify} />
             ) : (
               <Empty
                 title="Access unavailable"
-                description="Only workspace admins can manage people and access."
+                description="Only workspace admins can manage this workspace."
               />
             )
           ) : overview || !projects.length ? (
@@ -829,7 +864,11 @@ export default function App({
                             : (stats.totalKeys - completed).toLocaleString()}
                         </strong>
                         <small>
-                          {stats.outdatedKeys ?? 0} keys include outdated copy
+                          {stats.outdatedKeys ?? 0}{" "}
+                          {stats.outdatedKeys === 1
+                            ? "key includes"
+                            : "keys include"}{" "}
+                          outdated copy
                         </small>
                       </div>
                     </button>
@@ -1424,6 +1463,7 @@ export default function App({
                           The basics, and the languages that bring them to life.
                         </p>
                         <ProjectForm
+                          projects={projects}
                           project={project}
                           busy={busy}
                           error={error}
@@ -1561,6 +1601,7 @@ export default function App({
           onClose={closeModal}
         >
           <ProjectForm
+            projects={projects}
             busy={busy}
             error={error}
             onSave={(data) => void saveProject(data)}

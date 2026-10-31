@@ -67,7 +67,7 @@ test("new-project imports validate the entire batch atomically", async () => {
   const { svc } = await fixture();
   const importId = randomUUID();
   await svc.startImport(admin, {
-    project: { ...settings, id: "imported" },
+    project: { ...settings, id: "imported", name: "Imported web" },
     importId,
   });
   await assert.rejects(
