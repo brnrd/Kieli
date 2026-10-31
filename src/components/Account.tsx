@@ -167,8 +167,8 @@ export default function Account({
           <h2>Sessions and connections</h2>
           <p>
             Sign out of all Keylo sessions and revoke your personal Claude Code
-            connections. Project export and mobile delivery keys are managed
-            separately by project managers.
+            connections. Project export, source-sync and mobile delivery keys
+            are managed separately by project managers.
           </p>
           <button className="button" onClick={() => setRevoking(true)}>
             Sign out and revoke my connections

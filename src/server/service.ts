@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SyncCredentials } from "./sync-credentials";
 import { ProjectUpdates, type KeyChange } from "./project-updates";
 import { randomUUID } from "node:crypto";
 import {
@@ -920,13 +921,20 @@ export class KeyloService {
           changes,
           extra,
           project,
-          undefined,
+          identity.sync
+            ? () => new SyncCredentials(this.store).writeGuards(identity)
+            : undefined,
           origin,
         ),
     );
   }
   async previewUpdate(identity: Identity, id: string, input: unknown) {
-    return this.updates(identity, id).preview(identity, id, input);
+    return this.updates(identity, id).preview(
+      identity,
+      id,
+      input,
+      identity.sync ? "sync" : "import",
+    );
   }
   async applyUpdate(identity: Identity, id: string, plan: string) {
     return this.updates(identity, id).apply(identity, id, plan);

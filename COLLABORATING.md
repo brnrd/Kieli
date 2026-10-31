@@ -60,6 +60,7 @@ After building, run the HTTP smoke checks affected by your change:
 | Built-in accounts                       | `npm run smoke:local`    |
 | SAML authentication                     | `npm run smoke:saml`     |
 | SCIM and SSO lifecycle                  | `npm run smoke:sso`      |
+| Source-sync CLI and credentials         | `npm run smoke:sync`     |
 | MCP protocol and credentials            | `npm run smoke:mcp`      |
 | AWS install package and first-run setup | `npm run smoke:install`  |
 

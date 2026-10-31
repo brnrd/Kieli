@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import type { AuthMode, Project } from "../shared";
+import SyncConnection from "./SyncConnection";
 import McpConnection from "./McpConnection";
 import { IconButton, ModalShell } from "./ui";
 import { api } from "./api";
@@ -303,6 +304,7 @@ export default function Developers({
           </div>
         </ModalShell>
       )}
+      <SyncConnection project={project} manager={manager} notify={notify} />
       {manager && <OtaDelivery project={project} notify={notify} />}
       <McpConnection
         key={project.id}

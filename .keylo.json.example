@@ -1,0 +1,15 @@
+{
+  "url": "https://copy.example.com",
+  "project": "website",
+  "sourceLanguage": "en",
+  "push": {
+    "files": [
+      { "path": "./locales/en.json", "format": "nested", "namespace": "general" }
+    ]
+  },
+  "pull": {
+    "out": "./locales",
+    "format": "nested",
+    "languages": ["en", "fr", "nl"]
+  }
+}

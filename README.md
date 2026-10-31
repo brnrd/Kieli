@@ -51,6 +51,7 @@ Production requires an HTTPS `APP_ORIGIN` and an explicit `AUTH_MODE=local`, `ok
 - Missing/outdated/current translation states, source revisions and linked-source change detection, with freshness-aware completion and snapshot recovery.
 - Per-translation change history and restore, plus 30-day recoverable key deletion. [Recovery behavior and limits](docs/translation-history.md).
 - Previewed updates to existing projects, preserving targets by default, with explicit overwrite, conflict detection and retry receipts. [Project update behavior](docs/project-updates.md).
+- Portable CLI source push, repository JSON configuration and expiring project/prefix-scoped CI credentials. [Source synchronization](docs/source-sync.md).
 - Transactional project counters: reads of a key page do not fetch all translations to calculate progress.
 - Lokalise JSON ZIP and API-snapshot import with local preview, validation, explicit conversion warnings, and retryable atomic batches.
 - Optional built-in email/password accounts with Argon2id hashing, admin-issued activation/reset links, project-role assignments, account disabling, shared login throttling, and security events.
@@ -83,7 +84,7 @@ node cli/keylo.mjs pull \
   --format nested
 ```
 
-This writes `en.json`, `fr.json`, and `nl.json`. Omit `--languages` to export all languages. Add `--fallback` to fill missing translations from the source. Each locale file is replaced atomically; unrelated files are preserved. The CLI does not publish changes back to Keylo. Use `--demo` for local testing without a token.
+This writes `en.json`, `fr.json`, and `nl.json`. Omit `--languages` to export all languages. Add `--fallback` to fill missing translations from the source. Each locale file is replaced atomically; unrelated files are preserved. Source updates use the separate scoped push workflow described in [Source synchronization](docs/source-sync.md). Use `--demo` for local testing without a token.
 
 Choose another format with, for example, `--format strings`, `--format yaml`, `--format android`, or `--format xliff`. The **Developers** tab generates CLI and cURL examples for the selected format. Interactive exports download a ZIP containing individual locale files.
 

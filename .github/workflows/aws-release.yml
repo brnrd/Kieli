@@ -31,6 +31,7 @@ jobs:
       - run: npm run smoke:local
       - run: npm run smoke:saml
       - run: npm run smoke:sso
+      - run: npm run smoke:sync
       - run: npm run smoke:mcp
       - run: npm run smoke:install
       - run: npm audit --audit-level=moderate

@@ -30,7 +30,7 @@ Each invocation checks at most 100 users, four at a time, within an 18-second bu
 
 ## Sign-out and remaining boundaries
 
-Ordinary sign-out revokes the current Keylo browser session. **Your account → Sign out and revoke my connections** invalidates all of the person's Keylo sessions and personal MCP credentials. Project export tokens and mobile delivery credentials belong to the project and require separate rotation if the departing user possessed them.
+Ordinary sign-out revokes the current Keylo browser session. **Your account → Sign out and revoke my connections** invalidates all of the person's Keylo sessions and personal MCP credentials. Project export tokens, source-sync credentials and mobile delivery credentials belong to the project and require separate rotation if the departing user possessed them.
 
 MCP saves re-check the credential, owner and current directory state inside the same conditional transaction as the translations. A revocation or membership change that commits first prevents a competing MCP write. An already committed operation cannot be recalled; an in-flight read or ordinary browser operation may finish. Placeholder contract checks on MCP writes reject missing/changed named arguments, printf types, key references, ICU argument types/selectors/numeric substitutions and formatting tags, but cannot prove translation quality or all application-specific syntax.
 

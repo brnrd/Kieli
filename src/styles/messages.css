@@ -396,3 +396,32 @@
 .update-diff {
   margin-top: 14px;
 }
+
+.sync-config {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 12px;
+  max-height: 350px;
+  overflow: auto;
+}
+.sync-token-form {
+  display: grid;
+  grid-template-columns: 2fr 3fr 1fr;
+  gap: 12px;
+  align-items: start;
+  margin-top: 18px;
+}
+.sync-token-form > button {
+  grid-column: 1/-1;
+  justify-self: start;
+}
+@media (max-width: 640px) {
+  .sync-token-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

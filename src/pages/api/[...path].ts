@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { SyncCredentials } from "../../server/sync-credentials";
 import { z, ZodError } from "zod";
 import { HttpError } from "../../server/auth";
 import { Conflict, InvalidCursor } from "../../server/store";
@@ -239,6 +240,20 @@ export const ALL: APIRoute = async (context) => {
         );
       if (parts.length === 4 && parts[3] && method === "DELETE") {
         await svc.revokeToken(identity, id, parts[3]);
+        return new Response(null, { status: 204 });
+      }
+    }
+    if (parts[2] === "sync-tokens") {
+      const credentials = new SyncCredentials(await getStore());
+      if (parts.length === 3 && method === "GET")
+        return Response.json(await credentials.list(identity, id));
+      if (parts.length === 3 && method === "POST")
+        return Response.json(
+          await credentials.create(identity, id, await readJSON(request)),
+          { status: 201 },
+        );
+      if (parts.length === 4 && method === "DELETE") {
+        await credentials.revoke(identity, id, parts[3]!);
         return new Response(null, { status: 204 });
       }
     }

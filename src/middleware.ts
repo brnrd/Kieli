@@ -18,6 +18,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       path === "/auth/saml/acs" &&
       context.request.method === "POST";
     const publicPath =
+      path.startsWith("/sync/") ||
       path.startsWith("/scim/v2/") ||
       path.startsWith("/ota/") ||
       ["/tasks/snapshots", "/tasks/identities"].includes(path) ||
@@ -38,6 +39,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // separate bearer credentials; browser writes continue to check Origin.
     if (
       !samlPost &&
+      !path.startsWith("/sync/") &&
       !path.startsWith("/scim/v2/") &&
       path !== "/mcp" &&
       !["/tasks/snapshots", "/tasks/identities"].includes(path) &&

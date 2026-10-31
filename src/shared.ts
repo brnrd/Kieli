@@ -81,6 +81,7 @@ export type Identity = {
   sessionExpiresAt?: number;
   principalId?: string;
   accessVersion?: number;
+  sync?: { projectId: string; credentialId: string; prefixes: string[] };
   mcp?: {
     projectId: string;
     credentialId: string;

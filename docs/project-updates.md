@@ -27,4 +27,4 @@ POST /api/projects/:id/updates/preview
 POST /api/projects/:id/updates/:previewId/apply
 ```
 
-The preview response contains its ID, counts, entries, expiry and unresolved reference names. These browser endpoints initially require a signed-in manager; export and MCP credentials cannot invoke them. Dedicated source-sync credentials and CLI push use the same update service with their own restricted boundary.
+The preview response contains its ID, counts, entries, expiry and unresolved reference names. These browser endpoints initially require a signed-in manager; export and MCP credentials cannot invoke them. [Dedicated source-sync credentials and CLI push](source-sync.md) use the same update service with their own restricted boundary.

@@ -1,12 +1,23 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { keySchema } from "../validation";
-import type { Identity, Project, TranslationKey } from "../shared";
-import { looksPlural, resolveProject, references } from "../messages";
+import type {
+  Identity,
+  Project,
+  TranslationKey,
+  ProjectStats,
+} from "../shared";
+import {
+  looksPlural,
+  resolveProject,
+  references,
+  advancedKey,
+} from "../messages";
 import { authorize } from "./auth";
 import { HttpError } from "./errors";
 import { Conflict, type Store, type Change } from "./store";
 import type { KeyloService } from "./service";
+import { freshnessView } from "./freshness";
 import { dataPrefix } from "./project-data";
 import { keyState, type KeyState, type EditOrigin } from "./key-history";
 import { config } from "./config";
@@ -76,6 +87,25 @@ export class ProjectUpdates {
       project = await this.service.project(identity, id);
     if (new Set(data.keys.map((key) => key.name)).size !== data.keys.length)
       throw new HttpError(400, "Duplicate keys in this update.");
+    if (
+      identity.sync &&
+      (identity.sync.projectId !== id ||
+        data.policy !== "source" ||
+        data.keys.some(
+          (key) =>
+            (identity.sync!.prefixes.length &&
+              !identity.sync!.prefixes.some((prefix) =>
+                key.name.startsWith(prefix),
+              )) ||
+            Object.keys(key.translations).some(
+              (code) => code !== project.sourceLanguage,
+            ),
+        ))
+    )
+      throw new HttpError(
+        403,
+        "Source-sync credentials can only push source text within their key prefixes.",
+      );
     const entries: UpdateEntry[] = [];
     for (const input of data.keys) {
       for (const code of Object.keys(input.translations))
@@ -89,7 +119,9 @@ export class ProjectUpdates {
         `${dataPrefix(project)}KEY#${input.name}`,
       );
       const before = raw
-        ? await this.service.key(identity, id, input.name)
+        ? advancedKey(raw)
+          ? await this.service.key(identity, id, input.name)
+          : freshnessView([raw], project)[0]
         : undefined;
       const translations: Record<string, string> = {},
         preserved: string[] = [];
@@ -149,7 +181,15 @@ export class ProjectUpdates {
       });
     }
     // Validate linked messages against this batch and the existing project before presenting an applicable plan.
-    const current = await this.service.keys(identity, id),
+    const stats = await this.store.get<ProjectStats>(
+      `PROJECT#${id}`,
+      `${dataPrefix(project)}STATS`,
+    );
+    const current =
+        stats?.advancedKeys ||
+        entries.some((entry) => advancedKey(entry.after as TranslationKey))
+          ? await this.service.keys(identity, id)
+          : [],
       candidates = new Map(current.map((key) => [key.name, key]));
     for (const entry of entries)
       candidates.set(entry.name, {
@@ -218,7 +258,28 @@ export class ProjectUpdates {
       id: plan.id,
       policy: plan.policy,
       ...summary(entries),
-      entries,
+      entries: identity.sync
+        ? entries.map((entry) => ({
+            ...entry,
+            preserved: [],
+            before: entry.before
+              ? {
+                  ...entry.before,
+                  translations: {
+                    [project.sourceLanguage]:
+                      entry.before.translations[project.sourceLanguage] ?? "",
+                  },
+                }
+              : undefined,
+            after: {
+              ...entry.after,
+              translations: {
+                [project.sourceLanguage]:
+                  entry.after.translations[project.sourceLanguage] ?? "",
+              },
+            },
+          }))
+        : entries,
       expiresAt: new Date(plan.ttl * 1000).toISOString(),
       unresolvedReferences,
     };
@@ -292,6 +353,21 @@ export class ProjectUpdates {
           expectedSourceContext: entry.sourceContext,
         });
       }
+      if (
+        identity.sync &&
+        (plan.policy !== "source" ||
+          entries.some(
+            (entry) =>
+              (identity.sync!.prefixes.length &&
+                !identity.sync!.prefixes.some((prefix) =>
+                  entry.name.startsWith(prefix),
+                )) ||
+              Object.keys(entry.translations).some(
+                (code) => code !== project.sourceLanguage,
+              ),
+          ))
+      )
+        throw new HttpError(403, "Update is outside source-sync scope.");
       const result = summary(entries);
       await this.commit(
         changes,

@@ -196,3 +196,22 @@ test("references crossing batches are flagged and revalidated when dependencies 
     "Use Parent",
   );
 });
+
+test("ordinary source updates do not load the entire project key collection", async () => {
+  const { store } = await fixture();
+  let collections = 0;
+  const wrapped = {
+    ...store,
+    list: async <T>(pk: string, prefix: string) => {
+      if (prefix.endsWith("KEY#")) collections++;
+      return store.list<T>(pk, prefix);
+    },
+  };
+  const svc = new KeyloService(wrapped);
+  const plan = await svc.previewUpdate(admin, "web", {
+    policy: "source",
+    keys: [{ name: "greeting", translations: { en: "Updated" } }],
+  });
+  await svc.applyUpdate(admin, "web", plan.id);
+  assert.equal(collections, 0);
+});

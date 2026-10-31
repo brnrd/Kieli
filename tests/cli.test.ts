@@ -190,3 +190,57 @@ test("CLI pulls native format files and validates the whole response before writ
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("source JSON parsing rejects executable/non-string structures, duplicates and unsafe names", async () => {
+  const { sourceKeys } = await import("../cli/keylo.mjs");
+  assert.deepEqual(
+    sourceKeys('{"home":{"title":"Hello"}}', "nested").map((key) => key.name),
+    ["home.title"],
+  );
+  for (const text of [
+    '{"__proto__":{"polluted":"yes"}}',
+    '{"home":{"title":"A"},"home.title":"B"}',
+    '{"array":["x"]}',
+    '{"items":{"one":"One","other":"Other"}}',
+  ])
+    assert.throws(() => sourceKeys(text, "nested"));
+  assert.throws(() =>
+    parseArgs([
+      "push",
+      "--url",
+      "https://copy.example.com",
+      "--project",
+      "web",
+      "--source",
+      "en.json",
+      "--apply",
+      "--dry-run",
+    ]),
+  );
+});
+
+test("repository config resolves explicit file mappings relative to itself and rejects stored secrets", async () => {
+  const { loadConfig, parseArgs } = await import("../cli/keylo.mjs");
+  const directory = await mkdtemp(join(tmpdir(), "keylo-config-"));
+  try {
+    const path = join(directory, ".keylo.json");
+    await writeFile(
+      path,
+      JSON.stringify({
+        url: "https://copy.example.com",
+        project: "web",
+        sourceLanguage: "en",
+        push: { files: [{ path: "locales/en.json", format: "nested" }] },
+      }),
+    );
+    const defaults = await loadConfig(["push", "--config", path]);
+    const options = parseArgs(["push", "--config", path], defaults);
+    assert.ok("files" in options);
+    assert.equal(options.files[0].path, join(directory, "locales/en.json"));
+    assert.equal(options.apply, false);
+    await writeFile(path, JSON.stringify({ token: "must-not-store" }));
+    await assert.rejects(loadConfig(["push", "--config", path]), /credentials/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
