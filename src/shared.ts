@@ -71,6 +71,8 @@ export type Identity = {
   subject?: string;
   authTime?: number;
   sessionExpiresAt?: number;
+  principalId?: string;
+  accessVersion?: number;
   mcp?: {
     projectId: string;
     credentialId: string;

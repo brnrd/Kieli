@@ -109,7 +109,7 @@ To connect Claude Code, open **Developers → Claude Code**, issue a credential 
 | Export token                               | Only `GET /api/projects/<assigned-project>/export`                                   |
 | MCP credential                             | Only `/mcp`: read assigned project context and save selected target translations     |
 
-With built-in accounts, assign roles in **People & access**. Access edits and deactivation revoke previous sessions immediately; the last active admin is protected. With SSO, assignments come from verified OIDC/SAML groups and remain cached server-side for up to one hour. Roles are enforced on every server operation. All modes use server-side sessions; sign-out deletes the current session. Export-token revocation takes effect on the next request. IdP-driven offboarding, SCIM, and SAML Single Logout remain separate future work.
+With built-in accounts, assign roles in **People & access**. Access edits and deactivation revoke previous sessions immediately; the last active local admin is protected. SSO uses a central issuer/subject directory with current permissions checked per authentication. Configure [SCIM provisioning and optional Okta reconciliation](docs/sso-lifecycle.md) for upstream offboarding and group synchronization. Admins can block/revoke access; users can sign out and revoke their personal connections. All modes use server-side sessions. Keylo sign-out does not end the IdP session; SAML Single Logout remains unsupported.
 
 - [Built-in accounts](docs/built-in-accounts.md)
 - [Okta setup](docs/okta.md)

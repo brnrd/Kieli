@@ -184,7 +184,12 @@ export async function finishLogin(request: Request, cookies: AstroCookies) {
   );
   const claims = tokens.claims();
   if (!claims) throw new HttpError(401, "Okta did not return an identity.");
-  const identity = identityFromClaims(claims);
+  const identity = {
+    ...identityFromClaims(claims),
+    provider: "okta" as const,
+    issuer: String(claims.iss),
+    subject: String(claims.sub),
+  };
   const maxAge = Math.min(
     3600,
     Math.max(1, Number(claims.exp) - Math.floor(Date.now() / 1000)),

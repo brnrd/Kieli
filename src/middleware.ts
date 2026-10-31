@@ -18,8 +18,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
       path === "/auth/saml/acs" &&
       context.request.method === "POST";
     const publicPath =
+      path.startsWith("/scim/v2/") ||
       path.startsWith("/ota/") ||
-      path === "/tasks/snapshots" ||
+      ["/tasks/snapshots", "/tasks/identities"].includes(path) ||
       path === "/mcp" ||
       samlPost ||
       path === "/auth/saml/metadata" ||
@@ -33,11 +34,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
       path === "/api/auth/activate";
     // SAML's cross-site POST is bound to a one-time browser cookie, RelayState,
     // signed assertion, and request ID. MCP validates its own Host/Origin and
-    // requires a dedicated bearer token; every other browser write checks Origin.
+    // requires a dedicated bearer token. SCIM and maintenance jobs each use
+    // separate bearer credentials; browser writes continue to check Origin.
     if (
       !samlPost &&
+      !path.startsWith("/scim/v2/") &&
       path !== "/mcp" &&
-      path !== "/tasks/snapshots" &&
+      !["/tasks/snapshots", "/tasks/identities"].includes(path) &&
       !["GET", "HEAD", "OPTIONS"].includes(context.request.method)
     )
       checkOrigin(context.request);

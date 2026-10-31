@@ -3,6 +3,8 @@ import type { AstroCookies } from "astro";
 import type { Identity, IdentityProvider } from "../shared";
 import { config } from "./config";
 import { digest, LocalAuth, type LocalUser, userIdentity } from "./local-auth";
+import { SsoDirectory } from "./sso-directory";
+import { HttpError } from "./errors";
 import { Conflict, getStore, type Store } from "./store";
 
 export const sessionCookie = "keylo_session";
@@ -45,6 +47,10 @@ export class Sessions {
       "user" in source ? 28800 : Math.min(Math.floor(source.maxAge), 3600);
     if (!Number.isFinite(maxAge) || maxAge <= 0)
       throw new Error("Invalid session lifetime.");
+    const principal =
+      "identity" in source
+        ? await new SsoDirectory(this.store).login(source.identity)
+        : undefined;
     const session: Session = {
       version: 1,
       authTime: at,
@@ -58,7 +64,8 @@ export class Sessions {
           }
         : {
             provider,
-            identity: { ...source.identity, provider },
+            identity: { ...principal!.identity, provider },
+            authVersion: principal!.user.authVersion,
           }),
     };
     await this.revoke(cookies);
@@ -95,13 +102,21 @@ export class Sessions {
         return clear();
       identity = userIdentity(user, session.authTime);
     } else {
-      if (!session.identity) return clear();
-      identity = {
-        ...session.identity,
-        authTime: session.authTime,
-        provider: session.provider,
-        sessionExpiresAt: session.ttl,
-      };
+      if (!session.identity?.principalId || session.authVersion === undefined)
+        return clear();
+      try {
+        identity = {
+          ...(await new SsoDirectory(this.store).resolve(
+            session.identity.principalId,
+            session.authVersion,
+            session.authTime,
+          )),
+          sessionExpiresAt: session.ttl,
+        };
+      } catch (error) {
+        if (error instanceof HttpError && error.status === 401) return clear();
+        throw error;
+      }
     }
     if (seconds() - session.lastSeen >= 300) {
       try {

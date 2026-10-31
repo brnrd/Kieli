@@ -218,15 +218,63 @@ test("fresh-account installs do not require a reserved concurrency allocation, a
   );
 });
 
-test('automatic snapshots use a scoped secret, isolated runner and bounded EventBridge retries',()=>{
-  const r=template().Resources;
-  assert.equal(r.SnapshotSchedule.Properties.ScheduleExpression,'rate(5 minutes)');
-  assert.equal(r.SnapshotSchedule.Properties.Targets[0].RetryPolicy.MaximumRetryAttempts,2);
-  assert.deepEqual(r.App.Properties.Environment.Variables.KEYLO_SNAPSHOT_JOB_SECRET_ARN,{Ref:'SnapshotJobSecret'});
-  assert.ok(JSON.stringify(r.AppRole).includes('SnapshotJobSecret'));
+test("automatic snapshots use a scoped secret, isolated runner and bounded EventBridge retries", () => {
+  const r = template().Resources;
+  assert.equal(
+    r.SnapshotSchedule.Properties.ScheduleExpression,
+    "rate(5 minutes)",
+  );
+  assert.equal(
+    r.SnapshotSchedule.Properties.Targets[0].RetryPolicy.MaximumRetryAttempts,
+    2,
+  );
+  assert.deepEqual(
+    r.App.Properties.Environment.Variables.KEYLO_SNAPSHOT_JOB_SECRET_ARN,
+    { Ref: "SnapshotJobSecret" },
+  );
+  assert.ok(JSON.stringify(r.AppRole).includes("SnapshotJobSecret"));
   assert.ok(!JSON.stringify(r.SnapshotRunnerRole).includes('"Resource":"*"'));
-  assert.ok(!JSON.stringify(r.SnapshotRunnerRole).includes('dynamodb:'));
-  assert.match(r.SnapshotRunner.Properties.Code.ZipFile,/FunctionError/);
-  assert.match(r.SnapshotRunner.Properties.Code.ZipFile,/partial-failure/);
-  assert.ok(!r.SnapshotRunner.Properties.Code.ZipFile.includes('console.log'));
+  assert.ok(!JSON.stringify(r.SnapshotRunnerRole).includes("dynamodb:"));
+  assert.match(r.SnapshotRunner.Properties.Code.ZipFile, /FunctionError/);
+  assert.match(r.SnapshotRunner.Properties.Code.ZipFile, /partial-failure/);
+  assert.ok(!r.SnapshotRunner.Properties.Code.ZipFile.includes("console.log"));
+});
+
+test("SSO provisioning and reconciliation are opt-in and use exact secret resources in both templates", async () => {
+  const t = template();
+  assert.equal(t.Parameters.SsoProvisioningMode.Default, "jit");
+  assert.deepEqual(t.Parameters.SsoProvisioningMode.AllowedValues, [
+    "jit",
+    "scim",
+  ]);
+  assert.equal(t.Parameters.ScimSecretArn.Default, "");
+  assert.equal(t.Parameters.ReconciliationSecretArn.Default, "");
+  const policies = JSON.stringify(t.Resources.AppRole.Properties.Policies);
+  assert.ok(policies.includes("ScimSecretArn"));
+  assert.ok(policies.includes("ReconciliationSecretArn"));
+  assert.ok(!policies.includes('"Resource":"*"'));
+  assert.ok(JSON.stringify(t.Rules).includes("SsoProvisioningMode"));
+  assert.ok(JSON.stringify(t.Rules).includes("ReconciliationSecretArn"));
+  assert.deepEqual(
+    t.Resources.SnapshotRunner.Properties.Environment.Variables
+      .RECONCILE_ENABLED,
+    { "Fn::If": ["HasSsoReconciliation", "true", "false"] },
+  );
+  assert.match(
+    t.Resources.SnapshotRunner.Properties.Code.ZipFile,
+    /tasks\/identities/,
+  );
+  const sam = await readFile(
+    new URL("../infra/template.yaml", import.meta.url),
+    "utf8",
+  );
+  for (const field of [
+    "SsoProvisioningMode:",
+    "ScimSecretArn:",
+    "ReconciliationSecretArn:",
+    "SSO_PROVISIONING_MODE:",
+    "SSO_SCIM_SECRET_ARN:",
+    "SSO_RECONCILE_SECRET_ARN:",
+  ])
+    assert.ok(sam.includes(field));
 });

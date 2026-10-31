@@ -6,14 +6,21 @@ const secrets=new SecretsManagerClient({}); const lambda=new LambdaClient({});
 exports.handler=async()=>{
   const secret=await secrets.send(new GetSecretValueCommand({SecretId:process.env.JOB_SECRET}));
   if(!secret.SecretString||secret.SecretString.length<32) throw Error('Job secret unavailable');
-  const event={version:'2.0',routeKey:'POST /tasks/snapshots',rawPath:'/tasks/snapshots',rawQueryString:'',headers:{host:'internal.keylo',authorization:'Bearer '+secret.SecretString,'content-type':'application/json'},requestContext:{accountId:'internal',apiId:'internal',domainName:'internal.keylo',domainPrefix:'internal',http:{method:'POST',path:'/tasks/snapshots',protocol:'HTTP/1.1',sourceIp:'127.0.0.1',userAgent:'keylo-snapshot-runner'},requestId:'snapshot-job',routeKey:'POST /tasks/snapshots',stage:'$default',time:'',timeEpoch:Date.now()},body:'{}',isBase64Encoded:false};
-  const response=await lambda.send(new InvokeCommand({FunctionName:process.env.APP_FUNCTION,InvocationType:'RequestResponse',Payload:Buffer.from(JSON.stringify(event))}));
-  if(response.FunctionError) throw Error('Snapshot job invocation failed');
-  const output=JSON.parse(Buffer.from(response.Payload).toString());
-  if(output.statusCode!==200) throw Error('Snapshot job returned an error');
-  const body=JSON.parse(output.isBase64Encoded?Buffer.from(output.body,'base64').toString():output.body);
-  if(body.status==='partial-failure') throw Error('Some project snapshots failed; retry on next schedule');
-  return {status:body.status};
+  async function invoke(path) {
+    const event={version:'2.0',routeKey:'POST '+path,rawPath:path,rawQueryString:'',headers:{host:'internal.keylo',authorization:'Bearer '+secret.SecretString,'content-type':'application/json'},requestContext:{accountId:'internal',apiId:'internal',domainName:'internal.keylo',domainPrefix:'internal',http:{method:'POST',path,protocol:'HTTP/1.1',sourceIp:'127.0.0.1',userAgent:'keylo-maintenance-runner'},requestId:'maintenance-job',routeKey:'POST '+path,stage:'$default',time:'',timeEpoch:Date.now()},body:'{}',isBase64Encoded:false};
+    const response=await lambda.send(new InvokeCommand({FunctionName:process.env.APP_FUNCTION,InvocationType:'RequestResponse',Payload:Buffer.from(JSON.stringify(event))}));
+    if(response.FunctionError) throw Error('Maintenance invocation failed');
+    const output=JSON.parse(Buffer.from(response.Payload).toString());
+    if(output.statusCode!==200) throw Error('Maintenance returned an error');
+    const body=JSON.parse(output.isBase64Encoded?Buffer.from(output.body,'base64').toString():output.body);
+    if(body.status==='partial-failure') throw Error('Maintenance partially failed; retry on next schedule');
+    return body.status;
+  }
+  const paths=['/tasks/snapshots'];
+  if(process.env.RECONCILE_ENABLED==='true') paths.push('/tasks/identities');
+  const results=await Promise.allSettled(paths.map(invoke));
+  if(results.some(result=>result.status==='rejected')) throw Error('Maintenance failed');
+  return {status:'ok'};
 };`;
 export function snapshotResources() {
   const ref = (name) => ({ Ref: name }),
@@ -89,6 +96,9 @@ export function snapshotResources() {
           Variables: {
             JOB_SECRET: ref("SnapshotJobSecret"),
             APP_FUNCTION: ref("App"),
+            RECONCILE_ENABLED: {
+              "Fn::If": ["HasSsoReconciliation", "true", "false"],
+            },
           },
         },
       },

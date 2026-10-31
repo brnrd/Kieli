@@ -58,6 +58,9 @@ export function installTemplate({
               "SamlIdpIssuer",
               "SamlSpEntityId",
               "SecretsRevision",
+              "SsoProvisioningMode",
+              "ScimSecretArn",
+              "ReconciliationSecretArn",
             ],
           },
           {
@@ -79,6 +82,29 @@ export function installTemplate({
       KeyloRelease: { version, region, artifact: key },
     },
     Parameters: {
+      SsoProvisioningMode: {
+        Type: "String",
+        Default: "jit",
+        AllowedValues: ["jit", "scim"],
+        Description:
+          "JIT learns users at sign-in; SCIM requires pre-provisioning and current pushed groups.",
+      },
+      ScimSecretArn: {
+        Type: "String",
+        Default: "",
+        AllowedPattern:
+          "^$|arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:.+",
+        Description:
+          "SCIM-only existing secret containing a plain random provisioning token (32+ characters).",
+      },
+      ReconciliationSecretArn: {
+        Type: "String",
+        Default: "",
+        AllowedPattern:
+          "^$|arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:.+",
+        Description:
+          "Optional Okta reconciliation JSON secret: origin, appId, apiToken. Enables the five-minute scheduled job.",
+      },
       ReservedConcurrency: {
         Type: "Number",
         Default: 0,
@@ -134,6 +160,39 @@ export function installTemplate({
       },
     },
     Rules: {
+      ScimConfiguration: {
+        RuleCondition: { "Fn::Equals": [ref("SsoProvisioningMode"), "scim"] },
+        Assertions: [
+          {
+            Assert: {
+              "Fn::Or": [
+                { "Fn::Equals": [ref("AuthMode"), "okta"] },
+                { "Fn::Equals": [ref("AuthMode"), "saml"] },
+              ],
+            },
+            AssertDescription: "SCIM requires OIDC or SAML SSO.",
+          },
+          {
+            Assert: nonempty("ScimSecretArn"),
+            AssertDescription:
+              "SCIM requires an existing provisioning credential secret.",
+          },
+        ],
+      },
+      ReconciliationConfiguration: {
+        RuleCondition: nonempty("ReconciliationSecretArn"),
+        Assertions: [
+          {
+            Assert: {
+              "Fn::Or": [
+                { "Fn::Equals": [ref("AuthMode"), "okta"] },
+                { "Fn::Equals": [ref("AuthMode"), "saml"] },
+              ],
+            },
+            AssertDescription: "Reconciliation requires SSO.",
+          },
+        ],
+      },
       OktaConfiguration: {
         RuleCondition: { "Fn::Equals": [ref("AuthMode"), "okta"] },
         Assertions: ["OktaIssuer", "OktaClientId", "AppSecretsArn"].map(
@@ -159,6 +218,8 @@ export function installTemplate({
       },
     },
     Conditions: {
+      UseScim: { "Fn::Equals": [ref("SsoProvisioningMode"), "scim"] },
+      HasSsoReconciliation: nonempty("ReconciliationSecretArn"),
       HasReservedConcurrency: {
         "Fn::Not": [{ "Fn::Equals": [ref("ReservedConcurrency"), 0] }],
       },
@@ -285,6 +346,32 @@ export function installTemplate({
                 ],
               },
             }),
+            when("UseScim", {
+              PolicyName: "KeyloScimSecret",
+              PolicyDocument: {
+                Version: "2012-10-17",
+                Statement: [
+                  {
+                    Effect: "Allow",
+                    Action: "secretsmanager:GetSecretValue",
+                    Resource: ref("ScimSecretArn"),
+                  },
+                ],
+              },
+            }),
+            when("HasSsoReconciliation", {
+              PolicyName: "KeyloReconciliationSecret",
+              PolicyDocument: {
+                Version: "2012-10-17",
+                Statement: [
+                  {
+                    Effect: "Allow",
+                    Action: "secretsmanager:GetSecretValue",
+                    Resource: ref("ReconciliationSecretArn"),
+                  },
+                ],
+              },
+            }),
           ],
         },
       },
@@ -340,6 +427,12 @@ export function installTemplate({
               AWS_LWA_ASYNC_INIT: "true",
               APP_ORIGIN: origin,
               AUTH_MODE: ref("AuthMode"),
+              SSO_PROVISIONING_MODE: ref("SsoProvisioningMode"),
+              SSO_SCIM_SECRET_ARN: when("UseScim", ref("ScimSecretArn")),
+              SSO_RECONCILE_SECRET_ARN: when(
+                "HasSsoReconciliation",
+                ref("ReconciliationSecretArn"),
+              ),
               STORAGE_DRIVER: "dynamodb",
               DYNAMODB_TABLE: ref("Data"),
               KEYLO_VERSION: version,

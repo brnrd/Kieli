@@ -344,6 +344,50 @@ try {
     (await request("/api/bootstrap", "GET", undefined, admin)).status,
     401,
   );
+  const finalSignIn = await request("/api/auth/login", "POST", {
+    email: "admin@example.com",
+    password,
+  });
+  const activeAdmin = cookie(finalSignIn);
+  const secondDevice = cookie(
+    await request("/api/auth/login", "POST", {
+      email: "admin@example.com",
+      password,
+    }),
+  );
+  const personal = await json(
+    "/api/projects/local-smoke/mcp-tokens",
+    "POST",
+    { name: "Self-revoke fixture", languages: ["fr"] },
+    activeAdmin,
+    201,
+  );
+  const mcp = () =>
+    request(
+      "/mcp",
+      "POST",
+      { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      undefined,
+      {
+        authorization: `Bearer ${personal.secret}`,
+        accept: "application/json, text/event-stream",
+      },
+    );
+  assert.equal((await mcp()).status, 200);
+  assert.equal(
+    (
+      await request("/api/auth/revoke-all", "POST", undefined, activeAdmin, {
+        Origin: "https://attacker.example",
+      })
+    ).status,
+    403,
+  );
+  await json("/api/auth/revoke-all", "POST", undefined, activeAdmin);
+  assert.equal(
+    (await request("/api/bootstrap", "GET", undefined, secondDevice)).status,
+    401,
+  );
+  assert.equal((await mcp()).status, 401);
   console.log(
     "Local accounts HTTP smoke passed: operator bootstrap, activation, CSRF, login, role enforcement, disable/reactivate, reset, password rotation, session revocation, audit, and logout replay.",
   );

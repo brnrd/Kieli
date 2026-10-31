@@ -11,6 +11,7 @@ import {
 } from "../tests/helpers/saml.ts";
 
 // The IdP is a local signing fixture; no real identity provider or user data is used.
+const scimMode = process.argv.includes("--scim");
 const fixture = await samlFixture();
 const directory = await mkdtemp(join(tmpdir(), "keylo-saml-http-"));
 const origin = "http://127.0.0.1:4328";
@@ -29,6 +30,8 @@ const env = {
   SAML_IDP_CERT: fixture.idp.cert,
   SAML_SP_PRIVATE_KEY: fixture.sp.key,
   SAML_SP_CERT: fixture.sp.cert,
+  SSO_PROVISIONING_MODE: scimMode ? "scim" : "jit",
+  SSO_SCIM_TOKEN: "s".repeat(64),
 };
 delete env.SAML_SECRETS_ARN;
 const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
@@ -83,7 +86,35 @@ function post(encoded, flow, cookie = flow.binding) {
     }),
   });
 }
+async function provisioning(
+  path,
+  method = "GET",
+  body,
+  token = env.SSO_SCIM_TOKEN,
+) {
+  const response = await request(`/scim/v2/${path}`, {
+    method,
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/scim+json",
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  return response;
+}
+async function browserApi(path, method, cookie, body) {
+  return request(path, {
+    method,
+    headers: {
+      Origin: env.APP_ORIGIN,
+      Cookie: cookie,
+      "content-type": "application/json",
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
 try {
+  let provisioned;
   let ready = false;
   for (let i = 0; i < 50; i++) {
     if (server.exitCode !== null) throw Error(`Server exited: ${logs}`);
@@ -106,6 +137,24 @@ try {
     /application\/samlmetadata\+xml/,
   );
   assert.match(await metadata.text(), /AuthnRequestsSigned="true"/);
+  if (scimMode) {
+    assert.equal(
+      (await provisioning("Users", "GET", undefined, "wrong")).status,
+      401,
+    );
+    const user = await provisioning("Users", "POST", {
+      externalId: "immutable-user-123",
+      userName: "saml@example.com",
+      active: true,
+    });
+    assert.equal(user.status, 201, await user.clone().text());
+    provisioned = await user.json();
+    const group = await provisioning("Groups", "POST", {
+      displayName: "keylo-admin",
+      members: [{ value: provisioned.id }],
+    });
+    assert.equal(group.status, 201, await group.clone().text());
+  }
   const flow = await begin();
   const signed = signedResponse(fixture, flow.id, { groups: ["keylo-admin"] });
   // A foreign-origin POST is allowed only at ACS and only with complete protocol validation.
@@ -164,6 +213,48 @@ try {
     (await request("/api/bootstrap", { headers: { Cookie: cookie } })).status,
     401,
   );
+  if (scimMode) {
+    // Reauthenticate after normal logout, then revoke every personal connection.
+    const again = await begin();
+    const acceptedAgain = await post(
+      signedResponse(fixture, again.id, { groups: [] }).encoded,
+      again,
+    );
+    const activeCookie = session(acceptedAgain, "keylo_session");
+    const people = await browserApi("/api/sso/users", "GET", activeCookie);
+    assert.equal(people.status, 200, await people.clone().text());
+    assert.equal((await people.json()).items[0].id, provisioned.id);
+    const page = await request("/users", { headers: { Cookie: activeCookie } });
+    assert.equal(page.status, 200);
+    assert.match(await page.text(), /People &amp; access/);
+    assert.equal(
+      (await browserApi("/api/auth/revoke-all", "POST", activeCookie)).status,
+      200,
+    );
+    assert.equal(
+      (await browserApi("/api/bootstrap", "GET", activeCookie)).status,
+      401,
+    );
+    const deactivated = await provisioning(`Users/${provisioned.id}`, "PATCH", {
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      Operations: [{ op: "replace", path: "active", value: false }],
+    });
+    assert.equal(deactivated.status, 200, await deactivated.clone().text());
+    const final = await begin();
+    assert.equal(
+      (
+        await post(
+          signedResponse(fixture, final.id, { groups: ["keylo-admin"] })
+            .encoded,
+          final,
+        )
+      ).headers.get("location"),
+      "/login?error=signin",
+    );
+    console.log(
+      "SSO lifecycle HTTP smoke passed: separate SCIM authentication, provisioning, pushed groups, SAML sign-in, admin directory, account-wide revocation and deactivation blocking future login.",
+    );
+  }
   console.log(
     "SAML HTTP smoke passed: signed metadata/request, cross-site POST callback, browser binding, opaque sessions, roles, replay rejection, recipient validation, origin protection, and logout replay.",
   );

@@ -38,6 +38,8 @@ import {
   type PageOptions,
   type Change,
 } from "./store";
+import { validatePlaceholders } from "./placeholder-validation";
+import { McpCredentials } from "./mcp-credentials";
 import { mcpAudit } from "./mcp-credentials";
 import { translationBatchSchema } from "./mcp-schemas";
 
@@ -181,6 +183,7 @@ export class KeyloService {
     }[],
     additionalChanges: Change[] = [],
     expectedProject?: Project,
+    commitAuthorization?: () => Promise<Change[]>,
   ) {
     for (let attempt = 0; attempt < 8; attempt++) {
       const project = await this.currentProject(id);
@@ -234,6 +237,7 @@ export class KeyloService {
       }
       try {
         await this.store.transact([
+          ...(commitAuthorization ? await commitAuthorization() : []),
           ...additionalChanges,
           {
             pk: "WORKSPACE",
@@ -520,6 +524,10 @@ export class KeyloService {
             403,
             "MCP cannot change plural variables, type or offset.",
           );
+        validatePlaceholders(
+          previous.translations[project.sourceLanguage] ?? "",
+          text,
+        );
         const replaces =
           previous.plural && before && after
             ? Object.entries(before.forms).some(
@@ -567,6 +575,7 @@ export class KeyloService {
         }),
       ],
       project,
+      () => new McpCredentials(this.store).writeGuards(identity, id),
     );
     return {
       saved: changes.map((change) => ({

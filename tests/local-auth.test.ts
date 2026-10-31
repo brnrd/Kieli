@@ -490,6 +490,8 @@ test("Okta uses the same revocable opaque sessions with secure cookies and a one
   const sessions = new Sessions(store);
   const previousMode = process.env.AUTH_MODE;
   const previousOrigin = process.env.APP_ORIGIN;
+  const previousIssuer = process.env.OKTA_ISSUER;
+  process.env.OKTA_ISSUER = "https://idp.example.com/oauth2/default";
   process.env.AUTH_MODE = "okta";
   process.env.APP_ORIGIN = "https://copy.example.com";
   try {
@@ -527,6 +529,8 @@ test("Okta uses the same revocable opaque sessions with secure cookies and a one
     process.env.AUTH_MODE = "local";
     assert.equal(await sessions.resolve(cookieJar(secret).cookies), undefined);
   } finally {
+    if (previousIssuer === undefined) delete process.env.OKTA_ISSUER;
+    else process.env.OKTA_ISSUER = previousIssuer;
     process.env.AUTH_MODE = previousMode;
     process.env.APP_ORIGIN = previousOrigin;
   }

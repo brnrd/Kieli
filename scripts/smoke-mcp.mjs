@@ -129,6 +129,20 @@ try {
   });
   const key = JSON.parse(read.content[0].text);
   assert.equal(key.source, "Hello {name}");
+  const mismatch = await client.callTool({
+    name: "set_translations",
+    arguments: {
+      updates: [
+        {
+          key: key.key,
+          expectedVersion: key.version,
+          translations: { fr: "Bonjour" },
+        },
+      ],
+    },
+  });
+  assert.equal(mismatch.isError, true);
+  assert.equal(JSON.parse(mismatch.content[0].text).status, 400);
   const saved = await client.callTool({
     name: "set_translations",
     arguments: {

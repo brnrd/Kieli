@@ -30,12 +30,13 @@ jobs:
       - run: npm run smoke:features
       - run: npm run smoke:local
       - run: npm run smoke:saml
+      - run: npm run smoke:sso
       - run: npm run smoke:mcp
       - run: npm run smoke:install
       - run: npm audit --audit-level=moderate
       - run: npm run package:aws
       - run: node scripts/render-aws-template.mjs
-      - run: pipx run cfn-lint .aws-release/install-example.yaml infra/release-publisher.yaml
+      - run: pipx run cfn-lint .aws-release/install-example.yaml infra/release-publisher.yaml infra/template.yaml
       - uses: actions/upload-artifact@v4
         with:
           name: keylo-aws-package

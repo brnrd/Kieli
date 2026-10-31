@@ -1,0 +1,39 @@
+# SSO access lifecycle
+
+OIDC and SAML authentication use a central directory keyed by provider, exact issuer, and immutable subject. Email is profile data, never an account-linking key. Every browser/MCP authentication checks the directory; permissions are outside cookies. Existing SSO sessions and MCP credentials created before this directory was introduced must be issued again.
+
+## Choose provisioning
+
+`SSO_PROVISIONING_MODE=jit` is the default. A verified sign-in creates the user and updates its group assignments. Workspace administrators can open **Admin → People & access** to block/unblock users or revoke their sessions and personal MCP credentials. Blocking prevents subsequent sign-ins; revocation alone lets an otherwise authorized person sign in again. Administration requires authentication within the last 15 minutes. Translation contributions remain intact.
+
+For managed offboarding, choose `SSO_PROVISIONING_MODE=scim` and configure a dedicated random provisioning bearer token, at least 32 characters, using `SSO_SCIM_TOKEN` or a plain-text Secrets Manager secret referenced by `SSO_SCIM_SECRET_ARN`. Keep this credential separate from login, MCP, export, and maintenance credentials. Rotate it in both the IdP and server; AWS secret caching lasts up to five minutes.
+
+Configure the IdP's SCIM 2.0 base URL as `https://<keylo-host>/scim/v2`, with that bearer token. Enable user creation, profile updates, deactivation and group push. Users must be provisioned before signing in. Push `keylo-admin` and `keylo:<project-id>:admin|manager|user` groups; SCIM group membership determines permissions, and signed login group claims cannot grant extra access. Provision the initial administrator and push its admin group before enabling this mode.
+
+**Identity mapping must match:** SCIM `externalId` must equal OIDC `sub` or the persistent SAML NameID exactly. For Okta, use the immutable Okta user ID on both sides; configure and verify this mapping explicitly. Keylo does not infer it from an email address. Changing issuer or protocol creates a separate directory. Switching provisioning modes should be treated as an access migration and verified before rollout.
+
+Implemented endpoints: authenticated `ServiceProviderConfig`, `Users` and `Groups`; list pagination (`startIndex`, maximum `count=100`), supported equality filters, GET/POST/PUT/PATCH, user deactivation and group deletion. User `groups` is read-only; update group `members`. Password provisioning, bulk, sorting, custom schemas, schema/resource discovery and complex filter expressions are unsupported. Requests are limited to 256 KiB; a group has at most 1,000 members, and a directory at most 10,000 users, 2,000 groups and 50,000 memberships.
+
+User deactivation increments its access epoch, invalidating existing browser sessions and personal MCP credentials. Group changes affect existing sessions on their next authentication and invalidate MCP access if its owner loses project management permission. Old credentials cannot regain validity after deactivation/reactivation. Deactivation keeps the account, memberships and contributions; it never deletes translation history.
+
+Writes use conditional transactions and expose weak ETags (`W/"<version>"`). Send `If-Match` for safe conditional updates. Unversioned SCIM messages cannot establish event ordering: a delayed full replacement could restore a removed membership. User deactivation is sticky: reactivation requires a current ETag or an explicit administrator action, so an ordinary stale profile update cannot silently re-enable an account. Some IdP rehire flows therefore need operator intervention. A Keylo block is independent of provisioning and persists across SCIM updates.
+
+## Reconcile missed changes with Okta
+
+SCIM delivery is not sufficient on its own: Okta does not send SCIM deactivation for suspension. Optional polling checks the current user status, app assignment and role groups against Okta's directory API. It accepts only `ACTIVE` or `PROVISIONED` application assignments and an `ACTIVE` organization user. Other returned states deactivate access; malformed responses fail the check without changing local state. It only removes access; it never automatically reactivates a user. Reconciliation intersects upstream groups with locally provisioned grants, so it cannot invent a new permission.
+
+Configure `SSO_OKTA_ORIGIN` (exact HTTPS organization origin), `SSO_OKTA_APP_ID` and `SSO_OKTA_API_TOKEN`. Use a dedicated Okta API identity with read-only access to the relevant users, groups and app assignments. Alternatively set `SSO_RECONCILE_SECRET_ARN` to a Secrets Manager JSON secret containing `origin`, `appId`, `apiToken`. The immutable SSO subject must be the Okta user ID. Custom authorization-server subjects with a different mapping are incompatible with this polling implementation.
+
+For Node/Docker, schedule `npm run identities:reconcile` every five minutes. It uses `APP_ORIGIN` and the same `KEYLO_SNAPSHOT_JOB_TOKEN` as the server's maintenance endpoints. Never pass the token in a URL. The task is POST `/tasks/identities`; it accepts the dedicated maintenance bearer credential, not a browser cookie or SCIM token. Concurrent invocations use a shared lease. AWS templates run both jobs automatically when `ReconciliationSecretArn` is supplied, granting the application read access only to the supplied secret ARNs.
+
+Each invocation checks at most 100 users, four at a time, within an 18-second budget, and resumes using a stored cursor. Large directories need multiple schedule intervals. HTTP failures retain the last known state, return `partial-failure`, and retry on a subsequent cycle. The admin page shows the latest run and failures; `RECONCILE.lastCompleteCycle` records only fully successful cycles. Monitor the scheduler/Lambda errors and these directory records, alert on stale successful cycles, and retain/export `AUTH_AUDIT` using your operational policy. No fixed offboarding SLA is implied by the five-minute schedule.
+
+## Sign-out and remaining boundaries
+
+Ordinary sign-out revokes the current Keylo browser session. **Your account → Sign out and revoke my connections** invalidates all of the person's Keylo sessions and personal MCP credentials. Project export tokens and mobile delivery credentials belong to the project and require separate rotation if the departing user possessed them.
+
+MCP saves re-check the credential, owner and current directory state inside the same conditional transaction as the translations. A revocation or membership change that commits first prevents a competing MCP write. An already committed operation cannot be recalled; an in-flight read or ordinary browser operation may finish. Placeholder contract checks on MCP writes reject missing/changed named arguments, printf types, key references, ICU argument types/selectors/numeric substitutions and formatting tags, but cannot prove translation quality or all application-specific syntax.
+
+Keylo sign-out does not end the IdP session. SAML Single Logout, encrypted assertions, unsolicited IdP-initiated login, OIDC back-channel logout and event-hook ingestion are not implemented. Upstream changes take effect after successful provisioning/reconciliation; JIT-only deployments still depend on sign-in refresh or manual blocking. Verify real IdP mappings, group push, deactivation/suspension, reconciliation failures, MFA, secret permissions and DynamoDB concurrency in staging before production. Local fixtures do not replace that integration check.
+
+Protocol references: [Okta SCIM 2.0](https://developer.okta.com/docs/api/openapi/okta-scim/guides/scim-20), [Okta application assignment states](https://developer.okta.com/docs/api/openapi/okta-management/management/tags/applicationusers/other/getapplicationuser), [SCIM protocol](https://www.rfc-editor.org/rfc/rfc7644.html).

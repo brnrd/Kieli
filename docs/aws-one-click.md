@@ -75,3 +75,7 @@ The installer smoke builds a local QA ZIP, extracts it into a clean temporary di
 A real clean-account AWS install/upgrade, regional artifact access, Secrets Manager permissions, Lambda's managed runtime/layer, and DynamoDB transaction behavior still require integration verification before advertising the installer as production-ready. No live AWS integration run has been performed in this checkout.
 
 References: [CloudFormation quick-create links](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stacks-quick-create-links.html), [Lambda ZIP deployment](https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-zip.html), [Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter).
+
+## Optional SSO lifecycle configuration
+
+Both templates accept `SsoProvisioningMode=jit|scim`, `ScimSecretArn` (plain provisioning token; required in SCIM mode), and `ReconciliationSecretArn` (JSON with `origin`, `appId`, `apiToken`). These options require OIDC or SAML. Secrets are operator-supplied and are never template outputs. The runtime receives read permission only for the configured secret ARNs; custom KMS keys need a separately scoped decrypt grant. When reconciliation is configured, the five-minute maintenance runner invokes it alongside snapshots, with bounded work and resumable progress. See [SSO lifecycle setup and limitations](sso-lifecycle.md) before enabling SCIM; provision an administrator and its pushed group first.

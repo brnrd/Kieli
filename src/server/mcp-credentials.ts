@@ -4,6 +4,7 @@ import type { AuthMode, Identity, McpTokenView, Project } from "../shared";
 import { authorize, hashToken } from "./auth";
 import { config } from "./config";
 import { HttpError } from "./errors";
+import { SsoDirectory } from "./sso-directory";
 import { LocalAuth, userIdentity } from "./local-auth";
 import { Conflict, getStore, type Change, type Store } from "./store";
 
@@ -13,6 +14,7 @@ type Credential = McpTokenView & {
   createdBy: string;
   authMode: AuthMode;
   ownerAuthVersion?: number;
+  ownerPrincipalId?: string;
   ttl: number;
 };
 export function mcpAudit(
@@ -42,6 +44,7 @@ const view = ({
   createdBy,
   authMode,
   ownerAuthVersion,
+  ownerPrincipalId,
   ttl,
   ...safe
 }: Credential): McpTokenView => safe;
@@ -91,6 +94,8 @@ export class McpCredentials {
       );
     const mode = config().authMode;
     let ownerAuthVersion: number | undefined;
+    let ownerPrincipalId: string | undefined;
+    let guards: Change[] = [];
     let expiry = Date.now() + data.expiresInDays * 86400000;
     if (mode === "local") {
       const user = identity.sub.startsWith("local:")
@@ -99,8 +104,16 @@ export class McpCredentials {
       if (!user || user.status !== "active") throw invalid();
       authorize(userIdentity(user, 0), projectId, "manager");
       ownerAuthVersion = user.authVersion;
+      guards = [
+        {
+          pk: "USERS",
+          sk: `USER#${user.id}`,
+          check: true,
+          expectedVersion: user.version,
+        },
+      ];
     } else if (mode !== "demo") {
-      // Group assignments are a sign-in snapshot until IdP lifecycle sync exists.
+      // Keep the absolute sign-in expiry in addition to current directory checks.
       const until =
         Math.min(
           identity.sessionExpiresAt ?? 0,
@@ -108,6 +121,15 @@ export class McpCredentials {
         ) * 1000;
       if (identity.provider !== mode || until <= Date.now()) throw invalid();
       expiry = Math.min(expiry, until);
+      if (!identity.principalId || identity.accessVersion === undefined)
+        throw invalid();
+      guards = await new SsoDirectory(this.store).guards(
+        identity.principalId,
+        identity.accessVersion,
+        projectId,
+      );
+      ownerPrincipalId = identity.principalId;
+      ownerAuthVersion = identity.accessVersion;
     }
     const secret = `keylo_mcp_${projectId}.${randomBytes(32).toString("hex")}`;
     const id = hashToken(secret);
@@ -123,11 +145,13 @@ export class McpCredentials {
       createdByName: identity.name,
       authMode: mode,
       ...(ownerAuthVersion === undefined ? {} : { ownerAuthVersion }),
+      ...(ownerPrincipalId ? { ownerPrincipalId } : {}),
       createdAt: new Date().toISOString(),
       expiresAt: new Date(expiry).toISOString(),
       ttl: Math.ceil(expiry / 1000),
     };
     await this.store.transact([
+      ...guards,
       { pk: `PROJECT#${projectId}`, sk: `MCP_TOKEN#${id}`, value: credential },
       mcpAudit("mcp.credential_created", identity.sub, projectId, {
         credential: id,
@@ -164,6 +188,68 @@ export class McpCredentials {
       }
     }
   }
+  async writeGuards(identity: Identity, projectId: string): Promise<Change[]> {
+    const grant = identity.mcp;
+    if (!grant || grant.projectId !== projectId) throw invalid();
+    const credential = await this.store.get<Credential>(
+      `PROJECT#${projectId}`,
+      `MCP_TOKEN#${grant.credentialId}`,
+    );
+    if (
+      !credential ||
+      credential.createdBy !== identity.sub ||
+      credential.authMode !== config().authMode ||
+      Date.parse(credential.expiresAt) <= Date.now() ||
+      JSON.stringify(credential.languages) !==
+        JSON.stringify(grant.languages) ||
+      credential.allowOverwrite !== grant.allowOverwrite
+    )
+      throw invalid();
+    const guards: Change[] = [
+      {
+        pk: `PROJECT#${projectId}`,
+        sk: `MCP_TOKEN#${credential.id}`,
+        check: true,
+        expectedVersion: credential.version,
+      },
+    ];
+    if (credential.authMode === "local") {
+      const user = await new LocalAuth(this.store).getUser(
+        credential.createdBy.slice(6),
+      );
+      if (
+        !user ||
+        user.status !== "active" ||
+        user.authVersion !== credential.ownerAuthVersion
+      )
+        throw invalid();
+      try {
+        authorize(userIdentity(user, 0), projectId, "manager");
+      } catch {
+        throw invalid();
+      }
+      guards.push({
+        pk: "USERS",
+        sk: `USER#${user.id}`,
+        check: true,
+        expectedVersion: user.version,
+      });
+    } else if (credential.authMode !== "demo") {
+      if (
+        !credential.ownerPrincipalId ||
+        credential.ownerAuthVersion === undefined
+      )
+        throw invalid();
+      guards.push(
+        ...(await new SsoDirectory(this.store).guards(
+          credential.ownerPrincipalId,
+          credential.ownerAuthVersion,
+          projectId,
+        )),
+      );
+    }
+    return guards;
+  }
   async authenticate(request: Request): Promise<Identity> {
     const match =
       /^Bearer (keylo_mcp_([a-z0-9][a-z0-9-]{0,47})\.[a-f0-9]{64})$/.exec(
@@ -196,6 +282,18 @@ export class McpCredentials {
       } catch {
         throw invalid();
       }
+    }
+    if (credential.authMode === "okta" || credential.authMode === "saml") {
+      if (
+        !credential.ownerPrincipalId ||
+        credential.ownerAuthVersion === undefined
+      )
+        throw invalid();
+      await new SsoDirectory(this.store).guards(
+        credential.ownerPrincipalId,
+        credential.ownerAuthVersion,
+        projectId,
+      );
     }
     await new LocalAuth(this.store).limit(`mcp:${id}`, 120, 60);
     if (

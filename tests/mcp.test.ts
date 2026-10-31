@@ -5,6 +5,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { ZodError } from "zod";
 import type { Identity } from "../src/shared";
 import { HttpError, hashToken, authenticate } from "../src/server/auth";
+import { SsoDirectory } from "../src/server/sso-directory";
 import { McpCredentials } from "../src/server/mcp-credentials";
 import { handleMcp } from "../src/server/mcp";
 import { KeyloService } from "../src/server/service";
@@ -210,13 +211,13 @@ test("overwriting needs both credential permission and explicit per-call intent"
   const f = await fixture();
   await assert.rejects(
     f.svc.setMcpTranslations(f.identity, "website", {
-      updates: [update("home.cta")],
+      updates: [update("home.cta", 1, { fr: "Démarrer" })],
     }),
     denied(409),
   );
   await assert.rejects(
     f.svc.setMcpTranslations(f.identity, "website", {
-      updates: [update("home.cta")],
+      updates: [update("home.cta", 1, { fr: "Démarrer" })],
       overwriteExisting: true,
     }),
     denied(403),
@@ -224,12 +225,12 @@ test("overwriting needs both credential permission and explicit per-call intent"
   const enabled = await fixture(true);
   await assert.rejects(
     enabled.svc.setMcpTranslations(enabled.identity, "website", {
-      updates: [update("home.cta")],
+      updates: [update("home.cta", 1, { fr: "Démarrer" })],
     }),
     denied(409),
   );
   await enabled.svc.setMcpTranslations(enabled.identity, "website", {
-    updates: [update("home.cta")],
+    updates: [update("home.cta", 1, { fr: "Démarrer" })],
     overwriteExisting: true,
   });
 });
@@ -237,14 +238,14 @@ test("stale versions and any invalid member roll back the entire batch", async (
   const f = await fixture(true);
   await assert.rejects(
     f.svc.setMcpTranslations(f.identity, "website", {
-      updates: [update(), update("home.cta", 99)],
+      updates: [update(), update("home.cta", 99, { fr: "Démarrer" })],
       overwriteExisting: true,
     }),
     Conflict,
   );
   assert.equal((await f.svc.key(admin, "website", "home.title")).version, 1);
   await f.svc.setMcpTranslations(f.identity, "website", {
-    updates: [update(), update("home.cta")],
+    updates: [update(), update("home.cta", 1, { fr: "Démarrer" })],
     overwriteExisting: true,
   });
   assert.equal((await f.svc.key(admin, "website", "home.cta")).version, 2);
@@ -453,13 +454,20 @@ test("local creator disablement, auth epoch and project membership are live auth
 });
 test("SSO credentials cannot outlive their sign-in snapshot", async () => {
   const f = await fixture();
+  const previousIssuer = process.env.SAML_IDP_ISSUER;
+  process.env.SAML_IDP_ISSUER = "https://idp.example.com";
   process.env.AUTH_MODE = "saml";
   process.env.APP_ORIGIN = "https://copy.example.com";
   try {
     const now = Math.floor(Date.now() / 1000);
     const identity: Identity = {
-      ...admin,
-      provider: "saml",
+      ...(
+        await new SsoDirectory(f.store).login({
+          ...admin,
+          provider: "saml",
+          authTime: now,
+        })
+      ).identity,
       authTime: now,
       sessionExpiresAt: now + 120,
     };
@@ -478,6 +486,8 @@ test("SSO credentials cannot outlive their sign-in snapshot", async () => {
       denied(401),
     );
   } finally {
+    if (previousIssuer === undefined) delete process.env.SAML_IDP_ISSUER;
+    else process.env.SAML_IDP_ISSUER = previousIssuer;
     process.env.AUTH_MODE = "demo";
     process.env.APP_ORIGIN = "http://localhost:4321";
   }
@@ -497,14 +507,14 @@ test("racing batches commit one complete winner, with matching counters and audi
   const settled = await Promise.allSettled([
     f.svc.setMcpTranslations(f.identity, "website", {
       updates: [
-        update("home.title", 1, { fr: "A title" }),
+        update("home.title", 1, { fr: "A title {name}" }),
         update("home.cta", 1, { fr: "A button" }),
       ],
       overwriteExisting: true,
     }),
     f.svc.setMcpTranslations(f.identity, "website", {
       updates: [
-        update("home.title", 1, { fr: "B title" }),
+        update("home.title", 1, { fr: "B title {name}" }),
         update("home.cta", 1, { fr: "B button" }),
       ],
       overwriteExisting: true,

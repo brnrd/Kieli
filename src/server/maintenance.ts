@@ -29,7 +29,7 @@ async function secret() {
     throw new HttpError(503, "Automatic snapshot runner is not configured.");
   return value;
 }
-export async function runSnapshotJob(request: Request) {
+export async function authenticateMaintenance(request: Request) {
   const expected = createHash("sha256")
     .update(await secret())
     .digest();
@@ -42,6 +42,9 @@ export async function runSnapshotJob(request: Request) {
     .digest();
   if (!timingSafeEqual(expected, supplied))
     throw new HttpError(401, "Invalid job credential.");
+}
+export async function runSnapshotJob(request: Request) {
+  await authenticateMaintenance(request);
   const store = await getStore();
   const previous = await store.get<{ version: number; expires: number }>(
     "WORKSPACE",
@@ -83,6 +86,46 @@ export async function runSnapshotJob(request: Request) {
         { version: version + 1, expires: 0 },
         version,
       )
+      .catch(() => {});
+  }
+}
+
+export async function runIdentityJob(request: Request) {
+  await authenticateMaintenance(request);
+  const { config } = await import("./config");
+  if (!["okta", "saml"].includes(config().authMode))
+    return { status: "disabled" };
+  const { reconciliationSettings, SsoReconciler } =
+    await import("./sso-reconcile");
+  const settings = await reconciliationSettings();
+  if (!settings) return { status: "disabled" };
+  const store = await getStore(),
+    { SsoDirectory } = await import("./sso-directory"),
+    directory = new SsoDirectory(store);
+  const pk = directory.scope.pk,
+    previous = await store.get<{ version: number; expires: number }>(
+      pk,
+      "RECONCILE_LOCK",
+    );
+  if (previous && previous.expires > Date.now())
+    return { status: "already-running" };
+  const version = (previous?.version ?? 0) + 1;
+  try {
+    await store.put(
+      pk,
+      "RECONCILE_LOCK",
+      { version, expires: Date.now() + 60000 },
+      previous?.version,
+    );
+  } catch (error) {
+    if (error instanceof Conflict) return { status: "already-running" };
+    throw error;
+  }
+  try {
+    return await new SsoReconciler(store, settings).run();
+  } finally {
+    await store
+      .put(pk, "RECONCILE_LOCK", { version: version + 1, expires: 0 }, version)
       .catch(() => {});
   }
 }

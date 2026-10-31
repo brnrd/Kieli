@@ -22,8 +22,9 @@ jobs:
       - run: npm run smoke:features
       - run: npm run smoke:local
       - run: npm run smoke:saml
+      - run: npm run smoke:sso
       - run: npm run smoke:mcp
       - run: npm run smoke:install
       - run: node scripts/render-aws-template.mjs /tmp/keylo-install-template.yaml
-      - run: pipx run cfn-lint /tmp/keylo-install-template.yaml infra/release-publisher.yaml
+      - run: pipx run cfn-lint /tmp/keylo-install-template.yaml infra/release-publisher.yaml infra/template.yaml
       - run: npm audit --omit=dev --audit-level=high

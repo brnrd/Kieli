@@ -4,6 +4,7 @@ import { HttpError } from "../../server/auth";
 import { Conflict, InvalidCursor } from "../../server/store";
 import { service } from "../../server/service";
 import { readJSON } from "../../server/http";
+import { handleSsoApi } from "../../server/sso-api";
 import { handleAccountApi } from "../../server/account-api";
 import { mcpCredentials } from "../../server/mcp-credentials";
 import { zipSync, strToU8 } from "fflate";
@@ -15,6 +16,8 @@ export const ALL: APIRoute = async (context) => {
   try {
     if (params.path === "health" && request.method === "GET")
       return Response.json({ status: "ok" });
+    const ssoResponse = await handleSsoApi(context);
+    if (ssoResponse) return ssoResponse;
     const accountResponse = await handleAccountApi(context);
     if (accountResponse) return accountResponse;
     const identity = locals.identity;

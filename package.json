@@ -15,6 +15,7 @@
     "smoke": "node scripts/smoke.mjs",
     "smoke:local": "node scripts/smoke-local.mjs",
     "smoke:saml": "node --import tsx scripts/smoke-saml.mjs",
+    "smoke:sso": "node --import tsx scripts/smoke-saml.mjs --scim",
     "seed": "node --env-file-if-exists=.env --import tsx src/scripts/seed.ts",
     "users:bootstrap": "node --env-file-if-exists=.env --import tsx src/scripts/users.ts bootstrap",
     "users:recover": "node --env-file-if-exists=.env --import tsx src/scripts/users.ts recover",
@@ -24,6 +25,7 @@
     "smoke:install": "node scripts/smoke-install.mjs",
     "prebuild": "node scripts/package-sdks.mjs",
     "snapshots:run": "node --env-file-if-exists=.env scripts/snapshots.mjs",
+    "identities:reconcile": "node --env-file-if-exists=.env scripts/snapshots.mjs identities",
     "smoke:features": "node scripts/smoke-features.mjs"
   },
   "dependencies": {

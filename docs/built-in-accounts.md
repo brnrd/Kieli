@@ -82,6 +82,6 @@ The operator's AWS identity must be authorized to access that table. No AWS acco
 
 ## Boundaries
 
-This first built-in mode uses email/password with administrator-issued activation/reset links. Self-service email delivery, local MFA/passkeys, SCIM, and automatic identity-provider offboarding are not implemented. Okta remains available when your organization requires centrally enforced MFA and identity lifecycle policies. Accounts are not automatically linked by matching email when switching modes.
+This first built-in mode uses email/password with administrator-issued activation/reset links. Self-service email delivery and local MFA/passkeys are not implemented. Local accounts do not use SCIM; [SCIM provisioning and Okta reconciliation](sso-lifecycle.md) are optional features of SSO deployments. Okta remains available when your organization requires centrally enforced MFA and identity lifecycle policies. Accounts are not automatically linked by matching email when switching modes.
 
 References: [OWASP password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html), [OWASP authentication guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html).

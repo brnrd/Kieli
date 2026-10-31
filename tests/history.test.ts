@@ -7,6 +7,7 @@ import {
   type Change,
 } from "../src/server/store";
 import { KeyloService } from "../src/server/service";
+import { McpCredentials } from "../src/server/mcp-credentials";
 import { ProjectHistory } from "../src/server/project-history";
 import { HttpError } from "../src/server/errors";
 import { dataPrefix } from "../src/server/project-data";
@@ -453,7 +454,7 @@ test("snapshot integrity survives reordered DynamoDB map attributes", async () =
 });
 
 test("plural completion follows project settings and MCP fills forms without changing populated copy or variables", async () => {
-  const { svc } = await fixture();
+  const { svc, store } = await fixture();
   await svc.createKey(admin, "website", {
     name: "items",
     plural: true,
@@ -468,15 +469,16 @@ test("plural completion follows project settings and MCP fills forms without cha
     languages: ["fr"],
   });
   assert.equal(page.items.find((key) => key.name === "items")?.plural, true);
-  const identity: Identity = {
-    ...user,
-    mcp: {
-      projectId: "website",
-      credentialId: "fixture",
-      languages: ["fr"],
-      allowOverwrite: false,
-    },
-  };
+  const credentials = new McpCredentials(store);
+  const issued = await credentials.create(admin, "website", {
+    name: "Fixture",
+    languages: ["fr"],
+  });
+  const identity = await credentials.authenticate(
+    new Request("http://localhost:4321/mcp", {
+      headers: { authorization: `Bearer ${issued.secret}` },
+    }),
+  );
   let key = await svc.key(admin, "website", "items");
   await assert.rejects(
     svc.setMcpTranslations(identity, "website", {

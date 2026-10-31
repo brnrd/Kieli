@@ -1,5 +1,6 @@
 import { useState, type SyntheticEvent } from "react";
 import { Check, Loader2, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ModalShell } from "./ui";
 import type { AuthMode, Identity } from "../shared";
 import { api } from "./api";
 
@@ -17,6 +18,7 @@ export default function Account({
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [revoking, setRevoking] = useState(false);
   async function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -159,6 +161,64 @@ export default function Account({
               : "The demo uses a development identity. Enable built-in accounts with AUTH_MODE=local."}
           </p>
         </div>
+      )}
+      {mode !== "demo" && (
+        <section className="project-history-section">
+          <h2>Sessions and connections</h2>
+          <p>
+            Sign out of all Keylo sessions and revoke your personal Claude Code
+            connections. Project export and mobile delivery keys are managed
+            separately by project managers.
+          </p>
+          <button className="button" onClick={() => setRevoking(true)}>
+            Sign out and revoke my connections
+          </button>
+        </section>
+      )}
+      {revoking && (
+        <ModalShell
+          title="Sign out and revoke your connections?"
+          onClose={() => {
+            if (!busy) setRevoking(false);
+          }}
+        >
+          <div className="dialog-body">
+            <p>
+              You will need to sign in again and create new MCP credentials for
+              Claude Code. This applies to all your Keylo browser sessions.
+            </p>
+            {error && (
+              <div className="error-box" role="alert">
+                {error}
+              </div>
+            )}
+          </div>
+          <div className="dialog-footer">
+            <button
+              className="button"
+              disabled={busy}
+              onClick={() => setRevoking(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="button primary"
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                setError("");
+                void api("auth/revoke-all", { method: "POST", body: "{}" })
+                  .then(() => window.location.assign("/login"))
+                  .catch((error) => {
+                    setError(error.message);
+                    setBusy(false);
+                  });
+              }}
+            >
+              Sign out and revoke
+            </button>
+          </div>
+        </ModalShell>
       )}
     </section>
   );

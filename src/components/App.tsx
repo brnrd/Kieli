@@ -60,6 +60,7 @@ import Developers from "./Developers";
 import ProjectDirectory from "./ProjectDirectory";
 import LokaliseImport from "./LokaliseImport";
 import UserManagement from "./UserManagement";
+import SsoUserManagement from "./SsoUserManagement";
 import Account from "./Account";
 import AccessInfo from "./AccessInfo";
 import Appearance from "./Appearance";
@@ -559,7 +560,7 @@ export default function App({
             </span>
             {identity.admin && (
               <AdminMenu
-                manageUsers={bootstrap.authMode === "local"}
+                manageUsers={bootstrap.authMode !== "demo"}
                 onImport={() => openModal("import")}
                 onFiles={() => openModal("files")}
                 onUsers={() => workspaceNavigate("users")}
@@ -581,10 +582,13 @@ export default function App({
                 projects={projects}
                 notify={notify}
               />
+            ) : identity.admin &&
+              ["okta", "saml"].includes(bootstrap.authMode) ? (
+              <SsoUserManagement identity={identity} notify={notify} />
             ) : (
               <Empty
                 title="Access unavailable"
-                description="Only workspace admins can manage built-in accounts."
+                description="Only workspace admins can manage people and access."
               />
             )
           ) : overview || !projects.length ? (
