@@ -7,6 +7,7 @@ self.onmessage = (
     platform: string;
     kind?: "files" | "lokalise";
     language?: string;
+    updateExisting?: boolean;
   }>,
 ) => {
   try {
@@ -17,6 +18,7 @@ self.onmessage = (
               new Uint8Array(event.data.bytes),
               event.data.filename,
               event.data.language,
+              event.data.updateExisting,
             )
           : parseLokalise(
               new Uint8Array(event.data.bytes),

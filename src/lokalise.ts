@@ -97,7 +97,7 @@ function flat(value: unknown, filename: string) {
   visit(value, [], 0);
   return result;
 }
-function validate(preview: ImportPreview) {
+function validate(preview: ImportPreview, allowExternalReferences = false) {
   if (!preview.languages.length || preview.languages.length > 30)
     throw new Error("An import must have between 1 and 30 languages.");
   if (!preview.keys.length)
@@ -133,8 +133,25 @@ function validate(preview: ImportPreview) {
   }
   // Validate references across the entire import, then put dependencies first so
   // bounded API batches never introduce references to keys not imported yet.
+  const external = allowExternalReferences
+    ? [
+        ...new Set(
+          preview.keys.flatMap((key) =>
+            Object.values(key.translations).flatMap(references),
+          ),
+        ),
+      ]
+        .filter((name) => !seen.has(name))
+        .map((name) => ({
+          name,
+          translations: {},
+          namespace: "general",
+          description: "",
+          tags: [],
+        }))
+    : [];
   resolveProject(
-    preview.keys as never,
+    [...preview.keys, ...external] as never,
     { languages: preview.languages } as never,
     true,
   );

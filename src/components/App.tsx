@@ -42,7 +42,15 @@ import { isComplete } from "../shared";
 
 type Tab = "translations" | "languages" | "developers" | "settings" | "access";
 type Modal =
-  "import" | "files" | "key" | "project" | "export" | "delete" | "help" | null;
+  | "import"
+  | "files"
+  | "update-files"
+  | "key"
+  | "project"
+  | "export"
+  | "delete"
+  | "help"
+  | null;
 const initials = (name: string) =>
   name
     .split(" ")
@@ -53,6 +61,7 @@ const initials = (name: string) =>
 
 import { api } from "./api";
 import { IconButton, ModalShell, Empty, LanguageMark } from "./ui";
+import ProjectUpdate from "./ProjectUpdate";
 import KeyForm from "./KeyForm";
 import ProjectForm from "./ProjectForm";
 import ExportForm from "./ExportForm";
@@ -686,6 +695,14 @@ export default function App({
                     <ArrowDownToLine size={16} />
                     Export
                   </button>
+                  {manager && (
+                    <button
+                      className="button"
+                      onClick={() => openModal("update-files")}
+                    >
+                      Update from files
+                    </button>
+                  )}
                   {manager && (
                     <button
                       className="button primary"
@@ -1478,6 +1495,26 @@ export default function App({
                   ? "Project imported from Lokalise."
                   : "Translation files imported.",
               );
+            }}
+          />
+        </ModalShell>
+      )}
+      {modal === "update-files" && project && manager && (
+        <ModalShell
+          title="Update project from files"
+          subtitle={project.name}
+          onClose={closeModal}
+          wide
+        >
+          <ProjectUpdate
+            project={project}
+            onBusyChange={setBusy}
+            onCancel={closeModal}
+            onComplete={async () => {
+              await refreshKeys();
+              setBusy(false);
+              setModal(null);
+              notify("Project files updated.");
             }}
           />
         </ModalShell>

@@ -122,6 +122,14 @@ export const ALL: APIRoute = async (context) => {
           await svc.updateProject(identity, id, await readJSON(request)),
         );
     }
+    if (parts[2] === "updates") {
+      if (parts.length === 4 && parts[3] === "preview" && method === "POST")
+        return Response.json(
+          await svc.previewUpdate(identity, id, await readJSON(request)),
+        );
+      if (parts.length === 5 && parts[4] === "apply" && method === "POST")
+        return Response.json(await svc.applyUpdate(identity, id, parts[3]!));
+    }
     if (parts[2] === "trash") {
       if (parts.length === 3 && method === "GET")
         return Response.json(

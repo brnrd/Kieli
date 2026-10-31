@@ -59,6 +59,7 @@ export function parseTranslationFiles(
   bytes: Uint8Array,
   filename: string,
   languageHint = "",
+  allowExternalReferences = false,
 ): ImportPreview {
   if (bytes.length > MAX_FILE)
     throw new Error("Choose a file smaller than 10 MB.");
@@ -162,14 +163,17 @@ export function parseTranslationFiles(
     warnings.add(
       `${ignored} ZIP directories or macOS metadata entries ignored.`,
     );
-  return validateImportPreview({
-    name: filename.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
-    description: "Imported from translation files",
-    sourceLanguage: languages.has("en")
-      ? "en"
-      : (languages.keys().next().value ?? ""),
-    languages: [...languages.values()],
-    keys: [...keys.values()].sort((a, b) => a.name.localeCompare(b.name)),
-    warnings: [...warnings],
-  });
+  return validateImportPreview(
+    {
+      name: filename.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
+      description: "Imported from translation files",
+      sourceLanguage: languages.has("en")
+        ? "en"
+        : (languages.keys().next().value ?? ""),
+      languages: [...languages.values()],
+      keys: [...keys.values()].sort((a, b) => a.name.localeCompare(b.name)),
+      warnings: [...warnings],
+    },
+    allowExternalReferences,
+  );
 }

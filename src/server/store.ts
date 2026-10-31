@@ -1,3 +1,4 @@
+import { HttpError } from "./errors";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { config, required } from "./config";
@@ -35,6 +36,16 @@ export interface Store {
     prefix: string,
     options: PageOptions,
   ): Promise<{ items: T[]; nextCursor?: string }>;
+}
+function validateTransaction(changes: Change[]) {
+  if (
+    changes.length > 100 ||
+    Buffer.byteLength(JSON.stringify(changes)) > 3.5 * 1024 * 1024
+  )
+    throw new HttpError(
+      413,
+      "Write batch exceeds the transaction size limit. Retry with fewer keys.",
+    );
 }
 export class Conflict extends Error {
   constructor() {
@@ -125,6 +136,7 @@ export async function sqliteStore(path: string): Promise<Store> {
       remove(pk, sk, expectedVersion);
     },
     async transact(changes) {
+      validateTransaction(changes);
       db.exec("BEGIN IMMEDIATE");
       try {
         for (const change of changes) {
@@ -296,6 +308,7 @@ async function dynamoStore(): Promise<Store> {
       );
     },
     async transact(changes) {
+      validateTransaction(changes);
       await guarded(() =>
         client.send(
           new TransactWriteCommand({

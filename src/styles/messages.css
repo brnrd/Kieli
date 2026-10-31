@@ -380,3 +380,19 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.project-update-body > p {
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+.update-options summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.update-options {
+  margin-bottom: 14px;
+}
+.update-diff {
+  margin-top: 14px;
+}

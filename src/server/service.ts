@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ProjectUpdates, type KeyChange } from "./project-updates";
 import { randomUUID } from "node:crypto";
 import {
   editChange,
@@ -201,13 +202,7 @@ export class KeyloService {
   private async persistKeys(
     identity: Identity,
     id: string,
-    changes: {
-      old?: TranslationKey;
-      next?: TranslationKey;
-      expectedVersion?: number;
-      translatedLocales?: string[];
-      expectedSourceContext?: string;
-    }[],
+    changes: KeyChange[],
     additionalChanges: Change[] = [],
     expectedProject?: Project,
     commitAuthorization?: () => Promise<Change[]>,
@@ -913,6 +908,28 @@ export class KeyloService {
       [],
       project,
     );
+  }
+  private updates(identity: Identity, id: string) {
+    return new ProjectUpdates(
+      this.store,
+      this,
+      (changes, extra, project, origin) =>
+        this.persistKeys(
+          identity,
+          id,
+          changes,
+          extra,
+          project,
+          undefined,
+          origin,
+        ),
+    );
+  }
+  async previewUpdate(identity: Identity, id: string, input: unknown) {
+    return this.updates(identity, id).preview(identity, id, input);
+  }
+  async applyUpdate(identity: Identity, id: string, plan: string) {
+    return this.updates(identity, id).apply(identity, id, plan);
   }
   async keyHistory(
     identity: Identity,

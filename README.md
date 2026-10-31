@@ -50,6 +50,7 @@ Production requires an HTTPS `APP_ORIGIN` and an explicit `AUTH_MODE=local`, `ok
 - Multi-language key editor with source copy, context, tags, and optimistic concurrency control.
 - Missing/outdated/current translation states, source revisions and linked-source change detection, with freshness-aware completion and snapshot recovery.
 - Per-translation change history and restore, plus 30-day recoverable key deletion. [Recovery behavior and limits](docs/translation-history.md).
+- Previewed updates to existing projects, preserving targets by default, with explicit overwrite, conflict detection and retry receipts. [Project update behavior](docs/project-updates.md).
 - Transactional project counters: reads of a key page do not fetch all translations to calculate progress.
 - Lokalise JSON ZIP and API-snapshot import with local preview, validation, explicit conversion warnings, and retryable atomic batches.
 - Optional built-in email/password accounts with Argon2id hashing, admin-issued activation/reset links, project-role assignments, account disabling, shared login throttling, and security events.

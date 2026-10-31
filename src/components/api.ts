@@ -1,3 +1,11 @@
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`/api/${path}`, {
     ...options,
@@ -12,7 +20,10 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data.error ?? "Unable to complete the request.");
+    throw new ApiError(
+      data.error ?? "Unable to complete the request.",
+      response.status,
+    );
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }

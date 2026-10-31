@@ -287,6 +287,29 @@ try {
   );
   assert.equal(recovered.id, recoverable.id);
   assert.ok(recovered.version > recoverable.version);
+  const update = await json(
+    await api("/api/projects/features/updates/preview", "POST", {
+      keys: [
+        {
+          name: "imported.source",
+          translations: { en: "New source", fr: "Nouvelle source" },
+        },
+      ],
+    }),
+  );
+  assert.equal(update.created, 1);
+  const receipt = await json(
+    await api(`/api/projects/features/updates/${update.id}/apply`, "POST"),
+  );
+  assert.equal(receipt.replayed, false);
+  assert.equal(
+    (
+      await json(
+        await api(`/api/projects/features/updates/${update.id}/apply`, "POST"),
+      )
+    ).replayed,
+    true,
+  );
   const archive = await api("/downloads/keylo-sdks.zip");
   assert.equal(archive.status, 200);
   assert.ok((await archive.arrayBuffer()).byteLength > 1000);
