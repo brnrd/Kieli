@@ -135,3 +135,5 @@ Managers can create/download/restore [project snapshots](docs/project-history.md
 See [COLLABORATING.md](COLLABORATING.md) for setup, product scope and contribution checks. GitHub provides bug/feature issue forms and a pull request template. [AGENTS.md](AGENTS.md) gives coding agents repository-specific architecture, security and validation guidance.
 
 Builds can require current, complete translations with `node cli/keylo.mjs pull --config .keylo.json --require-current` (or export API `requireCurrent=true`). All write paths share server-side argument validation; see [message checks](docs/messages.md#shared-argument-validation) for supported syntax and draft/recovery behavior.
+
+The next implementation sequence is recorded in the [essentials roadmap](docs/roadmap.md), starting with editor navigation.
