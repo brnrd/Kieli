@@ -1150,14 +1150,14 @@ export default function App({
                                                 SOURCE
                                               </span>
                                             )}
+                                            {key.outdatedLanguages?.includes(
+                                              l.code,
+                                            ) && (
+                                              <span className="freshness-badge">
+                                                Outdated
+                                              </span>
+                                            )}
                                           </div>
-                                          {key.outdatedLanguages?.includes(
-                                            l.code,
-                                          ) && (
-                                            <span className="freshness-badge">
-                                              Outdated
-                                            </span>
-                                          )}
                                           <button
                                             onClick={() => editKey(key)}
                                             aria-label={`Edit ${l.name} translation for ${key.name}`}
