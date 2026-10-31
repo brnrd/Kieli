@@ -1,0 +1,169 @@
+/* Semantic colors are shared by every page, including sign-in and native dialogs. */
+:root {
+  color-scheme: light;
+  --bg: #fafbf9;
+  --surface: #ffffff;
+  --surface-subtle: #f3f5ef;
+  --surface-muted: #eef2e9;
+  --surface-hover: #e8eddf;
+  --surface-active: #e3ead8;
+  --border: #e0e6d8;
+  --border-subtle: #e9eddf;
+  --border-strong: #cbd8bd;
+  --text: #26372f;
+  --text-strong: #294b38;
+  --text-secondary: #526747;
+  --text-muted: #64725b;
+  --text-disabled: #98a68a;
+  --accent: #294b38;
+  --accent-hover: #385440;
+  --on-accent: #f7faef;
+  --focus: #7a9566;
+  --focus-ring: #8da37e26;
+  --selection: #d8e5c5;
+  --progress: #799467;
+  --progress-track: #e9ede4;
+  --success: #597539;
+  --success-bg: #eff4e7;
+  --success-border: #d9e4c8;
+  --warning: #816828;
+  --warning-bg: #fbf5e6;
+  --warning-border: #e7dabb;
+  --danger: #994b43;
+  --danger-bg: #fff4f0;
+  --danger-border: #ebd7cd;
+  --danger-fill: #aa4d40;
+  --on-danger: #ffffff;
+  --violet: #766087;
+  --violet-bg: #f0ecf5;
+  --violet-border: #e5dfee;
+  --blue: #5c788a;
+  --blue-bg: #e9f1f5;
+  --blue-border: #d9e6ed;
+  --amber: #876b40;
+  --amber-bg: #f7efdf;
+  --amber-border: #ede2c8;
+  --dot-sage: #7d9963;
+  --dot-violet: #a697b2;
+  --dot-amber: #c6a05a;
+  --dot-blue: #7c9fac;
+  --terminal-bg: #293e31;
+  --terminal-text: #d5e8b9;
+  --terminal-muted: #b6c59f;
+  --terminal-border: #40513b;
+  --terminal-hover: #3e5037;
+  --login-glow: #e7efdc;
+  --overlay: #16251d75;
+  --shadow: #182b2114;
+  --shadow-dialog: #13261d40;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141c17;
+  --surface: #1b261f;
+  --surface-subtle: #18221c;
+  --surface-muted: #233026;
+  --surface-hover: #2b3b2d;
+  --surface-active: #314632;
+  --border: #354638;
+  --border-subtle: #2b392e;
+  --border-strong: #506348;
+  --text: #e1e9dc;
+  --text-strong: #e4eddd;
+  --text-secondary: #c1d2b5;
+  --text-muted: #a6b79b;
+  --text-disabled: #72826c;
+  --accent: #bbd5a4;
+  --accent-hover: #d0e6be;
+  --on-accent: #1c2d20;
+  --focus: #b3cf98;
+  --focus-ring: #b3cf9830;
+  --selection: #47653b;
+  --progress: #a8c78c;
+  --progress-track: #344632;
+  --success: #b5d793;
+  --success-bg: #2b3d25;
+  --success-border: #405738;
+  --warning: #e1c17f;
+  --warning-bg: #392f1e;
+  --warning-border: #58472b;
+  --danger: #eeab9e;
+  --danger-bg: #3a2823;
+  --danger-border: #624138;
+  --danger-fill: #aa4d40;
+  --violet: #c2acd5;
+  --violet-bg: #302a3b;
+  --violet-border: #49405b;
+  --blue: #a4c7d8;
+  --blue-bg: #21323b;
+  --blue-border: #354d5b;
+  --amber: #d8b983;
+  --amber-bg: #372e21;
+  --amber-border: #56462c;
+  --dot-sage: #a2bc88;
+  --dot-violet: #b59bc9;
+  --dot-amber: #cfae6e;
+  --dot-blue: #91b7c8;
+  --terminal-bg: #101912;
+  --terminal-text: #c5dcb1;
+  --terminal-muted: #a3b693;
+  --terminal-border: #30412e;
+  --terminal-hover: #263725;
+  --login-glow: #263c27;
+  --overlay: #070e0ac2;
+  --shadow: #00000030;
+  --shadow-dialog: #00000070;
+}
+
+.appearance-picker {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+}
+.appearance-picker > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  padding: 6px 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.appearance-picker > button:hover {
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+:root[data-appearance="auto"] [data-appearance-value="auto"],
+:root[data-appearance="light"] [data-appearance-value="light"],
+:root[data-appearance="dark"] [data-appearance-value="dark"] {
+  background: var(--surface-active);
+  color: var(--text-strong);
+  box-shadow: 0 1px 2px var(--shadow);
+  font-weight: 600;
+}
+.sidebar-bottom > .appearance-picker {
+  margin: 8px 3px 13px;
+}
+.login-page .appearance-picker {
+  width: 218px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+input,
+textarea,
+select {
+  color: var(--text-secondary);
+  background-color: var(--surface);
+}
+@media (forced-colors: active) {
+  .appearance-picker > button[aria-pressed="true"] {
+    outline: 1px solid ButtonText;
+  }
+}

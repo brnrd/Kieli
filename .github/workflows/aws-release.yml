@@ -1,0 +1,97 @@
+name: Package AWS installer
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.targets.outputs.targets }}
+      publish: ${{ steps.targets.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Verify release version
+        if: github.event_name == 'release'
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: node -e 'const p=require("./package.json"); if(process.env.RELEASE_TAG!==`v${p.version}`) throw Error("Release tag must equal v"+p.version);'
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - run: npm run smoke
+      - run: npm run smoke:features
+      - run: npm run smoke:local
+      - run: npm run smoke:saml
+      - run: npm run smoke:mcp
+      - run: npm run smoke:install
+      - run: npm audit --audit-level=moderate
+      - run: npm run package:aws
+      - run: node scripts/render-aws-template.mjs
+      - run: pipx run cfn-lint .aws-release/install-example.yaml infra/release-publisher.yaml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keylo-aws-package
+          path: |
+            .aws-release/*.zip
+            .aws-release/release.json
+            .aws-release/install-example.yaml
+          if-no-files-found: error
+      - name: Resolve optional publishing targets
+        id: targets
+        env:
+          AWS_RELEASE_TARGETS: ${{ vars.AWS_RELEASE_TARGETS }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const targets = JSON.parse(process.env.AWS_RELEASE_TARGETS || '[]');
+          if (!Array.isArray(targets) || targets.length > 10 || targets.some(t => !/^[a-z]{2}-[a-z]+-\d$/.test(t.region) || !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(t.bucket) || !/^arn:aws:iam::\d{12}:role\/[\w/+=,.@-]+$/.test(t.roleArn)) || new Set(targets.map(t => t.region)).size !== targets.length) throw Error('Invalid AWS_RELEASE_TARGETS');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `targets=${JSON.stringify({include: targets})}\npublish=${targets.length > 0}\n`);
+          if (!targets.length) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'AWS package built. Publishing is unconfigured; no resources were deployed and no live launch link exists.\n');
+          JS
+  publish:
+    needs: package
+    if: needs.package.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    environment: aws-release
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix: ${{ fromJSON(needs.package.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: keylo-aws-package
+          path: .aws-release
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ matrix.roleArn }}
+          aws-region: ${{ matrix.region }}
+      - name: Publish immutable release and launch link
+        env:
+          RELEASE_REGION: ${{ matrix.region }}
+          RELEASE_BUCKET: ${{ matrix.bucket }}
+        run: |
+          node scripts/publish-aws.mjs --directory .aws-release --region "$RELEASE_REGION" --bucket "$RELEASE_BUCKET"
+          cat ".aws-release/launch-$RELEASE_REGION.md" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keylo-launch-${{ matrix.region }}
+          path: |
+            .aws-release/install-*.yaml
+            .aws-release/launch-*.md
+            .aws-release/published-*.json

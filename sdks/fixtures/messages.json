@@ -1,0 +1,1012 @@
+[
+  {
+    "locale": "en",
+    "checks": [
+      [
+        "hello",
+        {
+          "name": "Alice"
+        },
+        "Hello Alice"
+      ],
+      [
+        "items",
+        {
+          "count": "0"
+        },
+        "None"
+      ],
+      [
+        "items",
+        {
+          "count": "1"
+        },
+        "1 item"
+      ],
+      [
+        "items",
+        {
+          "count": "3"
+        },
+        "3 items"
+      ],
+      [
+        "rank",
+        {
+          "count": "22"
+        },
+        "22nd"
+      ],
+      [
+        "rank",
+        {
+          "count": "11"
+        },
+        "11th"
+      ],
+      [
+        "nested",
+        {
+          "gender": "male",
+          "count": "3"
+        },
+        "He has 3 items"
+      ],
+      [
+        "quoted",
+        {
+          "count": "1"
+        },
+        "# item"
+      ],
+      [
+        "offset",
+        {
+          "count": "2"
+        },
+        "You and one friend"
+      ],
+      [
+        "offset",
+        {
+          "count": "4"
+        },
+        "You and 3 friends"
+      ],
+      [
+        "hello",
+        {},
+        "FALLBACK"
+      ],
+      [
+        "unknown",
+        {},
+        "FALLBACK"
+      ]
+    ],
+    "bundle": {
+      "schema": 1,
+      "project": "mobile",
+      "locale": "en",
+      "release": "fixture",
+      "rules": {
+        "cardinal": {
+          "one": [
+            [
+              {
+                "operand": "i",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              },
+              {
+                "operand": "v",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "ordinal": {
+          "one": [
+            [
+              {
+                "operand": "n",
+                "mod": 10,
+                "not": false,
+                "ranges": [
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              },
+              {
+                "operand": "n",
+                "mod": 100,
+                "not": true,
+                "ranges": [
+                  [
+                    11,
+                    11
+                  ]
+                ]
+              }
+            ]
+          ],
+          "two": [
+            [
+              {
+                "operand": "n",
+                "mod": 10,
+                "not": false,
+                "ranges": [
+                  [
+                    2,
+                    2
+                  ]
+                ]
+              },
+              {
+                "operand": "n",
+                "mod": 100,
+                "not": true,
+                "ranges": [
+                  [
+                    12,
+                    12
+                  ]
+                ]
+              }
+            ]
+          ],
+          "few": [
+            [
+              {
+                "operand": "n",
+                "mod": 10,
+                "not": false,
+                "ranges": [
+                  [
+                    3,
+                    3
+                  ]
+                ]
+              },
+              {
+                "operand": "n",
+                "mod": 100,
+                "not": true,
+                "ranges": [
+                  [
+                    13,
+                    13
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "messages": {
+        "hello": {
+          "value": "Hello {name}",
+          "nodes": [
+            {
+              "type": "text",
+              "value": "Hello "
+            },
+            {
+              "type": "argument",
+              "value": "name"
+            }
+          ]
+        },
+        "items": {
+          "value": "{count, plural, =0 {None} one {# item} other {# items}}",
+          "nodes": [
+            {
+              "type": "plural",
+              "value": "count",
+              "offset": 0,
+              "ordinal": false,
+              "options": {
+                "=0": [
+                  {
+                    "type": "text",
+                    "value": "None"
+                  }
+                ],
+                "one": [
+                  {
+                    "type": "pound"
+                  },
+                  {
+                    "type": "text",
+                    "value": " item"
+                  }
+                ],
+                "other": [
+                  {
+                    "type": "pound"
+                  },
+                  {
+                    "type": "text",
+                    "value": " items"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "rank": {
+          "value": "{count, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+          "nodes": [
+            {
+              "type": "plural",
+              "value": "count",
+              "offset": 0,
+              "ordinal": true,
+              "options": {
+                "one": [
+                  {
+                    "type": "pound"
+                  },
+                  {
+                    "type": "text",
+                    "value": "st"
+                  }
+                ],
+                "two": [
+                  {
+                    "type": "pound"
+                  },
+                  {
+                    "type": "text",
+                    "value": "nd"
+                  }
+                ],
+                "few": [
+                  {
+                    "type": "pound"
+                  },
+                  {
+                    "type": "text",
+                    "value": "rd"
+                  }
+                ],
+                "other": [
+                  {
+                    "type": "pound"
+                  },
+                  {
+                    "type": "text",
+                    "value": "th"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "nested": {
+          "value": "{gender, select, male {He has {count, plural, one {one item} other {# items}}} other {They have items}}",
+          "nodes": [
+            {
+              "type": "select",
+              "value": "gender",
+              "options": {
+                "male": [
+                  {
+                    "type": "text",
+                    "value": "He has "
+                  },
+                  {
+                    "type": "plural",
+                    "value": "count",
+                    "offset": 0,
+                    "ordinal": false,
+                    "options": {
+                      "one": [
+                        {
+                          "type": "text",
+                          "value": "one item"
+                        }
+                      ],
+                      "other": [
+                        {
+                          "type": "pound"
+                        },
+                        {
+                          "type": "text",
+                          "value": " items"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "other": [
+                  {
+                    "type": "text",
+                    "value": "They have items"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "quoted": {
+          "value": "{count, plural, one {'#' item} other {# items}}",
+          "nodes": [
+            {
+              "type": "plural",
+              "value": "count",
+              "offset": 0,
+              "ordinal": false,
+              "options": {
+                "one": [
+                  {
+                    "type": "text",
+                    "value": "# item"
+                  }
+                ],
+                "other": [
+                  {
+                    "type": "pound"
+                  },
+                  {
+                    "type": "text",
+                    "value": " items"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "offset": {
+          "value": "{count, plural, offset:1 =0 {None} one {You and one friend} other {You and # friends}}",
+          "nodes": [
+            {
+              "type": "plural",
+              "value": "count",
+              "offset": 1,
+              "ordinal": false,
+              "options": {
+                "=0": [
+                  {
+                    "type": "text",
+                    "value": "None"
+                  }
+                ],
+                "one": [
+                  {
+                    "type": "text",
+                    "value": "You and one friend"
+                  }
+                ],
+                "other": [
+                  {
+                    "type": "text",
+                    "value": "You and "
+                  },
+                  {
+                    "type": "pound"
+                  },
+                  {
+                    "type": "text",
+                    "value": " friends"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "locale": "ar",
+    "checks": [
+      [
+        "items",
+        {
+          "count": "0"
+        },
+        "zero"
+      ],
+      [
+        "items",
+        {
+          "count": "1"
+        },
+        "one"
+      ],
+      [
+        "items",
+        {
+          "count": "2"
+        },
+        "two"
+      ],
+      [
+        "items",
+        {
+          "count": "3"
+        },
+        "few"
+      ],
+      [
+        "items",
+        {
+          "count": "11"
+        },
+        "many"
+      ],
+      [
+        "items",
+        {
+          "count": "100"
+        },
+        "other"
+      ],
+      [
+        "items",
+        {
+          "count": "1.5"
+        },
+        "other"
+      ]
+    ],
+    "bundle": {
+      "schema": 1,
+      "project": "mobile",
+      "locale": "ar",
+      "release": "fixture",
+      "rules": {
+        "cardinal": {
+          "zero": [
+            [
+              {
+                "operand": "n",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              }
+            ]
+          ],
+          "one": [
+            [
+              {
+                "operand": "n",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              }
+            ]
+          ],
+          "two": [
+            [
+              {
+                "operand": "n",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    2,
+                    2
+                  ]
+                ]
+              }
+            ]
+          ],
+          "few": [
+            [
+              {
+                "operand": "n",
+                "mod": 100,
+                "not": false,
+                "ranges": [
+                  [
+                    3,
+                    10
+                  ]
+                ]
+              }
+            ]
+          ],
+          "many": [
+            [
+              {
+                "operand": "n",
+                "mod": 100,
+                "not": false,
+                "ranges": [
+                  [
+                    11,
+                    99
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "ordinal": {}
+      },
+      "messages": {
+        "items": {
+          "value": "{count, plural, zero {zero} one {one} two {two} few {few} many {many} other {other}}",
+          "nodes": [
+            {
+              "type": "plural",
+              "value": "count",
+              "offset": 0,
+              "ordinal": false,
+              "options": {
+                "zero": [
+                  {
+                    "type": "text",
+                    "value": "zero"
+                  }
+                ],
+                "one": [
+                  {
+                    "type": "text",
+                    "value": "one"
+                  }
+                ],
+                "two": [
+                  {
+                    "type": "text",
+                    "value": "two"
+                  }
+                ],
+                "few": [
+                  {
+                    "type": "text",
+                    "value": "few"
+                  }
+                ],
+                "many": [
+                  {
+                    "type": "text",
+                    "value": "many"
+                  }
+                ],
+                "other": [
+                  {
+                    "type": "text",
+                    "value": "other"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "locale": "ru",
+    "checks": [
+      [
+        "items",
+        {
+          "count": "1"
+        },
+        "one"
+      ],
+      [
+        "items",
+        {
+          "count": "2"
+        },
+        "few"
+      ],
+      [
+        "items",
+        {
+          "count": "5"
+        },
+        "many"
+      ],
+      [
+        "items",
+        {
+          "count": "21"
+        },
+        "one"
+      ],
+      [
+        "items",
+        {
+          "count": "1.5"
+        },
+        "other"
+      ]
+    ],
+    "bundle": {
+      "schema": 1,
+      "project": "mobile",
+      "locale": "ru",
+      "release": "fixture",
+      "rules": {
+        "cardinal": {
+          "one": [
+            [
+              {
+                "operand": "v",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 10,
+                "not": false,
+                "ranges": [
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 100,
+                "not": true,
+                "ranges": [
+                  [
+                    11,
+                    11
+                  ]
+                ]
+              }
+            ]
+          ],
+          "few": [
+            [
+              {
+                "operand": "v",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 10,
+                "not": false,
+                "ranges": [
+                  [
+                    2,
+                    4
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 100,
+                "not": true,
+                "ranges": [
+                  [
+                    12,
+                    14
+                  ]
+                ]
+              }
+            ]
+          ],
+          "many": [
+            [
+              {
+                "operand": "v",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 10,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "operand": "v",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 10,
+                "not": false,
+                "ranges": [
+                  [
+                    5,
+                    9
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "operand": "v",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 100,
+                "not": false,
+                "ranges": [
+                  [
+                    11,
+                    14
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "ordinal": {}
+      },
+      "messages": {
+        "items": {
+          "value": "{count, plural, one {one} few {few} many {many} other {other}}",
+          "nodes": [
+            {
+              "type": "plural",
+              "value": "count",
+              "offset": 0,
+              "ordinal": false,
+              "options": {
+                "one": [
+                  {
+                    "type": "text",
+                    "value": "one"
+                  }
+                ],
+                "few": [
+                  {
+                    "type": "text",
+                    "value": "few"
+                  }
+                ],
+                "many": [
+                  {
+                    "type": "text",
+                    "value": "many"
+                  }
+                ],
+                "other": [
+                  {
+                    "type": "text",
+                    "value": "other"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "locale": "fr",
+    "checks": [
+      [
+        "items",
+        {
+          "count": "0"
+        },
+        "one"
+      ],
+      [
+        "items",
+        {
+          "count": "1000000"
+        },
+        "many"
+      ],
+      [
+        "items",
+        {
+          "count": "2"
+        },
+        "other"
+      ]
+    ],
+    "bundle": {
+      "schema": 1,
+      "project": "mobile",
+      "locale": "fr",
+      "release": "fixture",
+      "rules": {
+        "cardinal": {
+          "one": [
+            [
+              {
+                "operand": "i",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              }
+            ]
+          ],
+          "many": [
+            [
+              {
+                "operand": "e",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 0,
+                "not": true,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              {
+                "operand": "i",
+                "mod": 1000000,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              {
+                "operand": "v",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "operand": "e",
+                "mod": 0,
+                "not": true,
+                "ranges": [
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "ordinal": {
+          "one": [
+            [
+              {
+                "operand": "n",
+                "mod": 0,
+                "not": false,
+                "ranges": [
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "messages": {
+        "items": {
+          "value": "{count, plural, one {one} many {many} other {other}}",
+          "nodes": [
+            {
+              "type": "plural",
+              "value": "count",
+              "offset": 0,
+              "ordinal": false,
+              "options": {
+                "one": [
+                  {
+                    "type": "text",
+                    "value": "one"
+                  }
+                ],
+                "many": [
+                  {
+                    "type": "text",
+                    "value": "many"
+                  }
+                ],
+                "other": [
+                  {
+                    "type": "text",
+                    "value": "other"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+]

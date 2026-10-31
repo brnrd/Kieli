@@ -1,0 +1,29 @@
+name: Verify
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - run: npm run smoke
+      - run: npm run smoke:features
+      - run: npm run smoke:local
+      - run: npm run smoke:saml
+      - run: npm run smoke:mcp
+      - run: npm run smoke:install
+      - run: node scripts/render-aws-template.mjs /tmp/keylo-install-template.yaml
+      - run: pipx run cfn-lint /tmp/keylo-install-template.yaml infra/release-publisher.yaml
+      - run: npm audit --omit=dev --audit-level=high

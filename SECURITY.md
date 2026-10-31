@@ -1,0 +1,34 @@
+# Security
+
+Keylo is an initial implementation with tested security boundaries, not an audited security certification. Before production rollout, verify the selected authentication configuration, AWS policies, backup/restore, and expected workloads.
+
+Implemented protections:
+
+- Verified OIDC authorization-code flow with PKCE S256, state, and nonce; exact configured callback origin.
+- Optional SAML 2.0 SP-initiated flow using Node-SAML, signed requests/metadata, pinned current IdP certificates, mandatory signed response/assertion, strict issuer/audience/destination/recipient and persistent subjects, browser-bound one-time state, and shared atomic request/assertion replay checks. See docs/saml.md for configuration and supported bindings.
+- Revocable shared database sessions behind random 256-bit opaque HttpOnly, Secure-over-HTTPS, SameSite=Lax cookies. Local sessions last at most eight hours; Okta sessions at most one hour; both enforce 30-minute idle expiry.
+- Built-in accounts are admin-created with single-use, expiring activation/reset links. Argon2id password hashes, common-password/pattern checks, shared login throttling, generic authentication failures, and transactional last-active-admin protection.
+- The AWS ZIP installer adds explicitly enabled, origin-checked first-run setup protected by a 48-character AWS-generated secret. The secret is retrieved server-side and never placed in URLs/output values/page HTML. Account creation, the shared initialization guard, and the success audit commit atomically; installation stays closed after web setup or operator bootstrap. Attempts are rate limited. Plain environment setup tokens work only in development. See docs/aws-one-click.md.
+- Built-in account/access edits and deactivation invalidate prior sessions and setup links. Password changes rotate the current session and invalidate the others. Privileged user administration requires recent authentication.
+- Server-enforced project roles and default-deny project access. Cookie/session claims are not accepted from browser-provided role headers.
+- Exact-origin checks for browser writes. The active SAML POST ACS uses full signed protocol validation, independent browser cookie binding, and one-time state. The separate `/mcp` endpoint accepts dedicated bearer credentials only, validates the configured Host, and rejects foreign Origins when present; cookies and demo fallback cannot authenticate it. Bounded JSON/form bodies, no general cross-origin API allowlist, shared validation, React escaping, prototype-key rejection, and parameterized SQLite queries.
+- Astro-generated hash-based script/style CSP in production, same-origin resource directives, frame denial, no-sniff, referrer/permissions policies, and HSTS in production.
+- Project-scoped opaque export tokens with 256 random bits, SHA-256 storage, bounded expiry, and immediate revocation. Bearer access is restricted to the export route.
+- Separate hashed, expiring MCP credentials for one project and selected target languages. Local owners' current account/access epochs are checked per request; SSO credentials cannot outlive the issuing sign-in snapshot. Source/metadata/deletion/settings remain inaccessible to writes, with explicit overwrite permission, conditional atomic batches, shared per-credential rate limits, and success audit events. MCP credentials cannot access the browser/REST/export APIs. See docs/mcp.md.
+- Versioned conditional writes and atomic key/counter transactions prevent lost edits and import partial batches.
+- Loopback-only local demo identity. Demo mode is rejected when `NODE_ENV=production`; the shipped container explicitly uses production mode.
+- AWS table encryption, PITR, deletion protection, retained data, constrained runtime IAM, HTTPS, gateway throttling, and bounded concurrency in the SAM template.
+- AWS release publishing uses Linux x64 dependency-traced ZIPs, SHA-256 verification, versioned S3 code/template objects, and GitHub OIDC with repository/environment-specific trust. Local QA packages cannot be published. Publishing is unconfigured by default. The maintainer artifact bucket deliberately exposes only open-source releases; customer tables and runtime secrets remain private.
+
+Known boundaries:
+
+- An SSO session (OIDC or SAML) retains its assigned group snapshot until expiration/renewal (up to one hour). Keylo logout revokes its database session but does not end the entire IdP session. IdP-driven session revocation/SCIM/event hooks/reconciliation remain future work. SAML Single Logout, encrypted assertions, and unsolicited IdP-initiated login are not implemented.
+- Ordinary browser logout does not revoke independently issued MCP credentials; revoke the connection separately. SSO MCP credentials remain bounded to the sign-in's absolute expiry. Local password/access changes, account disablement, and revoking all sessions invalidate local MCP credentials. Requests already running may finish after credential revocation. Claude receives copy read through its connection; model instructions do not guarantee translation quality or placeholder correctness.
+- Built-in mode has no local MFA/passkeys or self-service email delivery. Admins distribute activation/reset links through a trusted private channel. A trusted database operator can recover an enabled local administrator with the documented recovery CLI. This operator access is privileged. See docs/built-in-accounts.md.
+- Workspace admins see every project and can create/import projects. Keylo is one organizational workspace, not a multi-tenant SaaS boundary.
+- Project deletion, language removal, key rename, and import overwrite are deliberately absent. Key deletion has a confirmation UI but no trash; restore data using your database backup policy.
+- Import parses files in a worker with limits; it does not execute content or extract archive paths to disk. No Lokalise API token is collected. Conversion warnings require acknowledgement. An entire multi-batch project import is not atomic.
+- DynamoDB substring filtering and aggregate writes have practical cost/size/contention limits. Exports are buffered and constrained by the hosting platform's response limit.
+- Built-in accounts have shared per-account and per-client login-attempt limits. Security events are stored in the database with manual retention. Rate limiting in the AWS template is a baseline, not a WAF or complete abuse-prevention system. Apply your organization's monitoring, network access, MFA, and incident-response policies through AWS/Okta.
+
+Report vulnerabilities privately to the repository maintainers through the repository's security advisory mechanism when one is configured. Do not publish real tokens, secrets, customer copy, or identity data in public issues. This repository does not yet declare a public security contact.

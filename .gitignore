@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+!.env.example
+.data/
+coverage/
+.aws-sam/
+.aws-release/
+*.log
+.DS_Store
+
+# Native SDK build products
+sdks/**/.build/
+sdks/**/.gradle/
+sdks/**/.dart_tool/
+sdks/**/build/
+sdks/**/pubspec.lock
+
+# Generated from SDK sources before each build
+/public/downloads/keylo-sdks.zip

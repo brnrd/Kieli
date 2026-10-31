@@ -1,0 +1,314 @@
+.project-history-section,
+.ota-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.section-title.standalone {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.section-title.standalone h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+}
+.section-title.standalone p,
+.project-history-section p,
+.ota-section p {
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+.snapshot-create,
+.ota-publish {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 16px 0;
+}
+.snapshot-create .field-label,
+.ota-publish .field-label:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.snapshot-policy {
+  padding: 16px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 18px 0;
+}
+.snapshot-policy .field-grid {
+  max-width: 440px;
+  margin: 14px 0;
+}
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.checkbox-label input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  margin: 2px 0;
+}
+.checkbox-label small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.history-list {
+  border-top: 1px solid var(--border);
+  margin: 18px 0;
+}
+.history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.history-row > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.history-row strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.history-row span,
+.history-row small {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.history-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.delivery-secret {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-subtle);
+  font-size: 12px;
+}
+.delivery-secret code {
+  display: block;
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.ota-section h3 {
+  margin-top: 28px;
+  font-size: 13px;
+}
+.plural-editor {
+  background: var(--surface);
+  font-size: 12px;
+}
+.plural-editor-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.plural-options {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.plural-options label {
+  display: grid;
+  gap: 6px;
+  font-size: 10px;
+}
+.plural-options input,
+.plural-options select {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 11px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.plural-form-field {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  border-bottom: 1px solid var(--border-subtle);
+  margin: 0;
+}
+.plural-form-field > span {
+  padding: 12px 10px;
+  font:
+    11px ui-monospace,
+    monospace;
+  color: var(--text-muted);
+  background: var(--surface-subtle);
+}
+.plural-form-field small {
+  display: block;
+  font: 9px sans-serif;
+  margin-top: 5px;
+}
+.translation-field .plural-form-field textarea {
+  min-height: 64px;
+  color: var(--text);
+  font-size: 12px;
+}
+.plural-forms-settings {
+  margin: 18px 0;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+}
+.plural-forms-settings summary {
+  cursor: pointer;
+  font-weight: 500;
+}
+.plural-forms-settings fieldset {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 14px 0 0;
+  padding: 12px 0 0;
+  min-width: 0;
+}
+.plural-forms-settings legend {
+  font-weight: 500;
+  padding-top: 12px;
+}
+.plural-category-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+  font-size: 11px;
+}
+.plural-category-options label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.plural-category-options input {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+}
+.plural-copy {
+  display: grid;
+  gap: 6px;
+}
+.plural-copy > span {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+}
+.plural-copy > span small {
+  font:
+    10px ui-monospace,
+    monospace;
+  color: var(--text-muted);
+  padding-top: 3px;
+}
+.reference-indicator {
+  display: block;
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+.reference-error {
+  display: block;
+  color: var(--danger);
+  font-size: 10px;
+  margin-top: 4px;
+}
+@media (max-width: 650px) {
+  .snapshot-create,
+  .ota-publish,
+  .section-title.standalone {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .history-row {
+    flex-wrap: wrap;
+  }
+  .plural-options {
+    grid-template-columns: 1fr;
+  }
+  .history-actions {
+    width: 100%;
+  }
+}
+.snapshot-create .field-label,
+.ota-publish .field-label {
+  margin-bottom: 0;
+}
+.section-title.standalone > div {
+  display: block;
+}
+.section-title.standalone p {
+  display: block;
+  margin: 8px 0 0;
+  max-width: 540px;
+}
+.reference-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 10px 0 16px;
+}
+.plural-key-toggle {
+  margin: 12px 0 18px;
+}
+.plural-copy > span {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 8px;
+  text-align: start;
+}
+.plural-copy > span > small {
+  font:
+    10px ui-monospace,
+    monospace;
+  color: var(--text-muted);
+  padding-top: 3px;
+}
+.plural-copy > span > span {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.field-warning {
+  display: block;
+  font-size: 11px;
+  color: var(--danger);
+  line-height: 1.5;
+  margin: 8px 12px;
+}

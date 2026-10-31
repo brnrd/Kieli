@@ -1,0 +1,20 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Appearance from '../../components/Appearance';
+import InstallForm from '../../components/InstallForm';
+import { installation } from '../../server/installation';
+if (!await (await installation()).available()) return Astro.redirect('/login');
+---
+<Layout title="Set up your workspace · Keylo">
+  <main class="login-page install-page">
+    <a href="/" class="wordmark"><img src="/favicon.svg" alt="" width="36" height="36"/>keylo<span class="wordmark-dot">.</span></a>
+    <div class="login-card local-login-card install-card">
+      <span class="eyebrow">YOUR OWN KEYLO</span>
+      <h1>A home for<br/>your team's words.</h1>
+      <p>Create the first administrator for your workspace.</p>
+      <InstallForm client:load />
+    </div>
+    <Appearance client:load />
+    <footer>Self-hosted in your AWS account.</footer>
+  </main>
+</Layout>

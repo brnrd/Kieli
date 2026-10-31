@@ -1,0 +1,9 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SignInForm from '../../components/SignInForm';
+import Appearance from '../../components/Appearance';
+import { config } from '../../server/config';
+if (config().authMode !== 'local') return Astro.redirect('/login');
+const token = Astro.url.searchParams.get('token') ?? '';
+---
+<Layout title="Set your password · Keylo"><main class="login-page"><a href="/" class="wordmark"><img src="/favicon.svg" alt="" width="36" height="36"/>keylo<span class="wordmark-dot">.</span></a><div class="login-card local-login-card"><span class="eyebrow">YOUR KEYLO ACCOUNT</span><h1>Make yourself<br/>at home.</h1><p>Choose a password to activate your account or complete your password reset.</p><SignInForm client:load setup token={token}/></div><Appearance client:load /><footer>Small by design. Open by nature.</footer></main></Layout>

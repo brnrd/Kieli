@@ -1,0 +1,20 @@
+{
+  "project": { "name": "Imported storefront", "base_language_iso": "en", "description": "A sample Lokalise migration" },
+  "languages": [
+    { "lang_iso": "en", "lang_name": "English" },
+    { "lang_iso": "fr", "lang_name": "French" },
+    { "lang_iso": "nl", "lang_name": "Dutch" }
+  ],
+  "keys": [
+    { "key_name": { "web": "home.title" }, "description": "Homepage heading", "tags": ["hero"], "translations": [
+      { "language_iso": "en", "translation": "Welcome home" },
+      { "language_iso": "fr", "translation": "Bienvenue chez vous" },
+      { "language_iso": "nl", "translation": "Welkom thuis" }
+    ] },
+    { "key_name": { "web": "home.cta" }, "description": "Main call to action", "tags": ["buttons"], "translations": [
+      { "language_iso": "en", "translation": "Find your next favorite" },
+      { "language_iso": "fr", "translation": "Trouvez votre prochain favori" },
+      { "language_iso": "nl", "translation": "" }
+    ] }
+  ]
+}
