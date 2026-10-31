@@ -7,10 +7,12 @@ import { api } from "./api";
 export default function Account({
   identity,
   mode,
+  samlLogoutEnabled = false,
   notify,
 }: {
   identity: Identity;
   mode: AuthMode;
+  samlLogoutEnabled?: boolean;
   notify: (message: string) => void;
 }) {
   const [currentPassword, setCurrent] = useState("");
@@ -173,6 +175,32 @@ export default function Account({
           <button className="button" onClick={() => setRevoking(true)}>
             Sign out and revoke my connections
           </button>
+        </section>
+      )}
+      {mode === "saml" && samlLogoutEnabled && (
+        <section className="project-history-section">
+          <h2>Sign out</h2>
+          <p>
+            Sign out of Keylo only, or also end your identity-provider session.
+            Provider sign-out may affect other connected apps. Independent
+            integration credentials remain active.
+          </p>
+          <form
+            className="account-signout-actions"
+            action="/auth/logout"
+            method="POST"
+          >
+            <button className="button" type="submit">
+              Sign out of Keylo
+            </button>
+            <button
+              className="button"
+              type="submit"
+              formAction="/auth/logout?saml=1"
+            >
+              Sign out of Keylo and identity provider
+            </button>
+          </form>
         </section>
       )}
       {revoking && (

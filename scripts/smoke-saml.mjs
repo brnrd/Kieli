@@ -8,11 +8,15 @@ import {
   samlFixture,
   requestInfo,
   signedResponse,
+  signedLogout,
 } from "../tests/helpers/saml.ts";
 
 // The IdP is a local signing fixture; no real identity provider or user data is used.
 const scimMode = process.argv.includes("--scim");
 const fixture = await samlFixture();
+fixture.settings.logoutUrl = "https://idp.example.com/slo";
+fixture.settings.logoutCallbackUrl =
+  "https://copy.example.com/auth/saml/logout";
 const directory = await mkdtemp(join(tmpdir(), "keylo-saml-http-"));
 const origin = "http://127.0.0.1:4328";
 const env = {
@@ -25,6 +29,7 @@ const env = {
   STORAGE_DRIVER: "sqlite",
   SQLITE_PATH: join(directory, "data.sqlite"),
   SAML_ENTRY_POINT: fixture.settings.entryPoint,
+  SAML_LOGOUT_URL: fixture.settings.logoutUrl,
   SAML_IDP_ISSUER: fixture.settings.idpIssuer,
   SAML_SP_ENTITY_ID: fixture.settings.entityId,
   SAML_IDP_CERT: fixture.idp.cert,
@@ -186,6 +191,8 @@ try {
   assert.equal(bootstrap.status, 200);
   const workspace = await bootstrap.json();
   assert.equal(workspace.authMode, "saml");
+  assert.equal(workspace.samlLogoutEnabled, true);
+  assert.equal(JSON.stringify(workspace).includes("sessionIndex"), false);
   assert.equal(workspace.identity.provider, "saml");
   assert.equal(workspace.identity.admin, true);
   assert.equal(
@@ -212,6 +219,102 @@ try {
   assert.equal(
     (await request("/api/bootstrap", { headers: { Cookie: cookie } })).status,
     401,
+  );
+  // Exercise the actual public callback, Origin exemption, cookies and signed SLO redirect.
+  const sloLogin = await begin();
+  const sloAccepted = await post(
+    signedResponse(fixture, sloLogin.id, {
+      groups: ["keylo-admin"],
+      sessionIndex: "http-slo-session",
+    }).encoded,
+    sloLogin,
+  );
+  const sloSession = session(sloAccepted, "keylo_session");
+  const blockedLogout = await request("/auth/logout?saml=1", {
+    method: "POST",
+    headers: { Origin: "https://attacker.example.com", Cookie: sloSession },
+  });
+  assert.equal(blockedLogout.status, 403);
+  const initiate = await request("/auth/logout?saml=1", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, Cookie: sloSession },
+  });
+  assert.equal(initiate.status, 303);
+  assert.equal(
+    (await request("/api/bootstrap", { headers: { Cookie: sloSession } }))
+      .status,
+    401,
+  );
+  const sloUrl = new URL(initiate.headers.get("location"));
+  assert.equal(sloUrl.origin, "https://idp.example.com");
+  const { inflateRawSync } = await import("node:zlib");
+  const sloXml = inflateRawSync(
+    Buffer.from(sloUrl.searchParams.get("SAMLRequest"), "base64"),
+  ).toString();
+  const requestId = /\bID="([^"]+)"/.exec(sloXml)[1];
+  const sloBinding = session(initiate, "__Secure-keylo_saml_logout");
+  const sloResponse = signedLogout(fixture, {
+    inResponseTo: requestId,
+    relay: sloUrl.searchParams.get("RelayState"),
+  });
+  const finishLogout = () =>
+    request("/auth/saml/logout", {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        Origin: "https://idp.example.com",
+        Cookie: sloBinding,
+      },
+      body: sloResponse.raw,
+    });
+  assert.equal(
+    (await finishLogout()).headers.get("location"),
+    "/login?logout=saml",
+  );
+  assert.equal(
+    (await finishLogout()).headers.get("location"),
+    "/login?logout=incomplete",
+  );
+  // IdP-initiated logout must revoke without a main session cookie (cross-site POST).
+  const idpLogin = await begin();
+  const idpAccepted = await post(
+    signedResponse(fixture, idpLogin.id, {
+      groups: ["keylo-admin"],
+      sessionIndex: "idp-http-session",
+    }).encoded,
+    idpLogin,
+  );
+  const idpSession = session(idpAccepted, "keylo_session");
+  const idpMessage = signedLogout(fixture, {
+    request: true,
+    indexes: ["idp-http-session"],
+  });
+  const idpResult = await request("/auth/saml/logout", {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      Origin: "https://idp.example.com",
+    },
+    body: idpMessage.raw,
+  });
+  assert.equal(
+    new URL(idpResult.headers.get("location")).origin,
+    "https://idp.example.com",
+  );
+  assert.equal(
+    (await request("/api/bootstrap", { headers: { Cookie: idpSession } }))
+      .status,
+    401,
+  );
+  // Expired/missing sessions still complete local logout; a provider failure is explicit.
+  assert.equal(
+    (
+      await request("/auth/logout?saml=1", {
+        method: "POST",
+        headers: { Origin: env.APP_ORIGIN },
+      })
+    ).headers.get("location"),
+    "/login?logout=incomplete",
   );
   if (scimMode) {
     // Reauthenticate after normal logout, then revoke every personal connection.
@@ -256,7 +359,7 @@ try {
     );
   }
   console.log(
-    "SAML HTTP smoke passed: signed metadata/request, cross-site POST callback, browser binding, opaque sessions, roles, replay rejection, recipient validation, origin protection, and logout replay.",
+    "SAML HTTP smoke passed: signed metadata/request, cross-site POST callback, browser binding, opaque sessions, roles, replay rejection, recipient validation, origin protection, local logout, signed SP/IdP Single Logout, provider failures and logout replay.",
   );
 } finally {
   server.kill("SIGTERM");

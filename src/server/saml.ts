@@ -21,6 +21,7 @@ const tokenPattern = /^[a-f0-9]{64}$/;
 type Flow = {
   version: number;
   requestId: string;
+  createdAt?: number;
   browserHash: string;
   ttl: number;
   previousSessionHash?: string;
@@ -61,6 +62,8 @@ export class SamlAuth {
       signatureAlgorithm: "sha256",
       digestAlgorithm: "sha256",
       signMetadata: true,
+      logoutCallbackUrl: this.settings.logoutCallbackUrl,
+      logoutUrl: this.settings.logoutUrl,
       identifierFormat: persistentNameID,
       wantAssertionsSigned: true,
       wantAuthnResponseSigned: true,
@@ -97,6 +100,7 @@ export class SamlAuth {
     await this.store.put(this.flowKey(relay), "META", {
       version: 1,
       requestId,
+      createdAt: Date.now(),
       browserHash: digest(browser),
       ttl: Math.floor(Date.now() / 1000) + 600,
       ...(previous && tokenPattern.test(previous)
@@ -176,7 +180,13 @@ export class SamlAuth {
       if (flow.previousSessionHash)
         await new Sessions(this.store).revokeHash(flow.previousSessionHash);
       await this.audit("login.saml_succeeded", validated.identity.sub);
-      return validated;
+      return {
+        ...validated,
+        saml: {
+          ...validated.saml,
+          startedAt: flow.createdAt ?? Date.now() - 600000,
+        },
+      };
     } catch {
       await this.audit("login.saml_failed");
       throw failure();

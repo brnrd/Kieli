@@ -43,7 +43,7 @@ Keylo keeps the workflow small: manual editing and explicit publication, without
 
 **Keep your copy on your infrastructure.** Keylo is designed for a self-hosted organizational workspace, with project access enforced by the backend.
 
-- **Choose how people sign in:** built-in email/password accounts, Okta OIDC or SAML SSO.
+- **Choose how people sign in:** built-in email/password accounts, Okta OIDC or SAML SSO with optional signed Single Logout.
 - **Manage access centrally:** workspace administration, project roles, account disabling and revocable server-side sessions. SSO supports SCIM provisioning and optional Okta reconciliation.
 - **Scope integrations:** separate export, source-sync, MCP and mobile delivery credentials. Management capabilities stay behind administrator access.
 - **Protect changes:** atomic write batches, optimistic concurrency, placeholder validation and security audit events.
@@ -51,7 +51,7 @@ Keylo keeps the workflow small: manual editing and explicit publication, without
 
 ![Keylo workspace administration with project and translation statistics](docs/images/workspace-admin.png)
 
-The [security model](SECURITY.md) documents credential lifecycles, trust boundaries and current limitations. SAML Single Logout is not implemented; Keylo logout does not end the identity-provider session. Local tests are not an independent security audit, and real IdP/AWS integrations need staging verification.
+The [security model](SECURITY.md) documents credential lifecycles, trust boundaries and current limitations. [SAML Single Logout](docs/saml.md#single-logout) supports provider sign-out and verified IdP-initiated session revocation when configured; local-only sign-out remains available. Local tests are not an independent security audit, and real IdP/AWS integrations need staging verification.
 
 ## Get started
 

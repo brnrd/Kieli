@@ -19,7 +19,7 @@ Store: SQLite locally / DynamoDB on AWS
 
 - `src/components/`: app shell, forms, project directory, developer integrations, importer.
 - `src/server/auth.ts`: Okta flow, authorization, and export-token verification.
-- `src/server/saml*.ts`: SAML configuration/credentials, shared replay cache, strict XML checks, and signed login/metadata flow.
+- `src/server/saml*.ts`: SAML configuration/credentials, shared replay cache, strict XML checks, signed login/metadata flow, signed Single Logout and shared session revocation fences.
 - `src/server/local-auth.ts`, `passwords.ts`, and `account-api.ts`: built-in accounts, activation/reset, project assignments, throttling, and security events.
 - `src/server/sessions.ts`: shared server-side sessions, cookie rotation, expiry, and revocation.
 - `src/server/service.ts`: project/key operations, atomic counters, batched import, and exports.
@@ -48,6 +48,8 @@ The composite primary key is `(pk, sk)`:
 | Shared attempt bucket         | `AUTH_RATE#<sha256>`                  | `<time-window>`      |
 | Security event                | `AUTH_AUDIT`                          | `<timestamp>#<uuid>` |
 | SAML request/assertion cache  | `SAML_CACHE#<scope-hash>`             | `<key-hash>`         |
+| SAML logout flow / replay | `SAML_LOGOUT_FLOW#<scope-hash>#<relay-hash>` / `SAML_LOGOUT_REPLAY#<scope-hash>#<id-hash>` | `META` |
+| SAML session revocation | `SAML_REVOKED#<issuer-subject-index-hash>` | `META` |
 | SAML browser login flow       | `SAML_FLOW#<scope-hash>#<relay-hash>` | `META`               |
 
 Keys and counters are written in one transaction with version conditions. Updating one key does not increment project settings' version. Aggregate coverage groups record how many keys share a set of filled locales, so adding a language updates completion immediately without rewriting every key. Per-language and namespace counts are also aggregated.
@@ -60,7 +62,7 @@ Substring search still evaluates matching project records on the backend; this i
 
 Data API endpoints require a browser session, except the explicitly public sign-in/activation/first-run setup endpoints. Only the export API also accepts `Authorization: Bearer <Keylo export token>`. The separate `/mcp` route requires a dedicated scoped MCP bearer credential and never accepts cookies. Browser mutation requests require an exact matching `Origin`, JSON content type, and a JSON body of at most 256 KB. Successful deletes return 204.
 
-In SAML mode, GET `/auth/login` starts a signed request, GET `/auth/saml/metadata` publishes signed public metadata, and POST `/auth/saml/acs` accepts the bounded form-encoded IdP response. This active POST callback enforces signatures, browser binding, correlation, and atomic replay prevention instead of Origin. See [SAML setup](saml.md). MCP permits an absent Origin for machine clients, rejects foreign Origins when supplied, and validates Host against `APP_ORIGIN`. All other browser writes retain exact-origin checks.
+In SAML mode, GET `/auth/login` starts a signed request, GET `/auth/saml/metadata` publishes signed public metadata, and POST `/auth/saml/acs` accepts the bounded form-encoded IdP response. This active POST callback enforces signatures, browser binding, correlation, and atomic replay prevention instead of Origin. Optional GET/POST `/auth/saml/logout` authenticates signed SAML logout messages; app-initiated responses also require one-time browser/request binding. POST `/auth/logout?saml=1` checks Origin and revokes local access before redirecting to the configured IdP. See [SAML setup](saml.md). MCP permits an absent Origin for machine clients, rejects foreign Origins when supplied, and validates Host against `APP_ORIGIN`. All other browser writes retain exact-origin checks.
 
 | Method    | Path                                                                         | Purpose                                                                |
 | --------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |

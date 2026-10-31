@@ -2,8 +2,8 @@ import { execFileSync } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { randomUUID } from "node:crypto";
-import { inflateRawSync } from "node:zlib";
+import { randomUUID, sign as cryptoSign } from "node:crypto";
+import { inflateRawSync, deflateRawSync } from "node:zlib";
 import { SignedXml } from "xml-crypto";
 import type { AstroCookies } from "astro";
 import {
@@ -115,6 +115,7 @@ export function signedResponse(
     responseRequestId: requestId,
     assertionId: `_${randomUUID()}`,
     subject: "immutable-user-123",
+    sessionIndex: "test-session",
     nameIDFormat: persistentNameID,
     email: "alex@example.com",
     name: "Alex Morgan",
@@ -130,7 +131,7 @@ export function signedResponse(
   const value = (key: keyof typeof options) => escapeXml(String(options[key]));
   const attribute = (name: string, values: string[]) =>
     `<saml:Attribute Name="${name}">${values.map((v) => `<saml:AttributeValue>${escapeXml(v)}</saml:AttributeValue>`).join("")}</saml:Attribute>`;
-  let xml = `<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="_${randomUUID()}" Version="2.0" IssueInstant="${value("issued")}" Destination="${value("destination")}" InResponseTo="${value("responseRequestId")}"><saml:Issuer>${value("responseIssuer")}</saml:Issuer><samlp:Status><samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/></samlp:Status><saml:Assertion ID="${value("assertionId")}" Version="2.0" IssueInstant="${value("issued")}"><saml:Issuer>${value("issuer")}</saml:Issuer><saml:Subject><saml:NameID Format="${value("nameIDFormat")}">${value("subject")}</saml:NameID><saml:SubjectConfirmation Method="${value("confirmationMethod")}"><saml:SubjectConfirmationData Recipient="${value("recipient")}" InResponseTo="${value("subjectRequestId")}" NotOnOrAfter="${value("expires")}"/></saml:SubjectConfirmation></saml:Subject><saml:Conditions NotBefore="${value("notBefore")}" NotOnOrAfter="${value("expires")}"><saml:AudienceRestriction><saml:Audience>${value("audience")}</saml:Audience></saml:AudienceRestriction></saml:Conditions><saml:AuthnStatement AuthnInstant="${value("authnInstant")}" SessionIndex="test-session" SessionNotOnOrAfter="${value("sessionExpires")}"><saml:AuthnContext><saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef></saml:AuthnContext></saml:AuthnStatement><saml:AttributeStatement>${attribute("name", [options.name])}${attribute("email", [options.email])}${attribute("groups", options.groups)}</saml:AttributeStatement></saml:Assertion></samlp:Response>`;
+  let xml = `<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="_${randomUUID()}" Version="2.0" IssueInstant="${value("issued")}" Destination="${value("destination")}" InResponseTo="${value("responseRequestId")}"><saml:Issuer>${value("responseIssuer")}</saml:Issuer><samlp:Status><samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/></samlp:Status><saml:Assertion ID="${value("assertionId")}" Version="2.0" IssueInstant="${value("issued")}"><saml:Issuer>${value("issuer")}</saml:Issuer><saml:Subject><saml:NameID Format="${value("nameIDFormat")}">${value("subject")}</saml:NameID><saml:SubjectConfirmation Method="${value("confirmationMethod")}"><saml:SubjectConfirmationData Recipient="${value("recipient")}" InResponseTo="${value("subjectRequestId")}" NotOnOrAfter="${value("expires")}"/></saml:SubjectConfirmation></saml:Subject><saml:Conditions NotBefore="${value("notBefore")}" NotOnOrAfter="${value("expires")}"><saml:AudienceRestriction><saml:Audience>${value("audience")}</saml:Audience></saml:AudienceRestriction></saml:Conditions><saml:AuthnStatement AuthnInstant="${value("authnInstant")}" SessionIndex="${value("sessionIndex")}" SessionNotOnOrAfter="${value("sessionExpires")}"><saml:AuthnContext><saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef></saml:AuthnContext></saml:AuthnStatement><saml:AttributeStatement>${attribute("name", [options.name])}${attribute("email", [options.email])}${attribute("groups", options.groups)}</saml:AttributeStatement></saml:Assertion></samlp:Response>`;
   const sign = (input: string, element: string) => {
     const signer = new SignedXml({
       privateKey: fixture.idp.key,
@@ -178,4 +179,82 @@ export function callbackRequest(
     },
     body: new URLSearchParams({ SAMLResponse: encoded, RelayState: relay }),
   });
+}
+
+export function signedLogout(
+  fixture: Awaited<ReturnType<typeof samlFixture>>,
+  options: {
+    request?: boolean;
+    id?: string;
+    inResponseTo?: string;
+    subject?: string;
+    indexes?: string[];
+    issued?: string;
+    issuer?: string;
+    destination?: string;
+    status?: string;
+    unsigned?: boolean;
+    sha1?: boolean;
+    relay?: string;
+    redirect?: boolean;
+    nameQualifier?: string;
+    spNameQualifier?: string;
+  } = {},
+) {
+  const name = options.request ? "LogoutRequest" : "LogoutResponse";
+  const id = options.id ?? `_${randomUUID()}`;
+  let xml = `<samlp:${name} xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="${escapeXml(id)}" Version="2.0" IssueInstant="${escapeXml(options.issued ?? new Date().toISOString())}" Destination="${escapeXml(options.destination ?? fixture.settings.logoutCallbackUrl!)}"${options.request ? "" : ` InResponseTo="${escapeXml(options.inResponseTo ?? "_unknown")}"`}><saml:Issuer>${escapeXml(options.issuer ?? fixture.settings.idpIssuer)}</saml:Issuer>${options.request ? `<saml:NameID Format="${persistentNameID}"${options.nameQualifier ? ` NameQualifier="${escapeXml(options.nameQualifier)}"` : ""}${options.spNameQualifier ? ` SPNameQualifier="${escapeXml(options.spNameQualifier)}"` : ""}>${escapeXml(options.subject ?? "immutable-user-123")}</saml:NameID>${(options.indexes ?? ["test-session"]).map((index) => `<samlp:SessionIndex>${escapeXml(index)}</samlp:SessionIndex>`).join("")}` : `<samlp:Status><samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:${escapeXml(options.status ?? "Success")}"/></samlp:Status>`}</samlp:${name}>`;
+  const field = options.request ? "SAMLRequest" : "SAMLResponse";
+  const algorithm = options.sha1 ? "sha1" : "sha256";
+  let raw: string;
+  if (options.redirect) {
+    raw = `${field}=${encodeURIComponent(deflateRawSync(xml).toString("base64"))}`;
+    if (options.relay !== undefined)
+      raw += `&RelayState=${encodeURIComponent(options.relay)}`;
+    raw += `&SigAlg=${encodeURIComponent(options.sha1 ? "http://www.w3.org/2000/09/xmldsig#rsa-sha1" : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256")}`;
+    if (!options.unsigned)
+      raw += `&Signature=${encodeURIComponent(cryptoSign(`RSA-${algorithm.toUpperCase()}`, Buffer.from(raw), fixture.idp.key).toString("base64"))}`;
+  } else {
+    if (!options.unsigned) {
+      const signer = new SignedXml({
+        privateKey: fixture.idp.key,
+        publicCert: fixture.idp.cert,
+        signatureAlgorithm: options.sha1
+          ? "http://www.w3.org/2000/09/xmldsig#rsa-sha1"
+          : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+        canonicalizationAlgorithm: "http://www.w3.org/2001/10/xml-exc-c14n#",
+      });
+      signer.addReference({
+        xpath: `/*[local-name()='${name}']`,
+        transforms: [
+          "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
+          "http://www.w3.org/2001/10/xml-exc-c14n#",
+        ],
+        digestAlgorithm: options.sha1
+          ? "http://www.w3.org/2000/09/xmldsig#sha1"
+          : "http://www.w3.org/2001/04/xmlenc#sha256",
+      });
+      signer.computeSignature(xml, {
+        location: { reference: "/*/*[local-name()='Issuer']", action: "after" },
+      });
+      xml = signer.getSignedXml();
+    }
+    const fields = new URLSearchParams({
+      [field]: Buffer.from(xml).toString("base64"),
+    });
+    if (options.relay !== undefined) fields.set("RelayState", options.relay);
+    raw = fields.toString();
+  }
+  return {
+    xml,
+    raw,
+    id,
+    request: options.redirect
+      ? new Request(`${fixture.settings.logoutCallbackUrl}?${raw}`)
+      : new Request(fixture.settings.logoutCallbackUrl!, {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          body: raw,
+        }),
+  };
 }

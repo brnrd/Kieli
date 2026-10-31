@@ -9,6 +9,8 @@ export const persistentNameID =
   "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent";
 export type SamlSettings = {
   entryPoint: string;
+  logoutUrl?: string;
+  logoutCallbackUrl?: string;
   idpIssuer: string;
   entityId: string;
   callbackUrl: string;
@@ -79,25 +81,27 @@ const current = (cert: X509Certificate) =>
 export async function samlSettings(): Promise<SamlSettings> {
   if (config().authMode !== "saml")
     throw new Error("SAML sign-in is not enabled.");
-  const entryPoint = new URL(required("SAML_ENTRY_POINT"));
-  if (
-    entryPoint.protocol !== "https:" ||
-    entryPoint.username ||
-    entryPoint.password ||
-    entryPoint.hash
-  )
-    throw new Error(
-      "SAML_ENTRY_POINT must be an HTTPS URL without credentials or a fragment.",
-    );
-  for (const name of [
-    "SAMLRequest",
-    "SAMLResponse",
-    "RelayState",
-    "Signature",
-    "SigAlg",
-  ])
-    if (entryPoint.searchParams.has(name))
-      throw new Error("SAML_ENTRY_POINT cannot contain protocol parameters.");
+  const endpoint = (value: string, label: string) => {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.username || url.password || url.hash)
+      throw new Error(
+        `${label} must be an HTTPS URL without credentials or a fragment.`,
+      );
+    for (const name of [
+      "SAMLRequest",
+      "SAMLResponse",
+      "RelayState",
+      "Signature",
+      "SigAlg",
+    ])
+      if (url.searchParams.has(name))
+        throw new Error(`${label} cannot contain protocol parameters.`);
+    return url.href;
+  };
+  const entryPoint = endpoint(required("SAML_ENTRY_POINT"), "SAML_ENTRY_POINT");
+  const logoutUrl = process.env.SAML_LOGOUT_URL
+    ? endpoint(process.env.SAML_LOGOUT_URL, "SAML_LOGOUT_URL")
+    : undefined;
   const idpIssuer = required("SAML_IDP_ISSUER");
   const entityId =
     process.env.SAML_SP_ENTITY_ID ?? `${config().origin}/auth/saml/metadata`;
@@ -141,7 +145,10 @@ export async function samlSettings(): Promise<SamlSettings> {
       "SAML_SP_CERT must be current and match SAML_SP_PRIVATE_KEY.",
     );
   return {
-    entryPoint: entryPoint.href,
+    entryPoint,
+    ...(logoutUrl
+      ? { logoutUrl, logoutCallbackUrl: `${config().origin}/auth/saml/logout` }
+      : {}),
     idpIssuer,
     entityId,
     callbackUrl: `${config().origin}/auth/saml/acs`,

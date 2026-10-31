@@ -79,3 +79,5 @@ References: [CloudFormation quick-create links](https://docs.aws.amazon.com/AWSC
 ## Optional SSO lifecycle configuration
 
 Both templates accept `SsoProvisioningMode=jit|scim`, `ScimSecretArn` (plain provisioning token; required in SCIM mode), and `ReconciliationSecretArn` (JSON with `origin`, `appId`, `apiToken`). These options require OIDC or SAML. Secrets are operator-supplied and are never template outputs. The runtime receives read permission only for the configured secret ARNs; custom KMS keys need a separately scoped decrypt grant. When reconciliation is configured, the five-minute maintenance runner invokes it alongside snapshots, with bounded work and resumable progress. See [SSO lifecycle setup and limitations](sso-lifecycle.md) before enabling SCIM; provision an administrator and its pushed group first.
+
+For optional SAML Single Logout, set `SamlLogoutUrl` to the IdP HTTPS logout endpoint and follow [SAML logout configuration](saml.md#single-logout). It reuses the configured SAML signing material. Leave it empty when SLO is not configured.

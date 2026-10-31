@@ -146,6 +146,13 @@ export function installTemplate({
         Default: "",
         AllowedPattern: "^$|https://[^\\s]+",
       },
+      SamlLogoutUrl: {
+        Type: "String",
+        Default: "",
+        AllowedPattern: "^$|https://[^\\s]+",
+        Description:
+          "Optional SAML IdP Single Logout endpoint; empty disables SLO.",
+      },
       SamlIdpIssuer: { Type: "String", Default: "" },
       SamlSpEntityId: {
         Type: "String",
@@ -439,6 +446,7 @@ export function installTemplate({
               KEYLO_SNAPSHOT_JOB_SECRET_ARN: ref("SnapshotJobSecret"),
               KEYLO_INSTALL_SECRET_ARN: when("UseLocal", ref("InstallSecret")),
               SAML_ENTRY_POINT: when("UseSaml", ref("SamlEntryPoint")),
+              SAML_LOGOUT_URL: when("UseSaml", ref("SamlLogoutUrl")),
               SAML_IDP_ISSUER: when("UseSaml", ref("SamlIdpIssuer")),
               SAML_SP_ENTITY_ID: when(
                 "HasSamlSpEntityId",

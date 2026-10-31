@@ -10,7 +10,7 @@ const ds = "http://www.w3.org/2000/09/xmldsig#";
 const invalid = () => {
   throw new Error("Invalid SAML message.");
 };
-function parse(xml: string) {
+export function parseSamlXml(xml: string) {
   if (/<!DOCTYPE|<!ENTITY/i.test(xml)) return invalid();
   const root = new DOMParser({
     errorHandler: { warning: invalid, error: invalid, fatalError: invalid },
@@ -18,18 +18,18 @@ function parse(xml: string) {
   if (!root) return invalid();
   return root;
 }
-const children = (node: Element, name: string, ns = assertionNS) =>
+export const children = (node: Element, name: string, ns = assertionNS) =>
   Array.from(node.childNodes).filter(
     (child): child is Element =>
       child.nodeType === 1 &&
       (child as Element).localName === name &&
       (child as Element).namespaceURI === ns,
   );
-function one(node: Element, name: string, ns = assertionNS) {
+export function one(node: Element, name: string, ns = assertionNS) {
   const found = children(node, name, ns);
   return found.length === 1 ? found[0]! : invalid();
 }
-function text(node: Element, limit: number) {
+export function text(node: Element, limit: number) {
   if (
     Array.from(node.childNodes).some(
       (child) => ![3, 4].includes(child.nodeType),
@@ -39,7 +39,7 @@ function text(node: Element, limit: number) {
   const value = node.textContent ?? "";
   return value.length <= limit ? value : invalid();
 }
-function timestamp(value: string | null) {
+export function timestamp(value: string | null) {
   if (
     !value ||
     !/^\d{4}-\d{2}-\d{2}T.+(?:Z|[+-]\d{2}:\d{2})$/.test(value) ||
@@ -56,9 +56,9 @@ function timely(node: Element) {
     (!before || timestamp(before) <= Date.now() + 60000)
   );
 }
-function signatureAlgorithms(root: Element) {
+export function signatureAlgorithms(root: Element, count = 2) {
   const signatures = Array.from(root.getElementsByTagNameNS(ds, "Signature"));
-  if (signatures.length !== 2) invalid();
+  if (signatures.length !== count) invalid();
   for (const signature of signatures) {
     const info = one(signature, "SignedInfo", ds);
     const method = one(info, "SignatureMethod", ds).getAttribute("Algorithm");
@@ -97,7 +97,7 @@ export function checkSamlEnvelope(
   const xml = new TextDecoder("utf-8", { fatal: true }).decode(
     Buffer.from(encoded, "base64"),
   );
-  const root = parse(xml);
+  const root = parseSamlXml(xml);
   if (
     root.namespaceURI !== protocolNS ||
     root.localName !== "Response" ||
@@ -129,7 +129,7 @@ export function samlIdentity(
   // Read identity and all authorization attributes only from the verified assertion.
   const xml = profile.getAssertionXml?.();
   if (!xml) return invalid();
-  const root = parse(xml);
+  const root = parseSamlXml(xml);
   if (
     root.localName !== "Assertion" ||
     root.namespaceURI !== assertionNS ||
@@ -174,7 +174,16 @@ export function samlIdentity(
     })
   )
     invalid();
+  for (const [name, expected] of [
+    ["NameQualifier", settings.idpIssuer],
+    ["SPNameQualifier", settings.entityId],
+  ])
+    if (nameID.hasAttribute(name!) && nameID.getAttribute(name!) !== expected)
+      invalid();
   const authn = one(root, "AuthnStatement");
+  const sessionIndex = authn.getAttribute("SessionIndex");
+  if (sessionIndex && (sessionIndex.length > 1024 || !sessionIndex.trim()))
+    invalid();
   if (timestamp(authn.getAttribute("AuthnInstant")) > Date.now() + 60000)
     invalid();
   let maxAge = 3600;
@@ -211,5 +220,18 @@ export function samlIdentity(
       subject: subjectId,
     },
     maxAge,
+    saml: {
+      issuer: settings.idpIssuer,
+      nameID: subjectId,
+      nameIDFormat: persistentNameID,
+      ...(nameID.hasAttribute("NameQualifier")
+        ? { nameQualifier: nameID.getAttribute("NameQualifier")! }
+        : {}),
+      ...(nameID.hasAttribute("SPNameQualifier")
+        ? { spNameQualifier: nameID.getAttribute("SPNameQualifier")! }
+        : {}),
+      ...(sessionIndex ? { sessionIndex } : {}),
+      startedAt: Date.now(),
+    },
   };
 }

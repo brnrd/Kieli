@@ -111,6 +111,7 @@ export type Token = {
 };
 export type ProjectSummary = Project & { role: Role };
 export type Bootstrap = {
+  samlLogoutEnabled?: boolean;
   identity: Identity;
   projects: ProjectSummary[];
   authMode: AuthMode;

@@ -706,6 +706,7 @@ export default function App({
             <Account
               identity={identity}
               mode={bootstrap.authMode}
+              samlLogoutEnabled={bootstrap.samlLogoutEnabled}
               notify={notify}
             />
           ) : workspacePage === "admin" ? (

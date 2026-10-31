@@ -7,9 +7,12 @@ import { SsoDirectory } from "./sso-directory";
 import { HttpError } from "./errors";
 import { Conflict, getStore, type Store } from "./store";
 
+import { samlSessionRevoked, type SamlSession } from "./saml-session";
+
 export const sessionCookie = "keylo_session";
 type Session = {
   version: number;
+  saml?: SamlSession;
   provider: IdentityProvider;
   userId?: string;
   authVersion?: number;
@@ -31,7 +34,9 @@ export class Sessions {
   constructor(private store: Store) {}
   async create(
     cookies: AstroCookies,
-    source: { user: LocalUser } | { identity: Identity; maxAge: number },
+    source:
+      | { user: LocalUser }
+      | { identity: Identity; maxAge: number; saml?: SamlSession },
   ) {
     const secret = randomBytes(32).toString("hex");
     const at = seconds();
@@ -53,6 +58,7 @@ export class Sessions {
         : undefined;
     const session: Session = {
       version: 1,
+      ...("saml" in source && source.saml ? { saml: source.saml } : {}),
       authTime: at,
       lastSeen: at,
       ttl: at + maxAge,
@@ -68,6 +74,11 @@ export class Sessions {
             authVersion: principal!.user.authVersion,
           }),
     };
+    if (session.saml && (await samlSessionRevoked(this.store, session.saml)))
+      throw new HttpError(
+        401,
+        "This SAML session has been signed out. Sign in again.",
+      );
     await this.revoke(cookies);
     await this.store.put(`SESSION#${digest(secret)}`, "META", session);
     cookies.set(sessionCookie, secret, { ...sessionCookieOptions(), maxAge });
@@ -87,6 +98,12 @@ export class Sessions {
       session.provider !== config().authMode ||
       session.ttl <= seconds() ||
       seconds() - session.lastSeen >= 1800
+    )
+      return clear();
+    if (
+      session.provider === "saml" &&
+      ((process.env.SAML_LOGOUT_URL && !session.saml) ||
+        (session.saml && (await samlSessionRevoked(this.store, session.saml))))
     )
       return clear();
     let identity: Identity;
@@ -133,6 +150,26 @@ export class Sessions {
       }
     }
     return identity;
+  }
+  async endForSamlLogout(
+    cookies: AstroCookies,
+  ): Promise<SamlSession | undefined> {
+    const secret = cookies.get(sessionCookie)?.value;
+    try {
+      if (!secret || !/^[a-f0-9]{64}$/.test(secret)) return;
+      const session = await this.store.get<Session>(
+        `SESSION#${digest(secret)}`,
+        "META",
+      );
+      if (
+        session?.provider === "saml" &&
+        session.ttl > seconds() &&
+        seconds() - session.lastSeen < 1800
+      )
+        return session.saml;
+    } finally {
+      await this.revoke(cookies);
+    }
   }
   async revoke(cookies: AstroCookies) {
     const secret = cookies.get(sessionCookie)?.value;

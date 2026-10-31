@@ -51,6 +51,11 @@ Parameters:
     Default: ""
     AllowedPattern: '^$|https://[^\s]+'
     Description: SAML-only identity-provider HTTP-Redirect SSO URL.
+  SamlLogoutUrl:
+    Type: String
+    Default: ""
+    AllowedPattern: '^$|https://[^\s]+'
+    Description: Optional SAML IdP Single Logout endpoint. Leave empty to disable SLO.
   SamlIdpIssuer:
     Type: String
     Default: ""
@@ -348,6 +353,7 @@ Resources:
           KEYLO_SNAPSHOT_JOB_SECRET_ARN: !Ref SnapshotJobSecret
           SAML_ENTRY_POINT:
             !If [UseSaml, !Ref SamlEntryPoint, !Ref "AWS::NoValue"]
+          SAML_LOGOUT_URL: !If [UseSaml, !Ref SamlLogoutUrl, !Ref "AWS::NoValue"]
           SAML_IDP_ISSUER:
             !If [UseSaml, !Ref SamlIdpIssuer, !Ref "AWS::NoValue"]
           SAML_SP_ENTITY_ID:

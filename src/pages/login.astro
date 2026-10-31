@@ -5,12 +5,15 @@ import Appearance from '../components/Appearance';
 import { config } from '../server/config';
 import { installation } from '../server/installation';
 const mode = config().authMode;
+const logoutStatus = Astro.url.searchParams.get('logout');
 if (mode === 'local' && await (await installation()).available()) return Astro.redirect('/auth/install');
 ---
 <Layout title="Sign in · Keylo">
   <main class="login-page">
     <a href="/" class="wordmark"><img src="/favicon.svg" alt="" width="36" height="36" />keylo<span class="wordmark-dot">.</span></a>
     <div class="login-card"><span class="eyebrow">WORDS WITHOUT BORDERS</span><h1>A little less lost<br/>in translation.</h1><p>Your product copy, keys, and languages.<br/>One calm place to keep them together.</p>
+    {logoutStatus === 'incomplete' && <div class="error-box" role="alert">Identity-provider sign-out could not be confirmed. If you started sign-out from Keylo, your Keylo session has ended. Your provider session may still be active.</div>}
+    {logoutStatus === 'saml' && <p role="status">Keylo sign-out is complete and your identity provider confirmed logout.</p>}
     {Astro.url.searchParams.has('error') && <div class="error-box" role="alert">Sign-in could not be completed. Try again or contact your workspace administrator.</div>}
     {mode === 'local' ? <SignInForm client:load/> : <><a class="button primary login-button" href="/auth/login">{mode === 'saml' ? 'Continue with SAML SSO' : mode === 'okta' ? 'Continue with Okta' : 'Open local demo'} <span aria-hidden="true">↗</span></a><small>{mode === 'okta' || mode === 'saml' ? 'Access is managed by your organization.' : 'Local development workspace.'}</small></>}
     </div>

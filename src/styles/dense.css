@@ -1260,3 +1260,14 @@
   padding-left: 14px;
   padding-right: 14px;
 }
+
+.account-signout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.account-signout-actions .button {
+  white-space: normal;
+  text-align: left;
+}

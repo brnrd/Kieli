@@ -58,6 +58,8 @@ For Okta, keep `AuthMode=okta` and the issuer/client/secret parameters from the 
 
 References: [Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter), [AWS SAM image functions](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-image-repositories.html), [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transactions.html).
 
+Optional SAML Single Logout uses `SamlLogoutUrl` in either template. Leave it empty to retain local-only sign-out. The existing SAML signing secret and data table are reused; IAM permissions are unchanged. See [SAML logout setup and staging checks](saml.md#single-logout).
+
 ## Optional SSO lifecycle configuration
 
 Both templates accept `SsoProvisioningMode=jit|scim`, `ScimSecretArn` (plain provisioning token; required in SCIM mode), and `ReconciliationSecretArn` (JSON with `origin`, `appId`, `apiToken`). These options require OIDC or SAML. Secrets are operator-supplied and are never template outputs. The runtime receives read permission only for the configured secret ARNs; custom KMS keys need a separately scoped decrypt grant. When reconciliation is configured, the five-minute maintenance runner invokes it alongside snapshots, with bounded work and resumable progress. See [SSO lifecycle setup and limitations](sso-lifecycle.md) before enabling SCIM; provision an administrator and its pushed group first.

@@ -439,6 +439,8 @@ export class KeyloService {
     return {
       identity,
       authMode: config().authMode,
+      samlLogoutEnabled:
+        config().authMode === "saml" && !!process.env.SAML_LOGOUT_URL,
       projects: projects
         .filter((p) => projectRole(identity, p.id))
         .map((p) => ({ ...p, role: projectRole(identity, p.id)! })),

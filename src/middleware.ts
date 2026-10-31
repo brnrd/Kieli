@@ -15,7 +15,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       return next();
     const samlPost =
       config().authMode === "saml" &&
-      path === "/auth/saml/acs" &&
+      ["/auth/saml/acs", "/auth/saml/logout"].includes(path) &&
       context.request.method === "POST";
     const publicPath =
       path.startsWith("/sync/") ||
@@ -24,6 +24,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
       ["/tasks/snapshots", "/tasks/identities"].includes(path) ||
       path === "/mcp" ||
       samlPost ||
+      (path === "/auth/saml/logout" && context.request.method === "GET") ||
+      (path === "/auth/logout" && context.request.method === "POST") ||
       path === "/auth/saml/metadata" ||
       path === "/login" ||
       path === "/auth/login" ||
@@ -33,7 +35,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
       path === "/api/auth/install" ||
       path === "/api/auth/login" ||
       path === "/api/auth/activate";
-    // SAML's cross-site POST is bound to a one-time browser cookie, RelayState,
+    // SAML sign-in and logout callbacks authenticate signed protocol messages.
+    // Sign-in and SP logout responses also require a one-time browser cookie, RelayState,
     // signed assertion, and request ID. MCP validates its own Host/Origin and
     // requires a dedicated bearer token. SCIM and maintenance jobs each use
     // separate bearer credentials; browser writes continue to check Origin.
