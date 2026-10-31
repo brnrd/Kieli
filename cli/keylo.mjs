@@ -29,6 +29,7 @@ Options:
   --languages <codes>   Comma-separated codes; defaults to all project languages
   --format <format>     flat (default), nested, yaml, js, ts, php, properties,
                         ini, resx, po, pot, strings, plist, android, arb, xliff, csv
+  --require-current     Fail pull if copy is missing, outdated or invalid
   --fallback            Use source copy for missing translations
   --demo                Allow a local demo server without a token
   --help                Show this help
@@ -56,6 +57,7 @@ export function parseArgs(args, defaults = {}) {
     files: defaults.files ?? [],
     apply: false,
     "dry-run": false,
+    "require-current": defaults.requireCurrent ?? false,
     fallback: false,
     demo: false,
   };
@@ -74,7 +76,11 @@ export function parseArgs(args, defaults = {}) {
     const option = args[i]?.replace(/^--/, "");
     if (!args[i]?.startsWith("--"))
       throw new Error(`Unexpected argument: ${args[i]}`);
-    if (["fallback", "demo", "apply", "dry-run"].includes(option))
+    if (
+      ["fallback", "demo", "apply", "dry-run", "require-current"].includes(
+        option,
+      )
+    )
       options[option] = true;
     else if (valued.has(option)) {
       const value = args[++i];
@@ -111,7 +117,11 @@ export function parseArgs(args, defaults = {}) {
   if (options.languages) Intl.getCanonicalLocales(options.languages.split(","));
   if (options.command === "push") {
     if (
-      args.some((arg) => ["--out", "--languages", "--fallback"].includes(arg))
+      args.some((arg) =>
+        ["--out", "--languages", "--fallback", "--require-current"].includes(
+          arg,
+        ),
+      )
     )
       throw new Error("Pull options cannot be used with push.");
     if (options.demo)
@@ -142,6 +152,7 @@ export async function pull(options, token = process.env.KEYLO_TOKEN) {
     format: options.format,
     languages: options.languages,
     fallback: String(options.fallback),
+    requireCurrent: String(options["require-current"] ?? false),
   }).toString();
   const response = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -150,7 +161,7 @@ export async function pull(options, token = process.env.KEYLO_TOKEN) {
   });
   if (!response.ok)
     throw new Error(
-      `Export failed (HTTP ${response.status}). Check the project, token, and access permissions.`,
+      `Export failed (HTTP ${response.status}). ${response.status === 422 ? "Check missing or outdated copy, placeholder contracts and format compatibility." : "Check the project, token, and access permissions."}`,
     );
   // Bound responses even if Content-Length is absent.
   const chunks = [];
@@ -284,7 +295,9 @@ export async function loadConfig(args) {
   if (!section || typeof section !== "object" || Array.isArray(section))
     throw new Error("Invalid command configuration.");
   const allowed =
-    command === "push" ? ["files"] : ["out", "format", "languages"];
+    command === "push"
+      ? ["files"]
+      : ["out", "format", "languages", "requireCurrent"];
   if (Object.keys(section).some((key) => !allowed.includes(key)))
     throw new Error("Unsupported command configuration field.");
   const files = command === "push" ? (section.files ?? []) : [];
@@ -313,6 +326,8 @@ export async function loadConfig(args) {
   )
     throw new Error("Invalid configuration values.");
   if (
+    (section.requireCurrent !== undefined &&
+      typeof section.requireCurrent !== "boolean") ||
     (section.out !== undefined && typeof section.out !== "string") ||
     (section.format !== undefined && typeof section.format !== "string") ||
     (section.languages !== undefined &&
@@ -327,6 +342,7 @@ export async function loadConfig(args) {
     out: section.out ? resolve(dirname(path), section.out) : undefined,
     format: section.format,
     languages: section.languages?.join(","),
+    requireCurrent: section.requireCurrent,
     files: mapped,
   };
 }
@@ -569,7 +585,11 @@ export async function main(args = process.argv.slice(2)) {
     }
     if (options.command === "push") {
       if (
-        args.some((arg) => ["--out", "--languages", "--fallback"].includes(arg))
+        args.some((arg) =>
+          ["--out", "--languages", "--fallback", "--require-current"].includes(
+            arg,
+          ),
+        )
       )
         throw new Error("Pull options cannot be used with push.");
       const result = await push(options);

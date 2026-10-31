@@ -134,7 +134,7 @@ test("conditional writes prevent duplicate keys and lost concurrent edits", asyn
   await svc.createKey(manager, "website", key);
   await assert.rejects(svc.createKey(manager, "website", key), Conflict);
   const updates = await Promise.allSettled(
-    ["Bonjour", "Salut"].map((fr) =>
+    ["Bonjour {name}", "Salut {name}"].map((fr) =>
       svc.updateKey(user, "website", key.name, {
         version: 1,
         translations: { fr },

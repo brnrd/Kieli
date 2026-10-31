@@ -280,6 +280,7 @@ export const ALL: APIRoute = async (context) => {
         locales,
         url.searchParams.get("format") ?? "flat",
         url.searchParams.get("fallback") === "true",
+        url.searchParams.get("requireCurrent") === "true",
       );
       if (url.searchParams.get("download") === "zip") {
         const archive = zipSync(

@@ -13,6 +13,7 @@ import type {
 } from "../shared";
 import { projectSchema, keySchema } from "../validation";
 import { mcpAudit } from "./mcp-credentials";
+import { requireCurrentCopy } from "./translation-quality";
 import { freshnessView } from "./freshness";
 import { resolveProject, translationComplete } from "../messages";
 
@@ -435,6 +436,11 @@ export class ProjectHistory {
     const keys = freshnessView(
       resolveProject(captured.keys, captured.snapshot.project),
       captured.snapshot.project,
+    );
+    requireCurrentCopy(
+      keys,
+      project,
+      project.languages.map((locale) => locale.code),
     );
     const release: Release = {
       id: randomUUID(),

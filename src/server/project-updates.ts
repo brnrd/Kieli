@@ -20,6 +20,7 @@ import type { KeyloService } from "./service";
 import { freshnessView } from "./freshness";
 import { dataPrefix } from "./project-data";
 import { keyState, type KeyState, type EditOrigin } from "./key-history";
+import { validateKeyQuality } from "./translation-quality";
 import { config } from "./config";
 export type KeyChange = {
   old?: TranslationKey;
@@ -228,6 +229,19 @@ export class ProjectUpdates {
     } catch (error) {
       throw new HttpError(422, (error as Error).message);
     }
+    const quality = new Map(
+      resolveProject([...candidates.values()], project).map((key) => [
+        key.name,
+        key,
+      ]),
+    );
+    for (const entry of entries)
+      validateKeyQuality(
+        quality.get(entry.name)!,
+        project,
+        Object.keys(entry.translations),
+        entry.before,
+      );
     // Leave room for indexed keys, immutable history, counters and lifecycle markers under DynamoDB's transaction ceiling.
     if (Buffer.byteLength(JSON.stringify(entries)) * 3 > 3 * 1024 * 1024)
       throw new HttpError(

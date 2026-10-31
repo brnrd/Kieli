@@ -49,3 +49,5 @@ Revoking a source-sync credential blocks subsequent requests and an in-flight wr
 Requests require the dedicated bearer credential, matching configured public Host, JSON bodies and HTTPS outside loopback. Foreign Origin values are rejected; machine clients may omit Origin. A shared limit permits 240 requests/minute per credential; CLI requests retry bounded transient failures and rate limits. A successful read/operation already completed cannot be recalled.
 
 Run `npm run smoke:sync` after building to verify config paths, dry-run/apply, target protection, credential separation, repeat behavior and revocation using disposable local fixtures.
+
+For a build that must contain only current, complete translations, use `node cli/keylo.mjs pull --config .keylo.json --require-current`. This also checks argument contracts in existing copy and fails before writing locale files. It can be set as `pull.requireCurrent: true` in repository configuration. Ordinary pulls retain their existing fallback/export behavior.

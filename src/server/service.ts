@@ -50,7 +50,7 @@ import {
   type Change,
 } from "./store";
 import { freshnessView, sourceContexts, stampFreshness } from "./freshness";
-import { validatePlaceholders } from "./placeholder-validation";
+import { validateKeyQuality, requireCurrentCopy } from "./translation-quality";
 import { McpCredentials } from "./mcp-credentials";
 import { mcpAudit } from "./mcp-credentials";
 import { translationBatchSchema } from "./mcp-schemas";
@@ -377,6 +377,19 @@ export class KeyloService {
           throw new HttpError(422, (error as Error).message);
         }
       }
+      const qualityKeys = graphNeeded
+        ? resolveProject([...decorated.values()], project)
+        : [...decorated.values()];
+      const qualityByName = new Map(qualityKeys.map((key) => [key.name, key]));
+      for (const change of changes)
+        if (change.next)
+          validateKeyQuality(
+            qualityByName.get(change.next.name)!,
+            project,
+            change.translatedLocales ??
+              (!change.old ? Object.keys(change.next.translations) : []),
+            change.old,
+          );
       try {
         await this.store.transact([
           ...(commitAuthorization ? await commitAuthorization() : []),
@@ -693,10 +706,6 @@ export class KeyloService {
             403,
             "MCP cannot change plural variables, type or offset.",
           );
-        validatePlaceholders(
-          previous.translations[project.sourceLanguage] ?? "",
-          text,
-        );
         const replaces =
           previous.plural && before && after
             ? Object.entries(before.forms).some(
@@ -1238,6 +1247,7 @@ export class KeyloService {
     locales: string[],
     format: string,
     fallback: boolean,
+    requireCurrent = false,
   ) {
     const project = await this.project(identity, id);
     try {
@@ -1256,6 +1266,7 @@ export class KeyloService {
         ? await this.effectiveKeys(project, rawStats)
         : await this.keys(identity, id)
     ).sort((a, b) => a.name.localeCompare(b.name, "en"));
+    if (requireCurrent) requireCurrentCopy(keys, project, selected);
     const result: Record<string, unknown> = Object.create(null);
     let size = 0;
     for (const locale of selected) {

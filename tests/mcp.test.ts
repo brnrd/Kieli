@@ -56,7 +56,11 @@ async function fixture(overwrite = false) {
   await svc.createKey(admin, "website", {
     name: "home.title",
     description: "A warm welcome",
-    translations: { en: "Hello {name}", fr: "", nl: "Private Dutch copy" },
+    translations: {
+      en: "Hello {name}",
+      fr: "",
+      nl: "Private Dutch copy {name}",
+    },
   });
   await svc.createKey(admin, "website", {
     name: "home.cta",
@@ -143,7 +147,7 @@ test("translation batches preserve source/context, update counters, and audit wi
   );
   const key = await f.svc.key(admin, "website", "home.title");
   assert.equal(key.translations.en, "Hello {name}");
-  assert.equal(key.translations.nl, "Private Dutch copy");
+  assert.equal(key.translations.nl, "Private Dutch copy {name}");
   assert.equal(key.description, "A warm welcome");
   assert.equal(key.updatedBy, "Claude · Claude");
   assert.equal((await f.svc.summary(admin, "website")).byLanguage.fr, 2);

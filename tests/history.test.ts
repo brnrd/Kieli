@@ -119,7 +119,7 @@ test("restore atomically swaps complete project data, keeps identity and adds a 
   await assert.rejects(
     svc.updateKey(admin, "website", "hello", {
       version: previous.version,
-      translations: { fr: "Stale edit" },
+      translations: { fr: "Stale edit {name}" },
     }),
     (error) => error instanceof Conflict,
   );
@@ -206,7 +206,7 @@ test("project guard blocks edits racing a snapshot restore", async () => {
   await assert.rejects(
     new KeyloService(wrapped).updateKey(admin, "website", "hello", {
       version: old.version,
-      translations: { fr: "Concurrent" },
+      translations: { fr: "Concurrent {name}" },
     }),
     (error) => error instanceof Conflict,
   );
@@ -239,7 +239,7 @@ test("releases stay immutable, channels roll back, delivery keys authenticate be
   const before = await svc.key(admin, "website", "hello");
   await svc.updateKey(admin, "website", "hello", {
     version: before.version,
-    translations: { fr: "Changed" },
+    translations: { fr: "Changed {name}" },
   });
   response = await history.deliver(
     "website",
@@ -262,7 +262,7 @@ test("releases stay immutable, channels roll back, delivery keys authenticate be
     credential.secret,
     null,
   );
-  assert.equal((await response.json()).messages.hello.value, "Changed");
+  assert.equal((await response.json()).messages.hello.value, "Changed {name}");
   await history.pointRelease(admin, "website", {
     release: release.id,
     channel: "production",
@@ -321,7 +321,7 @@ test("incomplete drafts, unsupported formatting and channel races never replace 
   key = await svc.key(admin, "website", "hello");
   await svc.updateKey(admin, "website", "hello", {
     version: key.version,
-    translations: { fr: "{date,date,long}" },
+    translations: { en: "{date,date,long}", fr: "{date,date,long}" },
   });
   await assert.rejects(
     history.publish(admin, "website", {

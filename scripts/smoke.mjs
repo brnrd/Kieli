@@ -279,6 +279,76 @@ try {
     await readFile(join(directory, "strings/fr.strings"), "utf8"),
     '"home.title" = "Salut";\n',
   );
+  assert.equal(
+    (
+      await request("/api/projects/smoke/keys", "POST", {
+        name: "invalid.arguments",
+        translations: { en: "Hello {name}", fr: "Bonjour" },
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/projects/smoke/export?requireCurrent=true",
+        "GET",
+        undefined,
+        authorization,
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request("/api/projects/smoke/keys/home.title", "PATCH", {
+        version: 2,
+        translations: { en: "Hello {name}" },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/projects/smoke/export?languages=fr&requireCurrent=true&fallback=true",
+        "GET",
+        undefined,
+        authorization,
+      )
+    ).status,
+    422,
+  );
+  const strictCli = spawn(
+    process.execPath,
+    [
+      "cli/keylo.mjs",
+      "pull",
+      "--url",
+      origin,
+      "--project",
+      "smoke",
+      "--languages",
+      "fr",
+      "--require-current",
+      "--out",
+      join(directory, "locales"),
+    ],
+    {
+      env: { ...process.env, KEYLO_TOKEN: token.secret },
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+  let strictError = "";
+  strictCli.stderr.on("data", (data) => {
+    strictError += data;
+  });
+  assert.equal((await once(strictCli, "exit"))[0], 1);
+  assert.match(strictError, /422/);
+  assert.deepEqual(
+    JSON.parse(await readFile(join(directory, "locales/fr.json"), "utf8")),
+    { home: { title: "Salut" } },
+  );
   const tokens = await (await request("/api/projects/smoke/tokens")).json();
   const revoked = await request(
     `/api/projects/smoke/tokens/${tokens[0].id}`,
@@ -297,7 +367,7 @@ try {
     401,
   );
   console.log(
-    "HTTP smoke passed: CSP, origins, roles, bounded bodies, pagination, version conflicts, token scope/revocation, and real CLI export.",
+    "HTTP smoke passed: CSP, origins, roles, bounded bodies, pagination, version conflicts, token scope/revocation, shared argument checks, strict freshness gates and real CLI export.",
   );
 } finally {
   server.kill("SIGTERM");

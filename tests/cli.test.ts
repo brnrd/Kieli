@@ -77,6 +77,10 @@ test("CLI sends bearer authorization and writes individual locale files atomical
         new URL(String(input)).searchParams.get("languages"),
         "en,fr",
       );
+      assert.equal(
+        new URL(String(input)).searchParams.get("requireCurrent"),
+        "true",
+      );
       return Response.json({
         project: "site",
         translations: { en: { hello: "Hello" }, fr: { hello: "Bonjour" } },
@@ -89,6 +93,7 @@ test("CLI sends bearer authorization and writes individual locale files atomical
         out: directory,
         format: "flat",
         languages: "en,fr",
+        "require-current": true,
         fallback: false,
       },
       "test-token",
@@ -243,4 +248,22 @@ test("repository config resolves explicit file mappings relative to itself and r
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("strict pull gates are explicit and cannot be mistaken for push options", () => {
+  const args = [
+    "pull",
+    "--url",
+    "https://example.com",
+    "--project",
+    "site",
+    "--require-current",
+  ];
+  const options = parseArgs(args);
+  assert.ok("require-current" in options);
+  assert.equal(options["require-current"], true);
+  assert.throws(
+    () => parseArgs(["push", ...args.slice(1), "--source", "en.json"]),
+    /Pull options/,
+  );
 });
