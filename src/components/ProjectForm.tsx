@@ -113,7 +113,6 @@ export default function ProjectForm({
           )}
           <label className="field-label">
             Project ID
-            <span>Used in API requests, CLI commands, and Okta groups.</span>
             <input
               aria-invalid={conflicts.id || undefined}
               aria-describedby={
@@ -128,6 +127,7 @@ export default function ProjectForm({
               className="mono-input"
               placeholder="acme-website"
             />
+            <span>Used in API requests, CLI commands, and SSO groups.</span>
           </label>
           {conflicts.id && (
             <p className="field-error" id="project-id-conflict" role="status">
@@ -135,11 +135,11 @@ export default function ProjectForm({
             </p>
           )}
           <label className="field-label">
-            Description <small>optional</small>
+            Description (optional)
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What are these words for?"
+              placeholder="Project purpose and context"
               maxLength={500}
               rows={2}
             />

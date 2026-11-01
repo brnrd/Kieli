@@ -80,6 +80,8 @@ Keep business rules in the backend service layer. Routes handle HTTP boundaries;
 
 File adapters must reject unsupported structures rather than silently discard meaningful data. Never execute imported content. Treat translations and MCP-visible copy as untrusted text. Avoid introducing a background worker, search service or extra deployment dependency without a demonstrated need.
 
+Use direct, task-focused interface labels such as “Edit key” and “Export translations.” Keep promotional slogans out of the workspace, dialogs and sign-in pages. Put field helper text after its control so adjacent inputs stay aligned; keep short optional markers on the label line. Favor compact layouts for people editing copy for extended sessions.
+
 Changes to persisted data need a documented, repeatable migration and a recovery strategy. Preserve existing data and API compatibility where practical, and state limitations honestly. Use plain labels and compact layouts that remain usable with many projects, keys and languages.
 
 ## Licensing

@@ -138,7 +138,7 @@ function TermForm({
             </p>
           )}
           <label className="field-label">
-            Notes <small>optional</small>
+            Notes (optional)
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}

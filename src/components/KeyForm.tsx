@@ -164,7 +164,6 @@ export default function KeyForm({
         <div className="dialog-body key-form">
           <label className="field-label">
             Key name
-            <span>Stable and descriptive. Your developers will thank you.</span>
             <input
               autoFocus
               name="keyName"
@@ -195,7 +194,7 @@ export default function KeyForm({
               />
             </label>
             <label className="field-label">
-              Tags <small>optional, comma separated</small>
+              Tags
               <input
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
@@ -203,21 +202,22 @@ export default function KeyForm({
                 disabled={!manager}
                 maxLength={360}
               />
+              <small>Optional, comma separated</small>
             </label>
           </div>
           <label className="field-label">
-            Context <small>optional</small>
+            Context (optional)
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="A little context goes a long way. Where does this copy appear?"
+              placeholder="Where is this copy used?"
               maxLength={1000}
               rows={2}
               disabled={!manager}
             />
           </label>
           <div className="form-divider">
-            <span>THE WORDS</span>
+            <span>TRANSLATIONS</span>
             <span>{project.languages.length} languages</span>
           </div>
           <label className="checkbox-label plural-key-toggle">

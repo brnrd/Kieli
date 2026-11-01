@@ -535,7 +535,6 @@ export default function App({
           <span className="workspace-avatar">K</span>
           <div>
             <strong>Your workspace</strong>
-            <span>Keep good words together</span>
           </div>
         </div>
         <div className="nav-section-label">WORKSPACE</div>
@@ -617,7 +616,8 @@ export default function App({
             className="nav-item help-item"
             onClick={() => openModal("help")}
           >
-            <CircleHelp size={17} />A little help
+            <CircleHelp size={17} />
+            Help
             <ArrowUpRight size={14} />
           </button>
           <Appearance />
@@ -733,11 +733,9 @@ export default function App({
             <>
               <div className="page-heading">
                 <div>
-                  <span className="eyebrow">YOUR WORDS, ORGANIZED</span>
                   <h1>
                     Projects<span className="heading-dot">.</span>
                   </h1>
-                  <p>A home for every product. A place for every word.</p>
                 </div>
                 {identity.admin && (
                   <div className="heading-actions">
@@ -759,7 +757,7 @@ export default function App({
               ) : (
                 <Empty
                   icon={<FolderClosed size={30} />}
-                  title="A fresh start for your words"
+                  title="No projects"
                   description={
                     identity.admin
                       ? "Create your first project, choose its languages, and add your product copy."
@@ -780,12 +778,6 @@ export default function App({
                   }
                 />
               )}
-              <div className="workspace-footer">
-                <span>SMALL BY DESIGN. OPEN BY NATURE.</span>
-                <span>
-                  Made for words that travel. <Globe2 size={14} />
-                </span>
-              </div>
             </>
           ) : !project ? (
             <Empty
@@ -809,10 +801,7 @@ export default function App({
                       <h1>{project.name}</h1>
                       <span className="project-type">PROJECT</span>
                     </div>
-                    <p>
-                      {project.description ||
-                        "A place for your product copy and translations."}
-                    </p>
+                    {project.description && <p>{project.description}</p>}
                   </div>
                 </div>
                 <div className="heading-actions">
@@ -901,7 +890,6 @@ export default function App({
                         <strong>
                           {loading ? "—" : stats.totalKeys.toLocaleString()}
                         </strong>
-                        <small>One source of truth</small>
                       </div>
                     </div>
                     <div className="stat">
@@ -974,18 +962,10 @@ export default function App({
                     <div className="section-title">
                       <div>
                         <h2 id="key-list-heading" tabIndex={-1}>
-                          All the right words
+                          Translation keys
                           <span>{stats.totalKeys.toLocaleString()}</span>
                         </h2>
-                        <p>
-                          Keep your copy in sync, from the first hello to the
-                          last detail.
-                        </p>
                       </div>
-                      <span className="saved-label">
-                        <CheckCircle2 size={14} />
-                        All languages, one place
-                      </span>
                     </div>
                     <div className="table-toolbar">
                       <label className="search-field">
@@ -1360,8 +1340,8 @@ export default function App({
                           }
                           title={
                             stats.totalKeys
-                              ? "No words found here"
-                              : "Every project starts with a word"
+                              ? "No matching keys"
+                              : "No keys yet"
                           }
                           description={
                             stats.totalKeys
@@ -1447,19 +1427,13 @@ export default function App({
                       </div>
                     </div>
                   </section>
-                  <div className="workspace-footer">
-                    <span>A PLACE FOR EVERY WORD.</span>
-                    <span>
-                      Manual translations. Human touches. <Globe2 size={14} />
-                    </span>
-                  </div>
                 </>
               )}
               {tab === "languages" && (
                 <>
                   <div className="section-title standalone">
                     <div>
-                      <h2>A few words, many worlds.</h2>
+                      <h2>Project languages</h2>
                       <p>Manage the languages your project speaks.</p>
                     </div>
                     {manager && (
@@ -1524,8 +1498,7 @@ export default function App({
                           )?.name
                         }
                       </strong>
-                      . New languages start with empty translations, ready for a
-                      human touch.
+                      . New languages start with empty translations.
                     </p>
                   </div>
                 </>
@@ -1684,14 +1657,7 @@ export default function App({
       {modal === "key" && project && (
         <ModalShell
           className="key-editor-dialog"
-          title={
-            editing ? "A place for this word." : "Make room for a new word."
-          }
-          subtitle={
-            editing
-              ? "Edit your copy and translations together."
-              : "One key. Every language. All together."
-          }
+          title={editing ? "Edit key" : "Add key"}
           onClose={closeModal}
           wide
         >
@@ -1710,11 +1676,7 @@ export default function App({
         </ModalShell>
       )}
       {modal === "project" && (
-        <ModalShell
-          title="A new home for your words."
-          subtitle="Keep each product's copy in its own little world."
-          onClose={closeModal}
-        >
+        <ModalShell title="Create project" onClose={closeModal}>
           <ProjectForm
             projects={projects}
             busy={busy}
@@ -1725,11 +1687,7 @@ export default function App({
         </ModalShell>
       )}
       {modal === "export" && project && (
-        <ModalShell
-          title="Good words travel."
-          subtitle="Take your translations wherever your product lives."
-          onClose={closeModal}
-        >
+        <ModalShell title="Export translations" onClose={closeModal}>
           <ExportForm project={project} onClose={closeModal} notify={notify} />
         </ModalShell>
       )}
@@ -1771,23 +1729,19 @@ export default function App({
         </ModalShell>
       )}
       {modal === "help" && (
-        <ModalShell
-          title="A little orientation."
-          subtitle="Less process. More good copy."
-          onClose={closeModal}
-        >
+        <ModalShell title="Help" onClose={closeModal}>
           <div className="dialog-body help-content">
             <div>
               <Braces />
-              <h3>Keys keep things connected</h3>
+              <h3>Keys</h3>
               <p>
                 Use stable names like <code>home.hero.title</code>. Developers
-                use the key; everyone works on the words behind it.
+                use these names to retrieve translations.
               </p>
             </div>
             <div>
               <Languages />
-              <h3>Every language, together</h3>
+              <h3>Languages</h3>
               <p>
                 Set a source language and add your target languages. Click any
                 translation to edit it. Empty translations stay visible as
@@ -1796,7 +1750,7 @@ export default function App({
             </div>
             <div>
               <Terminal />
-              <h3>Copy meets code</h3>
+              <h3>Export and CLI</h3>
               <p>
                 Export flat or nested JSON. Use the CLI with a project-scoped
                 token to pull locale files directly into your repository.

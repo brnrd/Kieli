@@ -134,17 +134,17 @@ export default function SyncConnection({
               />
             </label>
             <label className="field-label">
-              Key prefixes{" "}
-              <small>
-                optional, comma separated; empty allows all source keys in this
-                project
-              </small>
+              Key prefixes
               <input
                 value={prefixes}
                 disabled={busy}
                 placeholder="home., billing."
                 onChange={(event) => setPrefixes(event.target.value)}
               />
+              <small>
+                Optional, comma separated. Leave empty to allow all source keys
+                in this project.
+              </small>
             </label>
             <label className="field-label">
               Expires in

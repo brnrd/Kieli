@@ -1820,7 +1820,7 @@ progress::-moz-progress-bar {
   font-size: 8px;
   font-weight: 400;
   color: var(--text-muted);
-  margin-top: -5px;
+  margin-top: 0;
 }
 .field-label input,
 .field-label select,

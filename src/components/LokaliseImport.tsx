@@ -213,8 +213,7 @@ export default function LokaliseImport({
             </label>
             {kind === "lokalise" ? (
               <label className="field-label">
-                Key platform{" "}
-                <small>for API snapshots with per-platform names</small>
+                Key platform
                 <select
                   disabled={busy}
                   value={platform}
@@ -225,14 +224,12 @@ export default function LokaliseImport({
                   <option value="android">Android</option>
                   <option value="other">Other</option>
                 </select>
+                <small>For API snapshots with per-platform names</small>
               </label>
             ) : (
               <>
                 <label className="field-label">
-                  File language{" "}
-                  <small>
-                    optional, for a single file without a language filename
-                  </small>
+                  File language
                   <input
                     value={language}
                     onChange={(event) => setLanguage(event.target.value)}
@@ -240,6 +237,9 @@ export default function LokaliseImport({
                     placeholder="e.g. en or pt-BR"
                     maxLength={35}
                   />
+                  <small>
+                    Optional, for a single file without a language filename
+                  </small>
                 </label>
                 <details className="format-support">
                   <summary>Supported formats and limits</summary>

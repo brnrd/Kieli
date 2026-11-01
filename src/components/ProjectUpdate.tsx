@@ -192,10 +192,7 @@ export default function ProjectUpdate({
               />
             </label>
             <label className="field-label">
-              File language{" "}
-              <small>
-                optional, for a single file without a locale filename
-              </small>
+              File language
               <input
                 value={language}
                 maxLength={35}
@@ -205,6 +202,9 @@ export default function ProjectUpdate({
                   setReady(false);
                 }}
               />
+              <small>
+                Optional, for a single file without a locale filename
+              </small>
             </label>
             <label className="field-label">
               Update behavior
