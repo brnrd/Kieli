@@ -35,7 +35,20 @@ The first adapter is [Apple `.stringsdict`](apple-stringsdict.md): a bounded sin
 
 Acceptance: synthetic golden fixtures preserve arguments, plural semantics and supported metadata; unsupported structures produce actionable errors. Import, export, CLI and mobile expectations are documented separately.
 
-## Release verification
+## Next: everyday project and key management
+
+Prioritize these product basics before more format adapters or staging tooling. Implement and verify one at a time; the following items are plans, not shipped behavior.
+
+1. **Rename a key — next.** Managers can change a key's name without losing its stable identity, translations, freshness or history. Preview inbound references and name collisions. Reference updates must be atomic; reject unsupported batch sizes before making changes. Stale editors cannot save against the old name. Application source-code changes remain the developer's responsibility.
+2. **Archive and restore projects.** Retire projects from default navigation without deleting copy, history or settings. Make archived state visible and enforce editing restrictions on the server. Preserve read access and existing exports so archiving does not unexpectedly break consuming builds. Managers can restore the project.
+3. **Disable and re-enable target languages.** Pause a target language without deleting its translations or native metadata. Exclude disabled targets from ordinary editing, completion totals and default exports. Define explicit-language API/CLI behavior before implementation; source language cannot be disabled.
+4. **Bulk metadata changes.** Extend the existing selection/deletion UI with tag and namespace updates. Preview affected keys, use bounded version-checked batches and report partial progress accurately. No bulk action should certify translation quality or introduce a review workflow.
+5. **Duplicate a key.** Create a new named identity with selected context and optional target copy. Do not copy the original key's history or silently turn outdated translations into current ones. Validate names, permissions and placeholders as for ordinary creation.
+6. **Export a useful subset.** Export selected keys or a namespace instead of requiring a whole-project download. Keep browser, API and CLI selection rules consistent; apply the existing authorization, freshness gate and filename/format safeguards.
+
+Project deletion and permanent language removal stay separate from these recoverable operations. Do not turn archive/disable actions into hidden deletion.
+
+## Release verification — deferred until a staging environment is available
 
 Before an enterprise production rollout, run real IdP lifecycle/mapping checks, AWS installation and backup restoration in a staging account, and cold/warm workload tests using expected project sizes. Local fixtures do not establish those external integrations or operating limits.
 
