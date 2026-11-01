@@ -198,6 +198,28 @@ try {
   });
   assert.equal(accepted.status, 200, await accepted.clone().text());
   let member = cookie(accepted);
+  assert.equal(
+    (
+      await request(
+        "/api/projects/local-smoke/translation-memory",
+        "POST",
+        { source: "Hello", language: "fr" },
+        member,
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/projects/local-smoke/translation-memory/index",
+        "POST",
+        {},
+        member,
+      )
+    ).status,
+    403,
+  );
   const glossaryTerm = await json(
     "/api/projects/local-smoke/glossary",
     "POST",

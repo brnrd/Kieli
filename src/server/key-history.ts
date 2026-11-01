@@ -24,6 +24,7 @@ export type KeyEdit = {
   id: string;
   keyId: string;
   keyName: string;
+  sourceLanguage?: string;
   at: string;
   actor: string;
   actorName: string;

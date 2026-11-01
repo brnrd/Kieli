@@ -23,13 +23,13 @@ Implemented project-scoped source and target terms, notes, case sensitivity, sea
 
 Acceptance: terms are searchable, safely importable/exportable, audited and protected by project roles. MCP reads terms only within its project scope. Existing translation publication remains independent of any approval process.
 
-## 3. Manual reuse of previous translations — next
+## 3. Manual reuse of previous translations — completed
 
-Use existing history as a starting point for project-scoped translation-memory suggestions. Begin with exact source matches; measure whether fuzzy matching is useful before adding it. Suggestions are explicitly applied by a translator and pass the same placeholder/version checks as typed copy.
+Implemented exact-source suggestions from project history, with historical key/version provenance, per-target lookup, draft replacement confirmation and normal save validation. New writes index history atomically; managers can resumably include older history. Deleted/recreated identities, project scopes and active snapshot datasets are checked. See [manual translation reuse](translation-memory.md) for retention and matching limits.
 
 Acceptance: suggestions show their origin, never cross project/access boundaries and never overwrite copy automatically. Retention/deletion behavior is documented. Avoid an external search service until measured needs justify one.
 
-## 4. Native format fidelity
+## 4. Native format fidelity — next
 
 Choose the next format from a real consuming application rather than expanding a checklist. Candidates are Apple `.stringsdict`/`.xcstrings`, ARB metadata and native gettext plural entries. Specify the supported subset and lossless round-trip fixtures before implementing each adapter.
 

@@ -47,6 +47,8 @@ The composite primary key is `(pk, sk)`:
 | Active admin counter          | `AUTH_CONTROL`                        | `ADMINS`             |
 | Shared attempt bucket         | `AUTH_RATE#<sha256>`                  | `<time-window>`      |
 | Security event                | `AUTH_AUDIT`                          | `<timestamp>#<uuid>` |
+| Exact-source memory pointers | `PROJECT#<project>` | `TM#<source-hash>#<event-order>#<side>` |
+| History index checkpoint | `PROJECT#<project>` | `TM_INDEX#<source-language>` |
 | SAML request/assertion cache  | `SAML_CACHE#<scope-hash>`             | `<key-hash>`         |
 | SAML logout flow / replay | `SAML_LOGOUT_FLOW#<scope-hash>#<relay-hash>` / `SAML_LOGOUT_REPLAY#<scope-hash>#<id-hash>` | `META` |
 | SAML session revocation | `SAML_REVOKED#<issuer-subject-index-hash>` | `META` |

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { memoryChanges } from "./translation-memory";
 import { projectNameChanges } from "./project-names";
 import { SyncCredentials } from "./sync-credentials";
 import { ProjectUpdates, type KeyChange } from "./project-updates";
@@ -396,9 +397,23 @@ export class KeyloService {
           ...(commitAuthorization ? await commitAuthorization() : []),
           ...additionalChanges,
           ...lifecycle,
-          ...changes.map((change) =>
-            editChange(id, identity, origin, change.old, change.next),
-          ),
+          ...changes.flatMap((change) => {
+            const entry = editChange(
+              id,
+              identity,
+              origin,
+              change.old,
+              change.next,
+            );
+            const event = {
+              ...(entry.value as KeyEdit),
+              sourceLanguage: project.sourceLanguage,
+            };
+            return [
+              { ...entry, value: event },
+              ...memoryChanges(project, event),
+            ];
+          }),
           {
             pk: "WORKSPACE",
             sk: `PROJECT#${id}`,

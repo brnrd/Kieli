@@ -10,6 +10,8 @@ Deleting a key moves its copy and metadata into **Settings → Deleted keys** fo
 
 Trash expiry is checked synchronously. DynamoDB TTL removes expired trash eventually; SQLite removes expired TTL records when the store opens. History records are retained without automatic expiry. Translation history contains copy and contributor identifiers; apply your organization's database access, backup, retention and privacy policy. Project snapshots, live delivery releases and security audit records have separate lifecycles.
 
+[Previous translations](translation-memory.md) provides manual exact-source reuse across active keys in this project. It uses a compact derived lookup index; older history can be included by a manager. Deleted identities are excluded even while their history remains retained.
+
 API:
 
 - `GET /api/projects/:project/keys/:key/history?cursor=...`: up to 25 history entries.

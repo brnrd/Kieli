@@ -11,6 +11,7 @@ import { handleSsoApi } from "../../server/sso-api";
 import { handleAccountApi } from "../../server/account-api";
 import { mcpCredentials } from "../../server/mcp-credentials";
 import { zipSync, strToU8 } from "fflate";
+import { TranslationMemory } from "../../server/translation-memory";
 import { ProjectHistory } from "../../server/project-history";
 import { getStore } from "../../server/store";
 
@@ -90,6 +91,18 @@ export const ALL: APIRoute = async (context) => {
         return new Response(null, { status: 204 });
       }
       throw new HttpError(404, "Glossary endpoint not found.");
+    }
+    if (parts[2] === "translation-memory" && method === "POST") {
+      const memory = new TranslationMemory(await getStore());
+      if (parts.length === 3)
+        return Response.json(
+          await memory.lookup(identity, id, await readJSON(request)),
+        );
+      if (parts.length === 4 && parts[3] === "index")
+        return Response.json(
+          await memory.indexBatch(identity, id, await readJSON(request)),
+        );
+      throw new HttpError(404, "Not found.");
     }
     const history = new ProjectHistory(await getStore());
     if (parts[2] === "snapshots") {

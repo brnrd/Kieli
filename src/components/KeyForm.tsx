@@ -1,3 +1,4 @@
+import TranslationMemory from "./TranslationMemory";
 import GlossaryLookup from "./GlossaryLookup";
 import { sameTranslation } from "./editor-draft";
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
@@ -259,6 +260,29 @@ export default function KeyForm({
               }
             />
           )}
+          <TranslationMemory
+            project={project}
+            source={
+              editing &&
+              plural === !!editing.plural &&
+              sameTranslation(
+                translations[project.sourceLanguage] ?? "",
+                editing.translations[project.sourceLanguage] ?? "",
+                plural,
+              )
+                ? (editing.translations[project.sourceLanguage] ?? "")
+                : (translations[project.sourceLanguage] ?? "")
+            }
+            plural={plural}
+            focusLanguage={focusLanguage}
+            translations={translations}
+            manager={manager}
+            onApply={(code, text) => {
+              setTranslations((current) => ({ ...current, [code]: text }));
+              if (!sourceChanged)
+                setConfirmed((current) => new Set([...current, code]));
+            }}
+          />
           {project.languages.map((l) => (
             <div
               className="translation-field"
