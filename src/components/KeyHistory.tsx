@@ -86,6 +86,10 @@ export default function KeyHistory({
             <span>
               {entry.origin} · {new Date(entry.at).toLocaleString()}
               {entry.before &&
+                entry.after &&
+                entry.before.name !== entry.after.name &&
+                ` · Renamed ${entry.before.name} → ${entry.after.name}`}
+              {entry.before &&
               entry.after &&
               entry.before.translations[project.sourceLanguage] !==
                 entry.after.translations[project.sourceLanguage]

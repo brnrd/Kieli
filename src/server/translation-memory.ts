@@ -154,6 +154,26 @@ export class TranslationMemory {
         return { pointer, event, current };
       }),
     );
+    // History pointers retain their original names. Resolve a renamed identity
+    // within the active dataset; never follow a reused name to a different key.
+    if (
+      candidates.some(
+        ({ pointer, current }) =>
+          !current ||
+          (current.id ?? legacyKeyId(id, current.name)) !== pointer.keyId,
+      )
+    ) {
+      const active = new Map(
+        (
+          await this.store.list<TranslationKey>(
+            `PROJECT#${id}`,
+            `${dataPrefix(project)}KEY#`,
+          )
+        ).map((key) => [key.id ?? legacyKeyId(id, key.name), key]),
+      );
+      for (const candidate of candidates)
+        candidate.current = active.get(candidate.pointer.keyId);
+    }
     for (const { pointer, event, current } of candidates) {
       // Deleted keys, obsolete datasets and a reused key name must not expose copy.
       if (

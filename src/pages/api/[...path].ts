@@ -1,4 +1,5 @@
 import { Glossary } from "../../server/glossary";
+import { KeyRenames } from "../../server/key-renames";
 import { workspaceOverview } from "../../server/workspace";
 import type { APIRoute } from "astro";
 import { SyncCredentials } from "../../server/sync-credentials";
@@ -250,6 +251,20 @@ export const ALL: APIRoute = async (context) => {
         return Response.json(
           await svc.createKey(identity, id, await readJSON(request)),
           { status: 201 },
+        );
+      if (
+        parts.length === 5 &&
+        ["rename-preview", "rename"].includes(parts[4]!) &&
+        method === "POST"
+      )
+        return Response.json(
+          await new KeyRenames(await getStore(), svc).run(
+            identity,
+            id,
+            parts[3]!,
+            await readJSON(request),
+            parts[4] === "rename",
+          ),
         );
       if (parts.length === 5 && parts[4] === "history" && method === "GET")
         return Response.json(

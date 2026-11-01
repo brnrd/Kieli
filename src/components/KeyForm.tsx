@@ -18,6 +18,7 @@ export default function KeyForm({
   onClose,
   onReload,
   onRestored,
+  onRename,
   onDirtyChange,
   focusLanguage = "all",
 }: {
@@ -32,6 +33,7 @@ export default function KeyForm({
   onClose: () => void;
   onReload: () => Promise<void>;
   onRestored: () => Promise<void>;
+  onRename?: () => void;
 }) {
   const [name, setName] = useState(editing?.name ?? "");
   const [description, setDescription] = useState(editing?.description ?? "");
@@ -172,6 +174,11 @@ export default function KeyForm({
               disabled={!!editing}
               className="mono-input"
             />
+            {editing && manager && onRename && (
+              <button type="button" className="text-button" onClick={onRename}>
+                Rename key…
+              </button>
+            )}
           </label>
           <div className="field-grid">
             <label className="field-label">

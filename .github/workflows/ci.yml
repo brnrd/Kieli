@@ -23,6 +23,7 @@ jobs:
       - run: npm run smoke:apple
       - run: npm run smoke:glossary
       - run: npm run smoke:memory
+      - run: npm run smoke:rename
       - run: npm run smoke:local
       - run: npm run smoke:saml
       - run: npm run smoke:sso

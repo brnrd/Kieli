@@ -12,6 +12,8 @@ Trash expiry is checked synchronously. DynamoDB TTL removes expired trash eventu
 
 [Previous translations](translation-memory.md) provides manual exact-source reuse across active keys in this project. It uses a compact derived lookup index; older history can be included by a manager. Deleted identities are excluded even while their history remains retained.
 
+[Renaming a key](key-renaming.md) preserves its identity and history, records the old/new name, and updates exact references atomically. Historical text and names remain immutable; historical references are not rewritten. Check old reference names before restoring historical linked text, especially if a former name has since been reused.
+
 API:
 
 - `GET /api/projects/:project/keys/:key/history?cursor=...`: up to 25 history entries.

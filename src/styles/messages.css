@@ -492,3 +492,9 @@
   overflow-wrap: anywhere;
   margin-bottom: 10px;
 }
+.rename-impact ul {
+  max-height: 180px;
+  overflow: auto;
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}

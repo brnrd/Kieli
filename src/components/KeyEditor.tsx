@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, SkipForward } from "lucide-react";
 import type { Project, TranslationKey } from "../shared";
 import { api } from "./api";
 import KeyForm from "./KeyForm";
+import RenameKey from "./RenameKey";
 import { ModalShell } from "./ui";
 import { isTypingTarget } from "./editor-preferences";
 export type EditorFilters = {
@@ -53,6 +54,7 @@ export default forwardRef<
     [notice, setNotice] = useState(""),
     [pending, setPending] = useState<(() => void) | null>(null);
   const [formGeneration, setFormGeneration] = useState(0);
+  const [renaming, setRenaming] = useState(false);
   const actions = useRef({
     move: (_direction: "previous" | "next" | "attention") => {},
   });
@@ -123,6 +125,7 @@ export default forwardRef<
       if (
         !current ||
         busy ||
+        renaming ||
         pending ||
         event.defaultPrevented ||
         event.isComposing ||
@@ -148,7 +151,7 @@ export default forwardRef<
     }
     window.addEventListener("keydown", shortcut);
     return () => window.removeEventListener("keydown", shortcut);
-  }, [current, busy, pending]);
+  }, [current, busy, pending, renaming]);
   async function save(data: Record<string, unknown>, advance = false) {
     working(true);
     setError("");
@@ -264,6 +267,13 @@ export default forwardRef<
         focusLanguage={filters.language}
         onDirtyChange={setDirty}
         onSubmit={(data, advance) => void save(data, advance)}
+        onRename={() =>
+          guard(() => {
+            setDirty(false);
+            setFormGeneration((value) => value + 1);
+            setRenaming(true);
+          })
+        }
         onClose={() => guard(onClose)}
         onReload={async () => guard(() => void reload())}
         onRestored={async () => {
@@ -272,6 +282,21 @@ export default forwardRef<
           notify("Translation restored.");
         }}
       />
+      {renaming && current && (
+        <RenameKey
+          project={project}
+          editing={current}
+          onClose={() => setRenaming(false)}
+          onBusyChange={working}
+          onRenamed={async (key) => {
+            setCurrent(key);
+            setDirty(false);
+            setRenaming(false);
+            await onSaved();
+            notify("Key renamed and references updated.");
+          }}
+        />
+      )}
       {pending && (
         <ModalShell
           title="Discard unsaved changes?"
