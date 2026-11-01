@@ -1,6 +1,6 @@
 # Editor navigation
 
-Open a key from the translation list to work through a filtered queue without returning to the table after every change.
+Open a key name or its pencil action to work through a filtered queue in the full editor without returning to the table after every change. Clicking ordinary translation copy starts [inline editing](inline-editing.md) for quick one-locale changes; plurals and linked keys use the full editor.
 
 ![Key navigation with a focused French draft, six project languages and persistent save controls](images/editor-navigation.png)
 

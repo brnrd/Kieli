@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronsUpDown,
   CircleHelp,
   Code2,
   FolderClosed,
@@ -21,7 +20,7 @@ import {
   LayoutGrid,
   Loader2,
   LogOut,
-  MoreHorizontal,
+  Pencil,
   Plus,
   Search,
   Settings2,
@@ -69,6 +68,8 @@ import { api } from "./api";
 import { IconButton, ModalShell, Empty, LanguageMark } from "./ui";
 import ProjectUpdate from "./ProjectUpdate";
 import ProjectForm from "./ProjectForm";
+import InlineTranslation from "./InlineTranslation";
+import { canEditInline } from "./inline-edit";
 import ProjectArchive from "./ProjectArchive";
 import ProjectGlossary from "./ProjectGlossary";
 import KeyEditor, { type EditorHandle, type EditorFilters } from "./KeyEditor";
@@ -76,6 +77,7 @@ import {
   editorDefaults,
   editorPreferenceKey,
   parseEditorPreferences,
+  isTypingTarget,
 } from "./editor-preferences";
 import ExportForm from "./ExportForm";
 import Developers from "./Developers";
@@ -126,19 +128,21 @@ export default function App({
     page: "users" | "account" | "admin",
     section = "overview",
   ) {
-    const admin = page !== "account";
-    const nextSection = page === "users" ? "people" : section;
-    setWorkspacePage(admin ? "admin" : "account");
-    if (admin) setAdminSection(nextSection);
-    setOverview(false);
-    setSidebarOpen(false);
-    window.history.pushState(
-      {},
-      "",
-      admin
-        ? `/admin${nextSection === "overview" ? "" : `/${nextSection}`}`
-        : "/account",
-    );
+    leaveInline(() => {
+      const admin = page !== "account";
+      const nextSection = page === "users" ? "people" : section;
+      setWorkspacePage(admin ? "admin" : "account");
+      if (admin) setAdminSection(nextSection);
+      setOverview(false);
+      setSidebarOpen(false);
+      window.history.pushState(
+        {},
+        "",
+        admin
+          ? `/admin${nextSection === "overview" ? "" : `/${nextSection}`}`
+          : "/account",
+      );
+    });
   }
   const [tab, setTab] = useState<Tab>(
     (initialPath.split("/")[2] as Tab) || "translations",
@@ -199,12 +203,16 @@ export default function App({
     setCursorHistory([]);
   }
   function changeStatus(value: string) {
-    setStatus(value);
-    resetPage();
+    leaveInline(() => {
+      setStatus(value);
+      resetPage();
+    });
   }
   function changeNamespace(value: string) {
-    setNamespace(value);
-    resetPage();
+    leaveInline(() => {
+      setNamespace(value);
+      resetPage();
+    });
   }
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -212,6 +220,25 @@ export default function App({
   const [languageMenu, setLanguageMenu] = useState(false);
   const [modal, setModal] = useState<Modal>(null);
   const [editing, setEditing] = useState<TranslationKey | null>(null);
+  const [inline, setInline] = useState<{
+    key: TranslationKey;
+    language: string;
+  } | null>(null);
+  const inlineRef = useRef<EditorHandle>(null);
+  function leaveInline(action: () => void) {
+    if (inlineRef.current) inlineRef.current.requestLeave(action);
+    else action();
+  }
+  function toggleVisibleLanguage(code: string) {
+    const update = () =>
+      setVisibleLanguages((current) =>
+        current.includes(code)
+          ? current.filter((item) => item !== code)
+          : [...current, code],
+      );
+    if (inline?.language === code) leaveInline(update);
+    else update();
+  }
   const [editorLanguage, setEditorLanguage] = useState<string>();
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState(false);
@@ -276,45 +303,55 @@ export default function App({
     }
   }
   function openModal(value: Modal, language?: string) {
-    if (value === "key") {
-      setEditorLanguage(language);
-      editorOrigin.current = {
-        element:
-          document.activeElement instanceof HTMLElement
-            ? document.activeElement
-            : null,
-        scroll: window.scrollY,
-      };
-      setEditorFilters({ query, status, namespace, language: filterLanguage });
-    }
-    setError("");
-    setModal(value);
+    leaveInline(() => {
+      if (value === "key") {
+        setEditorLanguage(language);
+        editorOrigin.current = {
+          element:
+            document.activeElement instanceof HTMLElement
+              ? document.activeElement
+              : null,
+          scroll: window.scrollY,
+        };
+        setEditorFilters({
+          query,
+          status,
+          namespace,
+          language: filterLanguage,
+        });
+      }
+      setError("");
+      setModal(value);
+    });
   }
   function navigate(id: string, nextTab: Tab = "translations") {
-    setWorkspacePage("projects");
-    if (id !== projectId) {
-      setKeys([]);
-      setLoading(true);
-      setSelected(new Set());
-      setSearch("");
-      setNamespace("all");
-      setQuery("");
-      setStats(emptyStats());
-      resetPage();
-    }
-    setOverview(false);
-    setProjectId(id);
-    setTab(nextTab);
-    setSidebarOpen(false);
-    window.history.pushState(
-      {},
-      "",
-      `/projects/${id}${nextTab === "translations" ? "" : `/${nextTab}`}`,
-    );
+    leaveInline(() => {
+      setWorkspacePage("projects");
+      if (id !== projectId) {
+        setKeys([]);
+        setLoading(true);
+        setSelected(new Set());
+        setSearch("");
+        setNamespace("all");
+        setQuery("");
+        setStats(emptyStats());
+        resetPage();
+      }
+      setOverview(false);
+      setProjectId(id);
+      setTab(nextTab);
+      setSidebarOpen(false);
+      window.history.pushState(
+        {},
+        "",
+        `/projects/${id}${nextTab === "translations" ? "" : `/${nextTab}`}`,
+      );
+    });
   }
   useEffect(() => {
     const handler = () => {
-      const navigationGuard = editorRef.current ?? glossaryRef.current;
+      const navigationGuard =
+        inlineRef.current ?? editorRef.current ?? glossaryRef.current;
       if (navigationGuard && !allowHistory.current) {
         window.history.pushState({}, "", lastPath.current);
         navigationGuard.requestLeave(() => {
@@ -403,12 +440,41 @@ export default function App({
     setVisibleLanguages(project?.languages.map((l) => l.code) ?? []);
   }, [projectId, project?.languages.length]);
   useEffect(() => {
+    if (inline || search === query) return;
     const timer = setTimeout(() => {
       setQuery(search);
       resetPage();
     }, 220);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, inline, query]);
+  useEffect(() => {
+    const shortcut = (event: KeyboardEvent) => {
+      if (
+        event.key !== "/" ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        event.isComposing ||
+        event.defaultPrevented ||
+        isTypingTarget(event.target) ||
+        inline ||
+        modal ||
+        overview ||
+        workspacePage !== "projects" ||
+        tab !== "translations"
+      )
+        return;
+      event.preventDefault();
+      setLanguageMenu(false);
+      document
+        .querySelector<HTMLInputElement>(
+          'input[aria-label="Search keys and translations"]',
+        )
+        ?.focus();
+    };
+    window.addEventListener("keydown", shortcut);
+    return () => window.removeEventListener("keydown", shortcut);
+  }, [inline, modal, overview, workspacePage, tab]);
   const pageKeys = keys;
   const completed = project
     ? Object.entries(stats.coverage).reduce(
@@ -451,6 +517,11 @@ export default function App({
   function editKey(key: TranslationKey, language?: string) {
     setEditing(key);
     openModal("key", language);
+  }
+  function editTranslation(key: TranslationKey, language: string) {
+    if (project && canEditInline(project, key, language, manager))
+      leaveInline(() => setInline({ key, language }));
+    else editKey(key, language);
   }
   async function saveProject(data: Record<string, unknown>, existing = false) {
     setBusy(true);
@@ -511,10 +582,12 @@ export default function App({
     });
   }
   function allProjects() {
-    setWorkspacePage("projects");
-    setOverview(true);
-    setSidebarOpen(false);
-    window.history.pushState({}, "", "/");
+    leaveInline(() => {
+      setWorkspacePage("projects");
+      setOverview(true);
+      setSidebarOpen(false);
+      window.history.pushState({}, "", "/");
+    });
   }
 
   return (
@@ -890,8 +963,10 @@ export default function App({
                   <button
                     className="text-button"
                     onClick={() => {
-                      setLoading(true);
-                      void refreshKeys();
+                      leaveInline(() => {
+                        setLoading(true);
+                        void refreshKeys();
+                      });
                     }}
                   >
                     Try again
@@ -995,14 +1070,23 @@ export default function App({
                         <Search size={17} />
                         <input
                           value={search}
-                          onChange={(e) => setSearch(e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            leaveInline(() => setSearch(value));
+                          }}
                           placeholder="Find a key or translation…"
                           aria-label="Search keys and translations"
                         />
+                        <kbd
+                          className="search-shortcut"
+                          title="Press / to focus search"
+                        >
+                          /
+                        </kbd>
                         {search && (
                           <IconButton
                             label="Clear search"
-                            onClick={() => setSearch("")}
+                            onClick={() => leaveInline(() => setSearch(""))}
                           >
                             <X size={13} />
                           </IconButton>
@@ -1015,8 +1099,11 @@ export default function App({
                             aria-label="Focus language"
                             value={filterLanguage}
                             onChange={(event) => {
-                              setFocusLanguage(event.target.value);
-                              resetPage();
+                              const value = event.target.value;
+                              leaveInline(() => {
+                                setFocusLanguage(value);
+                                resetPage();
+                              });
                             }}
                           >
                             <option value="all">All languages</option>
@@ -1116,11 +1203,7 @@ export default function App({
                                         visibleLanguages.length === 1
                                       }
                                       onChange={() =>
-                                        setVisibleLanguages((v) =>
-                                          v.includes(l.code)
-                                            ? v.filter((c) => c !== l.code)
-                                            : [...v, l.code],
-                                        )
+                                        toggleVisibleLanguage(l.code)
                                       }
                                     />
                                     <LanguageMark code={l.code} small />
@@ -1189,7 +1272,7 @@ export default function App({
                               />
                             </th>
                             <th className="key-column" scope="col">
-                              Key <ChevronsUpDown size={12} />
+                              Key
                             </th>
                             <th className="translations-heading" scope="col">
                               Translations
@@ -1214,7 +1297,11 @@ export default function App({
                                 <tr
                                   key={key.name}
                                   className={
-                                    selected.has(key.name) ? "row-selected" : ""
+                                    inline?.key.name === key.name
+                                      ? "row-inline-edit"
+                                      : selected.has(key.name)
+                                        ? "row-selected"
+                                        : ""
                                   }
                                 >
                                   <td className="checkbox-column">
@@ -1234,25 +1321,28 @@ export default function App({
                                       {key.name}
                                     </button>
                                     <div className="key-meta">
-                                      <span className="namespace-tag">
-                                        {key.namespace || "general"}
-                                      </span>
+                                      {key.namespace &&
+                                        key.namespace !== "general" && (
+                                          <span className="namespace-tag">
+                                            {key.namespace}
+                                          </span>
+                                        )}
                                       {key.tags.slice(0, 1).map((tag) => (
                                         <span className="key-tag" key={tag}>
                                           {tag}
                                         </span>
                                       ))}
                                     </div>
-                                    <span
-                                      className={`key-status status-badge ${isComplete(key, project) ? "complete" : key.outdatedLanguages?.length ? "outdated" : "missing"}`}
-                                    >
-                                      <span />
-                                      {isComplete(key, project)
-                                        ? "Current"
-                                        : key.outdatedLanguages?.length
+                                    {!isComplete(key, project) && (
+                                      <span
+                                        className={`key-status status-badge ${key.outdatedLanguages?.length ? "outdated" : "missing"}`}
+                                      >
+                                        <span />
+                                        {key.outdatedLanguages?.length
                                           ? "Outdated"
                                           : "Missing"}
-                                    </span>
+                                      </span>
+                                    )}
                                   </td>
                                   <td className="translations-column">
                                     <div className="translation-stack">
@@ -1278,57 +1368,76 @@ export default function App({
                                               </span>
                                             )}
                                           </div>
-                                          <button
-                                            onClick={() => editKey(key, l.code)}
-                                            aria-label={`${project.archivedAt ? "View" : "Edit"} ${l.name} translation for ${key.name}`}
-                                            lang={l.code}
-                                            dir="auto"
-                                          >
-                                            {(key.resolvedTranslations ??
-                                              key.translations)[
-                                              l.code
-                                            ]?.trim() ? (
-                                              key.plural &&
-                                              readPlural(
-                                                (key.resolvedTranslations ??
-                                                  key.translations)[l.code]!,
-                                              ) ? (
-                                                <span className="plural-copy">
-                                                  {Object.entries(
-                                                    readPlural(
-                                                      (key.resolvedTranslations ??
-                                                        key.translations)[
-                                                        l.code
-                                                      ]!,
-                                                    )!.forms,
-                                                  ).map(([form, text]) => (
-                                                    <span key={form}>
-                                                      <small>{form}</small>
-                                                      <span>
-                                                        {text || (
-                                                          <em>
-                                                            Add translation
-                                                          </em>
-                                                        )}
+                                          {inline?.key.name === key.name &&
+                                          inline.language === l.code ? (
+                                            <InlineTranslation
+                                              ref={inlineRef}
+                                              project={project}
+                                              entry={inline.key}
+                                              language={inline.language}
+                                              onClose={() => setInline(null)}
+                                              onSaved={() => refreshKeys()}
+                                              onFullEditor={(latest) =>
+                                                editKey(latest, l.code)
+                                              }
+                                              notify={notify}
+                                            />
+                                          ) : (
+                                            <button
+                                              className="translation-value"
+                                              onClick={() =>
+                                                editTranslation(key, l.code)
+                                              }
+                                              aria-label={`${project.archivedAt ? "View" : "Edit"} ${l.name} translation for ${key.name}`}
+                                              lang={l.code}
+                                              dir="auto"
+                                            >
+                                              {(key.resolvedTranslations ??
+                                                key.translations)[
+                                                l.code
+                                              ]?.trim() ? (
+                                                key.plural &&
+                                                readPlural(
+                                                  (key.resolvedTranslations ??
+                                                    key.translations)[l.code]!,
+                                                ) ? (
+                                                  <span className="plural-copy">
+                                                    {Object.entries(
+                                                      readPlural(
+                                                        (key.resolvedTranslations ??
+                                                          key.translations)[
+                                                          l.code
+                                                        ]!,
+                                                      )!.forms,
+                                                    ).map(([form, text]) => (
+                                                      <span key={form}>
+                                                        <small>{form}</small>
+                                                        <span>
+                                                          {text || (
+                                                            <em>
+                                                              Add translation
+                                                            </em>
+                                                          )}
+                                                        </span>
                                                       </span>
-                                                    </span>
-                                                  ))}
-                                                </span>
+                                                    ))}
+                                                  </span>
+                                                ) : (
+                                                  (key.resolvedTranslations ??
+                                                    key.translations)[l.code]
+                                                )
                                               ) : (
-                                                (key.resolvedTranslations ??
-                                                  key.translations)[l.code]
-                                              )
-                                            ) : (
-                                              <span className="missing-copy">
-                                                {!project.archivedAt && (
-                                                  <Plus size={12} />
-                                                )}
-                                                {project.archivedAt
-                                                  ? "Missing translation"
-                                                  : "Add translation"}
-                                              </span>
-                                            )}
-                                          </button>
+                                                <span className="missing-copy">
+                                                  {!project.archivedAt && (
+                                                    <Plus size={12} />
+                                                  )}
+                                                  {project.archivedAt
+                                                    ? "Missing translation"
+                                                    : "Add translation"}
+                                                </span>
+                                              )}
+                                            </button>
+                                          )}
                                           {references(
                                             key.translations[l.code] ?? "",
                                           ).length > 0 && (
@@ -1350,10 +1459,10 @@ export default function App({
                                   </td>
                                   <td className="row-action-column">
                                     <IconButton
-                                      label={`${project.archivedAt ? "View" : "Edit"} ${key.name}`}
+                                      label={`${project.archivedAt ? "View" : "Open full editor for"} ${key.name}`}
                                       onClick={() => editKey(key)}
                                     >
-                                      <MoreHorizontal size={18} />
+                                      <Pencil size={15} />
                                     </IconButton>
                                   </td>
                                 </tr>
@@ -1419,8 +1528,11 @@ export default function App({
                             aria-label="Rows per page"
                             value={pageSize}
                             onChange={(e) => {
-                              setPageSize(Number(e.target.value));
-                              resetPage();
+                              const size = Number(e.target.value);
+                              leaveInline(() => {
+                                setPageSize(size);
+                                resetPage();
+                              });
                             }}
                           >
                             <option value={25}>25</option>
@@ -1432,9 +1544,11 @@ export default function App({
                           label="Previous page"
                           disabled={page <= 1 || loading}
                           onClick={() => {
-                            setCursor(cursorHistory.at(-1) || undefined);
-                            setCursorHistory((h) => h.slice(0, -1));
-                            setPage((p) => p - 1);
+                            leaveInline(() => {
+                              setCursor(cursorHistory.at(-1) || undefined);
+                              setCursorHistory((h) => h.slice(0, -1));
+                              setPage((p) => p - 1);
+                            });
                           }}
                         >
                           <ChevronLeft size={16} />
@@ -1446,9 +1560,11 @@ export default function App({
                           label="Next page"
                           disabled={!nextCursor || loading}
                           onClick={() => {
-                            setCursorHistory((h) => [...h, cursor ?? ""]);
-                            setCursor(nextCursor);
-                            setPage((p) => p + 1);
+                            leaveInline(() => {
+                              setCursorHistory((h) => [...h, cursor ?? ""]);
+                              setCursor(nextCursor);
+                              setPage((p) => p + 1);
+                            });
                           }}
                         >
                           <ChevronRight size={16} />

@@ -25,6 +25,7 @@ Keylo gives product teams and developers a shared place to manage the words in t
 - **Reuse previous wording.** Find [exact source matches in project history](docs/translation-memory.md), inspect their origin and apply them to a draft before saving.
 - **Consistent terminology.** Maintain a [shared project glossary](docs/glossary.md), consult matching terms beside copy, and bring terminology to Claude through scoped MCP access.
 - **A purposeful editor.** Stacked language values, search, locale filters and cursor pagination help you work through thousands of keys. [Save & next, keyboard navigation and guarded drafts](docs/editor-navigation.md) keep you moving across pages.
+- **Quick inline edits.** Change a locale directly in the list with explicit Save/Cancel, keyboard shortcuts, source context and conflict protection. [Inline editing](docs/inline-editing.md).
 - **Translation freshness.** See what is missing, current or outdated when source copy changes. Existing translations stay available for editing.
 - **Plurals and linked copy.** Unicode cardinal/ordinal forms, project-level overrides and reusable `[%key:other.key%]` references.
 - **Safer changes.** Argument checks, version conflicts, per-translation history, recoverable key deletion and project snapshots help protect your work.

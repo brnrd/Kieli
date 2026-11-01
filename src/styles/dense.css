@@ -465,12 +465,12 @@
   font-size: 6px;
   color: var(--text-muted);
 }
-.translation-cell button {
+.translation-cell > .translation-value {
   font-size: 10px;
   color: var(--text-secondary);
   line-height: 1.65;
 }
-.translation-cell.source-cell button {
+.translation-cell.source-cell > .translation-value {
   color: var(--text-strong);
 }
 .missing-copy {
@@ -895,7 +895,7 @@
   .translation-table td {
     height: 45px;
   }
-  .translation-cell button,
+  .translation-cell > .translation-value,
   .key-name {
     font-size: 11px;
   }
@@ -1311,4 +1311,129 @@
   font-size: 12px;
   line-height: 1.6;
   margin: 8px 0 12px;
+}
+
+/* Translation copy is primary; locale and key metadata stay secondary. */
+.translation-cell > .translation-value {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.65;
+  border-radius: 4px;
+}
+.translation-cell > .translation-value:focus-visible {
+  outline: 2px solid var(--text-secondary);
+  outline-offset: 3px;
+}
+.translation-language {
+  font-size: 10px;
+}
+.row-inline-edit {
+  background: var(--surface-subtle);
+}
+.inline-translation {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--surface);
+}
+.inline-edit-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 11px;
+}
+.inline-edit-heading code {
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.inline-edit-heading > span {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.inline-source {
+  border-left: 2px solid var(--border);
+  padding-left: 8px;
+  margin-bottom: 8px;
+}
+.inline-source > span {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.inline-source p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 100px;
+  overflow: auto;
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--text);
+}
+.inline-context {
+  margin: 6px 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.inline-translation textarea {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.inline-translation textarea:focus {
+  outline: 2px solid var(--text-secondary);
+  outline-offset: 1px;
+}
+.inline-edit-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.inline-edit-actions > span {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.inline-freshness {
+  margin-top: 8px;
+  font-size: 11px;
+}
+.inline-translation .error-box {
+  margin-top: 8px;
+}
+@media (max-width: 640px) {
+  .translation-stack .translation-cell:has(.inline-translation) {
+    grid-template-columns: 1fr;
+  }
+  .inline-edit-actions > span {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}
+.search-shortcut {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  margin-right: 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font:
+    10px ui-monospace,
+    monospace;
 }
