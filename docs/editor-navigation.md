@@ -11,6 +11,8 @@ Open a key from the translation list to work through a filtered queue without re
 
 Search, namespace, completion status and **Focus language** are captured when the editor opens. Focus language controls which locale is checked by completion/status filters and which translation field receives focus. Search continues to cover all key names, context, tags and copy; the visible-language chooser still controls the table's displayed languages. Other locales remain editable in the form.
 
+Clicking a locale's copy (including an empty translation or plural preview) opens the editor at that language, overriding the default field focus without changing the list filters or saved preferences. This editing language stays focused when navigating between keys. Clicking a key name or its general edit button uses the list's Focus language, or the first target language when All languages is selected. A source field that you cannot edit is brought into view without enabling it.
+
 The current key name, navigation controls and save actions stay visible while scrolling through many languages. `dir="auto"` is preserved for translation fields, including plural forms and right-to-left copy.
 
 ## Shortcuts and drafts

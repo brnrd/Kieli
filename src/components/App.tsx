@@ -210,6 +210,7 @@ export default function App({
   const [languageMenu, setLanguageMenu] = useState(false);
   const [modal, setModal] = useState<Modal>(null);
   const [editing, setEditing] = useState<TranslationKey | null>(null);
+  const [editorLanguage, setEditorLanguage] = useState<string>();
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -272,8 +273,9 @@ export default function App({
       setError("");
     }
   }
-  function openModal(value: Modal) {
+  function openModal(value: Modal, language?: string) {
     if (value === "key") {
+      setEditorLanguage(language);
       editorOrigin.current = {
         element:
           document.activeElement instanceof HTMLElement
@@ -443,9 +445,9 @@ export default function App({
       ),
     )
     .sort((a, b) => a.name.localeCompare(b.name));
-  function editKey(key: TranslationKey) {
+  function editKey(key: TranslationKey, language?: string) {
     setEditing(key);
-    openModal("key");
+    openModal("key", language);
   }
   async function saveProject(data: Record<string, unknown>, existing = false) {
     setBusy(true);
@@ -1270,7 +1272,7 @@ export default function App({
                                             )}
                                           </div>
                                           <button
-                                            onClick={() => editKey(key)}
+                                            onClick={() => editKey(key, l.code)}
                                             aria-label={`Edit ${l.name} translation for ${key.name}`}
                                             lang={l.code}
                                             dir="auto"
@@ -1699,6 +1701,7 @@ export default function App({
             initial={editing}
             manager={manager}
             filters={editorFilters}
+            initialLanguage={editorLanguage}
             onSaved={() => refreshKeys()}
             onClose={finishEditorClose}
             onBusyChange={setBusy}

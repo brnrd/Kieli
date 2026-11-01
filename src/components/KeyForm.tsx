@@ -84,11 +84,14 @@ export default function KeyForm({
             (locale) => locale.code !== project.sourceLanguage,
           )?.code ?? project.sourceLanguage);
     const frame = requestAnimationFrame(() => {
-      const field = formRef.current?.querySelector<HTMLElement>(
-        `[data-language="${code}"] textarea:not(:disabled)`,
+      const section = formRef.current?.querySelector<HTMLElement>(
+        `[data-language="${code}"]`,
+      );
+      const field = section?.querySelector<HTMLTextAreaElement>(
+        "textarea:not(:disabled)",
       );
       field?.focus();
-      field?.scrollIntoView({ block: "center" });
+      (field ?? section)?.scrollIntoView({ block: "center" });
     });
     return () => cancelAnimationFrame(frame);
   }, []);

@@ -29,6 +29,7 @@ export default forwardRef<
     initial: TranslationKey | null;
     manager: boolean;
     filters: EditorFilters;
+    initialLanguage?: string;
     onSaved: () => Promise<void>;
     onClose: () => void;
     onBusyChange: (busy: boolean) => void;
@@ -40,6 +41,7 @@ export default forwardRef<
     initial,
     manager,
     filters,
+    initialLanguage,
     onSaved,
     onClose,
     onBusyChange,
@@ -264,7 +266,7 @@ export default forwardRef<
         manager={manager}
         busy={busy}
         error={error}
-        focusLanguage={filters.language}
+        focusLanguage={initialLanguage ?? filters.language}
         onDirtyChange={setDirty}
         onSubmit={(data, advance) => void save(data, advance)}
         onRename={() =>
