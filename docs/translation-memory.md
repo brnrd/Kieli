@@ -1,8 +1,8 @@
 # Manually reuse previous translations
 
-Expand **Previous translations** in a key's editor, then select a target language. Keylo finds historical wording for the same literal source text in this project. **Use this translation** copies the selected wording into that language's draft. If the draft already contains different wording, confirm **Replace draft translation** or keep the draft. Nothing is saved automatically; normal Save / Save & next, placeholder checks, source-context checks and version conflicts still apply. Unsaved-change protection covers reused wording too.
+Expand **Previous translations** in a key's editor, then select a target language. Keylo finds historical wording for the same literal source text in this project. **Use translation** copies the selected wording into that language's draft. If the draft already contains different wording, confirm **Replace draft translation** or keep the draft. Nothing is saved automatically; normal Save / Save & next, placeholder checks, source-context checks and version conflicts still apply. Unsaved-change protection covers reused wording too.
 
-Suggestions identify their source key, historical key version, last-save date/name and edit origin. The name/date describe that key version, not necessarily the original author of each individual translation. Human context and translation quality still need judgment.
+Compact suggestion rows keep wording and its apply action together. Suggestions identify their source key, historical key version, last-save date/name and edit origin. The name/date describe that key version, not necessarily the original author of each individual translation. Human context and translation quality still need judgment.
 
 ![Manual reuse with historical key/version provenance](images/translation-memory.png)
 

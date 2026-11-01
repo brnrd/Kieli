@@ -145,24 +145,23 @@ export default function TranslationMemory({
         Previous translations <span>Exact source matches</span>
       </summary>
       <div className="glossary-lookup-content">
-        <p>
-          Reuse wording from this project's history. Applying changes only your
-          draft; save when ready.
-        </p>
-        <label className="memory-language">
-          Target language
-          <select
-            aria-label="Previous translations target language"
-            value={language}
-            onChange={(event) => setLanguage(event.target.value)}
-          >
-            {targets.map((locale) => (
-              <option key={locale.code} value={locale.code}>
-                {locale.name} ({locale.code})
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="memory-toolbar">
+          <p>Apply to your draft, then save.</p>
+          <label className="memory-language">
+            Target language
+            <select
+              aria-label="Previous translations target language"
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+            >
+              {targets.map((locale) => (
+                <option key={locale.code} value={locale.code}>
+                  {locale.name} ({locale.code})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         {!source.trim() && <p>Write source copy to find exact matches.</p>}
         {loading && <p role="status">Finding previous translations…</p>}
         {error && (
@@ -188,9 +187,8 @@ export default function TranslationMemory({
                     <strong>{suggestion.keyName}</strong> · v
                     {suggestion.keyVersion} ·{" "}
                     {new Date(suggestion.savedAt).toLocaleDateString("en-GB")} ·{" "}
-                    {suggestion.savedBy}
-                    <br />
-                    Recorded via {suggestion.origin} · {suggestion.side} edit
+                    {suggestion.savedBy} · {suggestion.origin} ·{" "}
+                    {suggestion.side} edit
                   </p>
                   <button
                     type="button"
@@ -198,7 +196,7 @@ export default function TranslationMemory({
                     onClick={() => apply(suggestion)}
                     disabled={translations[language] === suggestion.text}
                   >
-                    Use this translation
+                    Use translation
                   </button>
                   {pending?.scope === scope &&
                     pending.suggestion.id === suggestion.id && (
@@ -233,41 +231,39 @@ export default function TranslationMemory({
                 </article>
               ))}
             </div>
-            <div className="memory-pagination">
-              <button
-                className="text-button"
-                type="button"
-                disabled={!back.length}
-                onClick={() => {
-                  setCursor(back.at(-1));
-                  setBack((value) => value.slice(0, -1));
-                  setPending(undefined);
-                }}
-              >
-                Newer history
-              </button>
-              <button
-                className="text-button"
-                type="button"
-                disabled={!result.nextCursor}
-                onClick={() => {
-                  setBack((value) => [...value, cursor]);
-                  setCursor(result.nextCursor);
-                  setPending(undefined);
-                }}
-              >
-                Older history
-              </button>
-            </div>
+            {(back.length > 0 || result.nextCursor) && (
+              <div className="memory-pagination">
+                <button
+                  className="text-button"
+                  type="button"
+                  disabled={!back.length}
+                  onClick={() => {
+                    setCursor(back.at(-1));
+                    setBack((value) => value.slice(0, -1));
+                    setPending(undefined);
+                  }}
+                >
+                  Newer history
+                </button>
+                <button
+                  className="text-button"
+                  type="button"
+                  disabled={!result.nextCursor}
+                  onClick={() => {
+                    setBack((value) => [...value, cursor]);
+                    setCursor(result.nextCursor);
+                    setPending(undefined);
+                  }}
+                >
+                  Older history
+                </button>
+              </div>
+            )}
           </>
         )}
         {manager && index && !index.done && (
           <div className="memory-index">
-            <p>
-              New edits are indexed automatically. Include history recorded
-              before this feature for more suggestions. {index.scanned} records
-              checked.
-            </p>
+            <p>Older history: {index.scanned} records checked.</p>
             {indexing ? (
               <button
                 type="button"
