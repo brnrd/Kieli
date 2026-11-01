@@ -107,7 +107,9 @@ export default function KeyHistory({
                     type="button"
                     className="text-button"
                     disabled={
-                      busy || (!manager && language === project.sourceLanguage)
+                      busy ||
+                      !!project.archivedAt ||
+                      (!manager && language === project.sourceLanguage)
                     }
                     onClick={() => setConfirm({ entry, side: "before" })}
                   >
@@ -124,7 +126,9 @@ export default function KeyHistory({
                     type="button"
                     className="text-button"
                     disabled={
-                      busy || (!manager && language === project.sourceLanguage)
+                      busy ||
+                      !!project.archivedAt ||
+                      (!manager && language === project.sourceLanguage)
                     }
                     onClick={() => setConfirm({ entry, side: "after" })}
                   >

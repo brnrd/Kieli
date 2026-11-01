@@ -337,7 +337,9 @@ export default function ProjectForm({
           )}
           {readOnly && (
             <p className="muted">
-              A project manager can update these settings.
+              {project?.archivedAt
+                ? "Restore this project to edit its settings."
+                : "A project manager can update these settings."}
             </p>
           )}
         </div>

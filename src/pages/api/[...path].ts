@@ -53,6 +53,10 @@ export const ALL: APIRoute = async (context) => {
       );
     const id = parts[1];
     if (!id) throw new HttpError(404, "Endpoint not found.");
+    if (parts.length === 3 && parts[2] === "archive" && method === "POST")
+      return Response.json(
+        await svc.setProjectArchived(identity, id, await readJSON(request)),
+      );
     if (parts[2] === "glossary") {
       const glossary = new Glossary(await getStore());
       if (parts.length === 3 && method === "GET")

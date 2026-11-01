@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertProjectEditable } from "./project-lifecycle";
 import type { Identity, ProjectStats, TranslationKey } from "../shared";
 import { keyNameSchema, keySchema } from "../validation";
 import { referencePattern, references as keyReferences } from "../messages";
@@ -42,6 +43,7 @@ export class KeyRenames {
     if (data.name === name)
       throw new HttpError(400, "Choose a different key name.");
     const project = await this.service.project(identity, id);
+    assertProjectEditable(project);
     await this.service.summary(identity, id); // Initialize legacy statistics if necessary.
     const pk = `PROJECT#${id}`,
       prefix = dataPrefix(project);

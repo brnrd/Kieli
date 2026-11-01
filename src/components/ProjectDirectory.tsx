@@ -18,16 +18,22 @@ export default function ProjectDirectory({
 }) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [status, setStatus] = useState("active");
   const filtered = useMemo(
     () =>
       projects
+        .filter(
+          (p) =>
+            status === "all" ||
+            (status === "archived" ? !!p.archivedAt : !p.archivedAt),
+        )
         .filter((p) =>
           [p.name, p.id, p.description].some((v) =>
             v.toLowerCase().includes(search.toLowerCase()),
           ),
         )
         .sort((a, b) => a.name.localeCompare(b.name)),
-    [projects, search],
+    [projects, search, status],
   );
   const size = 40;
   const pages = Math.max(1, Math.ceil(filtered.length / size));
@@ -46,6 +52,21 @@ export default function ProjectDirectory({
             placeholder="Search projects by name or ID…"
             aria-label="Search project directory"
           />
+        </label>
+        <label className="directory-status">
+          Status
+          <select
+            aria-label="Project status"
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+            <option value="all">All projects</option>
+          </select>
         </label>
         <span>
           {filtered.length} of {projects.length} projects
@@ -74,6 +95,9 @@ export default function ProjectDirectory({
                   >
                     <span className={`project-dot ${p.color}`} />
                     {p.name}
+                    {p.archivedAt && (
+                      <span className="role-pill">Archived</span>
+                    )}
                   </button>
                 </td>
                 <td>
@@ -105,7 +129,11 @@ export default function ProjectDirectory({
           </tbody>
         </table>
         {!filtered.length && (
-          <p className="directory-empty">No projects match this search.</p>
+          <p className="directory-empty">
+            {!search && status === "active"
+              ? "No active projects. Choose Archived to find retired projects."
+              : "No projects match this search and status."}
+          </p>
         )}
       </div>
       <div className="table-footer">

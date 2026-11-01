@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { assertProjectEditable } from "./project-lifecycle";
 import { z } from "zod";
 import { keySchema } from "../validation";
 import type {
@@ -86,6 +87,7 @@ export class ProjectUpdates {
       throw new HttpError(403, "Sign in to update this project.");
     const data = inputSchema.parse(input),
       project = await this.service.project(identity, id);
+    assertProjectEditable(project);
     if (new Set(data.keys.map((key) => key.name)).size !== data.keys.length)
       throw new HttpError(400, "Duplicate keys in this update.");
     if (
@@ -285,6 +287,12 @@ export class ProjectUpdates {
     };
     await this.store.transact([
       { pk: `PROJECT#${id}`, sk: `UPDATE_PLAN#${plan.id}`, value: plan },
+      {
+        pk: "WORKSPACE",
+        sk: `PROJECT#${id}`,
+        check: true,
+        expectedVersion: project.version,
+      },
       ...entries.map((entry, index) => ({
         pk: `PROJECT#${id}`,
         sk: `${prefix(plan.id)}${String(index).padStart(5, "0")}`,
@@ -327,6 +335,7 @@ export class ProjectUpdates {
     authorize(identity, id, "manager");
     if (identity.mcp || identity.tokenProject)
       throw new HttpError(403, "Sign in to update this project.");
+    assertProjectEditable(await this.service.project(identity, id));
     z.uuid().parse(planId);
     const pk = `PROJECT#${id}`,
       plan = await this.store.get<Plan>(pk, `UPDATE_PLAN#${planId}`);

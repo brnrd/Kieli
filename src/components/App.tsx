@@ -69,6 +69,7 @@ import { api } from "./api";
 import { IconButton, ModalShell, Empty, LanguageMark } from "./ui";
 import ProjectUpdate from "./ProjectUpdate";
 import ProjectForm from "./ProjectForm";
+import ProjectArchive from "./ProjectArchive";
 import ProjectGlossary from "./ProjectGlossary";
 import KeyEditor, { type EditorHandle, type EditorFilters } from "./KeyEditor";
 import {
@@ -144,6 +145,7 @@ export default function App({
   );
   const project = projects.find((p) => p.id === projectId);
   const manager = project?.role !== "user";
+  const editable = manager && !project?.archivedAt;
   const [keys, setKeys] = useState<TranslationKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -439,6 +441,7 @@ export default function App({
     project?.languages.filter((l) => visibleLanguages.includes(l.code)) ?? [];
   const namespaces = Object.keys(stats.namespaces).sort();
   const sidebarProjects = projects
+    .filter((p) => !p.archivedAt)
     .filter((p) =>
       [p.name, p.id].some((v) =>
         v.toLowerCase().includes(projectSearch.toLowerCase()),
@@ -543,7 +546,10 @@ export default function App({
           onClick={allProjects}
         >
           <LayoutGrid size={17} />
-          All projects<span className="nav-count">{projects.length}</span>
+          All projects
+          <span className="nav-count">
+            {projects.filter((p) => !p.archivedAt).length}
+          </span>
         </button>
         <div className="nav-section-label projects-label">
           YOUR PROJECTS
@@ -791,6 +797,23 @@ export default function App({
             />
           ) : (
             <>
+              {project.archivedAt && (
+                <div className="project-archive-banner" role="status">
+                  <strong>Archived · Read-only</strong>
+                  <span>
+                    Existing exports and published mobile releases remain
+                    available.
+                  </span>
+                  {manager && (
+                    <button
+                      className="button"
+                      onClick={() => navigate(projectId, "settings")}
+                    >
+                      Manage archive
+                    </button>
+                  )}
+                </div>
+              )}
               <div className="page-heading project-heading">
                 <div className="project-title">
                   <span className={`project-icon ${project.color}`}>
@@ -812,7 +835,7 @@ export default function App({
                     <ArrowDownToLine size={16} />
                     Export
                   </button>
-                  {manager && (
+                  {editable && (
                     <button
                       className="button"
                       onClick={() => openModal("update-files")}
@@ -820,7 +843,7 @@ export default function App({
                       Update from files
                     </button>
                   )}
-                  {manager && (
+                  {editable && (
                     <button
                       className="button primary"
                       onClick={() => {
@@ -1125,7 +1148,7 @@ export default function App({
                         >
                           Clear selection
                         </button>
-                        {manager && (
+                        {editable && (
                           <button
                             className="text-button danger-text"
                             onClick={() => openModal("delete")}
@@ -1144,6 +1167,7 @@ export default function App({
                               <input
                                 type="checkbox"
                                 aria-label="Select all keys on this page"
+                                disabled={!!project.archivedAt}
                                 checked={
                                   pageKeys.length > 0 &&
                                   pageKeys.every((k) => selected.has(k.name))
@@ -1171,7 +1195,9 @@ export default function App({
                               Translations
                             </th>
                             <th className="row-action-column">
-                              <span className="sr-only">Edit key</span>
+                              <span className="sr-only">
+                                {project.archivedAt ? "View key" : "Edit key"}
+                              </span>
                             </th>
                           </tr>
                         </thead>
@@ -1195,6 +1221,7 @@ export default function App({
                                     <input
                                       type="checkbox"
                                       aria-label={`Select ${key.name}`}
+                                      disabled={!!project.archivedAt}
                                       checked={selected.has(key.name)}
                                       onChange={() => selectKey(key.name)}
                                     />
@@ -1253,7 +1280,7 @@ export default function App({
                                           </div>
                                           <button
                                             onClick={() => editKey(key, l.code)}
-                                            aria-label={`Edit ${l.name} translation for ${key.name}`}
+                                            aria-label={`${project.archivedAt ? "View" : "Edit"} ${l.name} translation for ${key.name}`}
                                             lang={l.code}
                                             dir="auto"
                                           >
@@ -1293,8 +1320,12 @@ export default function App({
                                               )
                                             ) : (
                                               <span className="missing-copy">
-                                                <Plus size={12} />
-                                                Add translation
+                                                {!project.archivedAt && (
+                                                  <Plus size={12} />
+                                                )}
+                                                {project.archivedAt
+                                                  ? "Missing translation"
+                                                  : "Add translation"}
                                               </span>
                                             )}
                                           </button>
@@ -1319,7 +1350,7 @@ export default function App({
                                   </td>
                                   <td className="row-action-column">
                                     <IconButton
-                                      label={`Edit ${key.name}`}
+                                      label={`${project.archivedAt ? "View" : "Edit"} ${key.name}`}
                                       onClick={() => editKey(key)}
                                     >
                                       <MoreHorizontal size={18} />
@@ -1339,9 +1370,7 @@ export default function App({
                             )
                           }
                           title={
-                            stats.totalKeys
-                              ? "No matching keys"
-                              : "No keys yet"
+                            stats.totalKeys ? "No matching keys" : "No keys yet"
                           }
                           description={
                             stats.totalKeys
@@ -1361,7 +1390,7 @@ export default function App({
                                 Clear filters
                               </button>
                             ) : (
-                              manager && (
+                              editable && (
                                 <button
                                   className="button primary"
                                   onClick={() => openModal("key")}
@@ -1436,7 +1465,7 @@ export default function App({
                       <h2>Project languages</h2>
                       <p>Manage the languages your project speaks.</p>
                     </div>
-                    {manager && (
+                    {editable && (
                       <button
                         className="button"
                         onClick={() => navigate(projectId, "settings")}
@@ -1507,7 +1536,7 @@ export default function App({
                 <ProjectGlossary
                   key={project.id}
                   project={project}
-                  manager={manager}
+                  manager={editable}
                   navigationRef={glossaryRef}
                   notify={notify}
                 />
@@ -1562,10 +1591,30 @@ export default function App({
                           project={project}
                           busy={busy}
                           error={error}
-                          readOnly={!manager}
+                          readOnly={!editable}
                           onSave={(data) => void saveProject(data, true)}
                           onCancel={() => navigate(projectId)}
                         />
+                        {manager && (
+                          <ProjectArchive
+                            project={project}
+                            onChanged={(saved) => {
+                              setProjects((current) =>
+                                current.map((item) =>
+                                  item.id === saved.id
+                                    ? { ...saved, role: item.role }
+                                    : item,
+                                ),
+                              );
+                              setSelected(new Set());
+                              notify(
+                                saved.archivedAt
+                                  ? "Project archived."
+                                  : "Project restored.",
+                              );
+                            }}
+                          />
+                        )}
                         {manager && (
                           <DeletedKeys project={project} notify={notify} />
                         )}
@@ -1634,7 +1683,7 @@ export default function App({
           />
         </ModalShell>
       )}
-      {modal === "update-files" && project && manager && (
+      {modal === "update-files" && project && editable && (
         <ModalShell
           title="Update project from files"
           subtitle={project.name}
@@ -1657,7 +1706,9 @@ export default function App({
       {modal === "key" && project && (
         <ModalShell
           className="key-editor-dialog"
-          title={editing ? "Edit key" : "Add key"}
+          title={
+            project.archivedAt ? "View key" : editing ? "Edit key" : "Add key"
+          }
           onClose={closeModal}
           wide
         >
@@ -1665,7 +1716,7 @@ export default function App({
             ref={editorRef}
             project={project}
             initial={editing}
-            manager={manager}
+            manager={editable}
             filters={editorFilters}
             initialLanguage={editorLanguage}
             onSaved={() => refreshKeys()}

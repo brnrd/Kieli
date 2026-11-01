@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertProjectEditable } from "./project-lifecycle";
 import { memoryChanges } from "./translation-memory";
 import { projectNameChanges } from "./project-names";
 import { SyncCredentials } from "./sync-credentials";
@@ -214,6 +215,7 @@ export class KeyloService {
   ) {
     for (let attempt = 0; attempt < 8; attempt++) {
       const project = await this.currentProject(id);
+      assertProjectEditable(project);
       if (expectedProject && expectedProject.version !== project.version)
         throw new Conflict();
       const prefix = dataPrefix(project);
@@ -498,6 +500,7 @@ export class KeyloService {
       .looseObject({ version: z.number().int().positive() })
       .parse(input);
     const project = await this.project(identity, id);
+    assertProjectEditable(project);
     const parsed = projectSchema.parse({ ...data, id });
     // Removing a locale is deliberately unsupported: it would silently orphan translations.
     if (
@@ -525,6 +528,42 @@ export class KeyloService {
         value: value(next),
         expectedVersion: version,
       },
+    ]);
+    return next;
+  }
+  async setProjectArchived(identity: Identity, id: string, input: unknown) {
+    if (identity.mcp || identity.sync || identity.tokenProject)
+      throw new HttpError(403, "Sign in to archive or restore projects.");
+    authorize(identity, id, "manager");
+    const data = z
+      .object({ version: z.number().int().positive(), archived: z.boolean() })
+      .strict()
+      .parse(input);
+    const project = await this.project(identity, id);
+    if (project.version !== data.version) throw new Conflict();
+    if (!!project.archivedAt === data.archived) return project;
+    const { archivedAt, archivedBy, ...active } = project;
+    const next: Project = {
+      ...active,
+      version: project.version + 1,
+      updatedAt: now(),
+      ...(data.archived
+        ? { archivedAt: now(), archivedBy: identity.name }
+        : {}),
+    };
+    await this.store.transact([
+      {
+        pk: "WORKSPACE",
+        sk: `PROJECT#${id}`,
+        expectedVersion: project.version,
+        value: value(next),
+      },
+      mcpAudit(
+        data.archived ? "project.archived" : "project.unarchived",
+        identity.principalId ?? identity.sub,
+        id,
+        {},
+      ),
     ]);
     return next;
   }
@@ -1233,6 +1272,7 @@ export class KeyloService {
       `PROJECT#${project.id}`,
     );
     if (existing) {
+      assertProjectEditable(existing);
       if (
         existing.importId === importId &&
         existing.importedBy === identity.sub
@@ -1261,6 +1301,7 @@ export class KeyloService {
         403,
         "This import does not belong to the current project and user.",
       );
+    assertProjectEditable(project);
     if (new Set(data.keys.map((k) => k.name)).size !== data.keys.length)
       throw new HttpError(400, "Duplicate keys in import batch.");
     const changes: { next: TranslationKey }[] = [];

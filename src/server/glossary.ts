@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
+import { assertProjectEditable } from "./project-lifecycle";
 import { canonicalJSON } from "../canonical-json";
 import {
   glossaryTermSchema,
@@ -52,6 +53,7 @@ export class Glossary {
     authorize(identity, id, write ? "manager" : "user");
     const project = await this.store.get<Project>("WORKSPACE", `PROJECT#${id}`);
     if (!project) throw new HttpError(404, "Project not found.");
+    if (write) assertProjectEditable(project);
     return project;
   }
   private async state(id: string) {

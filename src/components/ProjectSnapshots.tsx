@@ -196,7 +196,7 @@ export default function ProjectSnapshots({
             type="checkbox"
             checked={enabled}
             onChange={(event) => setEnabled(event.target.checked)}
-            disabled={busy}
+            disabled={busy || !!project.archivedAt}
           />
           <span>
             Automatic snapshots
@@ -210,7 +210,7 @@ export default function ProjectSnapshots({
           <label className="field-label">
             Frequency
             <select
-              disabled={busy || !enabled}
+              disabled={busy || !enabled || !!project.archivedAt}
               value={hours}
               onChange={(event) => setHours(Number(event.target.value))}
             >
@@ -221,7 +221,7 @@ export default function ProjectSnapshots({
           <label className="field-label">
             Keep automatic snapshots
             <input
-              disabled={busy || !enabled}
+              disabled={busy || !enabled || !!project.archivedAt}
               type="number"
               min={2}
               max={30}
@@ -230,7 +230,7 @@ export default function ProjectSnapshots({
             />
           </label>
         </div>
-        <button className="button" disabled={busy}>
+        <button className="button" disabled={busy || !!project.archivedAt}>
           Save schedule
         </button>
       </form>
@@ -265,7 +265,9 @@ export default function ProjectSnapshots({
                 <button
                   type="button"
                   className="button"
-                  disabled={busy || item.status !== "ready"}
+                  disabled={
+                    busy || item.status !== "ready" || !!project.archivedAt
+                  }
                   onClick={() => setRestore(item)}
                 >
                   <RotateCcw size={13} />

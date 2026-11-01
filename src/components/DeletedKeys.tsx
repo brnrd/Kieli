@@ -71,7 +71,7 @@ export default function DeletedKeys({
             <button
               type="button"
               className="button"
-              disabled={busy}
+              disabled={busy || !!project.archivedAt}
               onClick={() => setConfirm(item)}
             >
               Restore key

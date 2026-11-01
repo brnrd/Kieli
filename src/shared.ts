@@ -9,6 +9,8 @@ export type Locale = {
   ordinalForms?: PluralCategory[];
 };
 export type Project = {
+  archivedAt?: string;
+  archivedBy?: string;
   id: string;
   name: string;
   description: string;

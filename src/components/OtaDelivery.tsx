@@ -112,7 +112,10 @@ export default function OtaDelivery({
             <option value="preview">Preview</option>
           </select>
         </label>
-        <button className="button primary" disabled={busy}>
+        <button
+          className="button primary"
+          disabled={busy || !!project.archivedAt}
+        >
           {busy ? <Loader2 size={14} className="spin" /> : <Radio size={14} />}
           Publish drafts
         </button>
@@ -141,7 +144,9 @@ export default function OtaDelivery({
               <button
                 className="button"
                 type="button"
-                disabled={busy || head?.release === release.id}
+                disabled={
+                  busy || !!project.archivedAt || head?.release === release.id
+                }
                 onClick={() =>
                   void run(async () => {
                     await api(`projects/${project.id}/releases/activate`, {

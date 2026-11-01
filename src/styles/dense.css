@@ -1271,3 +1271,44 @@
   white-space: normal;
   text-align: left;
 }
+
+.directory-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.directory-status select {
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+.project-archive-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.project-archive-banner .button {
+  margin-left: auto;
+}
+.project-archive-settings {
+  border-top: 1px solid var(--border);
+  padding: 20px 0;
+}
+.project-archive-settings p {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 8px 0 12px;
+}

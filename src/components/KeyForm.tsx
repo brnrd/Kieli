@@ -120,6 +120,7 @@ export default function KeyForm({
     .map((locale) => locale.code);
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (project.archivedAt) return;
     const targetTranslations = Object.fromEntries(
       Object.entries(translations).filter(
         ([code, text]) =>
@@ -270,29 +271,31 @@ export default function KeyForm({
               }
             />
           )}
-          <TranslationMemory
-            project={project}
-            source={
-              editing &&
-              plural === !!editing.plural &&
-              sameTranslation(
-                translations[project.sourceLanguage] ?? "",
-                editing.translations[project.sourceLanguage] ?? "",
-                plural,
-              )
-                ? (editing.translations[project.sourceLanguage] ?? "")
-                : (translations[project.sourceLanguage] ?? "")
-            }
-            plural={plural}
-            focusLanguage={focusLanguage}
-            translations={translations}
-            manager={manager}
-            onApply={(code, text) => {
-              setTranslations((current) => ({ ...current, [code]: text }));
-              if (!sourceChanged)
-                setConfirmed((current) => new Set([...current, code]));
-            }}
-          />
+          {!project.archivedAt && (
+            <TranslationMemory
+              project={project}
+              source={
+                editing &&
+                plural === !!editing.plural &&
+                sameTranslation(
+                  translations[project.sourceLanguage] ?? "",
+                  editing.translations[project.sourceLanguage] ?? "",
+                  plural,
+                )
+                  ? (editing.translations[project.sourceLanguage] ?? "")
+                  : (translations[project.sourceLanguage] ?? "")
+              }
+              plural={plural}
+              focusLanguage={focusLanguage}
+              translations={translations}
+              manager={manager}
+              onApply={(code, text) => {
+                setTranslations((current) => ({ ...current, [code]: text }));
+                if (!sourceChanged)
+                  setConfirmed((current) => new Set([...current, code]));
+              }}
+            />
+          )}
           {project.languages.map((l) => (
             <div
               className="translation-field"
@@ -327,7 +330,10 @@ export default function KeyForm({
                     translations[project.sourceLanguage] ?? "",
                   )}
                   value={translations[l.code] ?? ""}
-                  disabled={!manager && l.code === project.sourceLanguage}
+                  disabled={
+                    !!project.archivedAt ||
+                    (!manager && l.code === project.sourceLanguage)
+                  }
                   onChange={(value) =>
                     setTranslations((current) => ({
                       ...current,
@@ -338,6 +344,7 @@ export default function KeyForm({
               ) : (
                 <textarea
                   aria-label={l.name}
+                  readOnly={!!project.archivedAt}
                   value={translations[l.code] ?? ""}
                   onChange={(e) =>
                     setTranslations((t) => ({ ...t, [l.code]: e.target.value }))
@@ -351,10 +358,15 @@ export default function KeyForm({
                   dir="auto"
                   rows={2}
                   maxLength={20000}
-                  disabled={!manager && l.code === project.sourceLanguage}
+                  disabled={
+                    !project.archivedAt &&
+                    !manager &&
+                    l.code === project.sourceLanguage
+                  }
                 />
               )}
-              {editing?.outdatedLanguages?.includes(l.code) &&
+              {!project.archivedAt &&
+                editing?.outdatedLanguages?.includes(l.code) &&
                 l.code !== project.sourceLanguage && (
                   <label className="checkbox-label freshness-confirm">
                     <input
@@ -417,22 +429,26 @@ export default function KeyForm({
         <div className="dialog-footer">
           <span className="footer-note">
             <ShieldCheck size={14} />
-            {manager
-              ? "You can edit all languages."
-              : "You can edit target languages."}
+            {project.archivedAt
+              ? "Archived project · Read-only"
+              : manager
+                ? "You can edit all languages."
+                : "You can edit target languages."}
           </span>
           <button type="button" className="button" onClick={onClose}>
-            Cancel
+            {project.archivedAt ? "Close" : "Cancel"}
           </button>
-          <button type="submit" className="button primary">
-            {busy ? (
-              <Loader2 size={16} className="spin" />
-            ) : (
-              <Check size={16} />
-            )}{" "}
-            {editing ? "Save changes" : "Add key"}
-          </button>
-          {editing && (
+          {!project.archivedAt && (
+            <button type="submit" className="button primary">
+              {busy ? (
+                <Loader2 size={16} className="spin" />
+              ) : (
+                <Check size={16} />
+              )}{" "}
+              {editing ? "Save changes" : "Add key"}
+            </button>
+          )}
+          {editing && !project.archivedAt && (
             <button type="submit" value="next" className="button primary">
               Save &amp; next
             </button>

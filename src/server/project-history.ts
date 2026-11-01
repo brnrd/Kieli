@@ -1,4 +1,5 @@
 import { projectNameChanges } from "./project-names";
+import { assertProjectEditable } from "./project-lifecycle";
 import { canonicalJSON } from "../canonical-json";
 import { randomUUID, createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
@@ -126,6 +127,7 @@ export class ProjectHistory {
     authorize(identity, id, "manager");
     label = z.string().trim().min(1).max(100).parse(label);
     const project = await this.svc.project(identity, id);
+    if (kind === "release") assertProjectEditable(project);
     const before = await this.stamp(project);
     const keys = (await this.svc.keys(identity, id)).map((key) => ({
       ...keyInput(key),
@@ -325,6 +327,7 @@ export class ProjectHistory {
     authorize(identity, id, "manager");
     const { snapshot, keys } = await this.read(identity, id, snapshotId);
     const current = await this.svc.project(identity, id);
+    assertProjectEditable(current);
     if (current.version !== expectedVersion) throw new Conflict();
     const nameChanges = await projectNameChanges(
       this.store,
@@ -442,6 +445,7 @@ export class ProjectHistory {
     const snapshot = await this.create(identity, id, data.label, "release");
     const captured = await this.read(identity, id, snapshot.id);
     const project = captured.snapshot.project;
+    assertProjectEditable(project);
     const keys = freshnessView(
       resolveProject(captured.keys, captured.snapshot.project),
       captured.snapshot.project,
@@ -525,6 +529,12 @@ export class ProjectHistory {
     await batches(this.store, writes);
     await this.store.transact([
       { pk: pk(id), sk: `OTARELEASE#${release.id}`, value: release },
+      {
+        pk: "WORKSPACE",
+        sk: `PROJECT#${id}`,
+        check: true,
+        expectedVersion: project.version,
+      },
       { pk: pk(id), sk: `OTABUILD#${release.id}`, expectedVersion: 1 },
       {
         pk: pk(id),
@@ -547,7 +557,8 @@ export class ProjectHistory {
   }
   async pointRelease(identity: Identity, id: string, input: unknown) {
     authorize(identity, id, "manager");
-    await this.svc.project(identity, id);
+    const project = await this.svc.project(identity, id);
+    assertProjectEditable(project);
     const data = z
       .object({
         release: z.uuid(),
@@ -559,6 +570,12 @@ export class ProjectHistory {
     if (!(await this.store.get<Release>(pk(id), `OTARELEASE#${data.release}`)))
       throw new HttpError(404, "Published release not found.");
     await this.store.transact([
+      {
+        pk: "WORKSPACE",
+        sk: `PROJECT#${id}`,
+        check: true,
+        expectedVersion: project.version,
+      },
       {
         pk: pk(id),
         sk: `OTAHEAD#${data.channel}`,

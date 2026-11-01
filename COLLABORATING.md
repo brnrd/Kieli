@@ -57,6 +57,7 @@ After building, run the HTTP smoke checks affected by your change:
 | --------------------------------------- | ------------------------ |
 | Core API, export and CLI                | `npm run smoke`          |
 | Key renaming and reference updates      | `npm run smoke:rename`   |
+| Project archiving and read-only access  | `npm run smoke:archive`  |
 | Apple native localization files        | `npm run smoke:apple`    |
 | Messages, snapshots and delivery        | `npm run smoke:features` |
 | Previous translations and history index | `npm run smoke:memory` |
