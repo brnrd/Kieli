@@ -70,6 +70,10 @@ export const translationSchema = z.record(
   z.string().min(2).max(35),
   z.string().max(20000),
 );
+export const applePluralTypesSchema = z.record(
+  language.shape.code,
+  z.enum(["d", "ld", "lld"]),
+);
 export const keySchema = z
   .object({
     name: keyNameSchema,
@@ -84,6 +88,7 @@ export const keySchema = z
     tags: z.array(z.string().trim().min(1).max(30)).max(12).default([]),
     translations: translationSchema,
     plural: z.boolean().optional(),
+    applePluralTypes: applePluralTypesSchema.optional(),
   })
   .strict()
   .superRefine((key, ctx) => {

@@ -82,6 +82,7 @@ test("restoring one translation preserves other languages and historical freshne
       expectedSourceContext: current.sourceContext,
     },
   );
+  assert.equal(restored.applePluralTypes, undefined);
   assert.equal(restored.translations.en, "Goodbye");
   assert.equal(restored.translations.fr, "Bonjour");
   assert.deepEqual(restored.outdatedLanguages, ["fr"]);

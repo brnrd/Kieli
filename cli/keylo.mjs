@@ -32,7 +32,7 @@ Pull:
   --out <directory>     Destination directory (default: ./locales)
   --languages <codes>   Comma-separated codes; defaults to all project languages
   --format <format>     flat (default), nested, yaml, js, ts, php, properties,
-                        ini, resx, po, pot, strings, plist, android, arb, xliff, csv
+                        ini, resx, po, pot, strings, stringsdict, plist, android, arb, xliff, csv
   --require-current     Stop if copy is missing, outdated or invalid
   --fallback            Use source copy for missing translations
 
@@ -54,7 +54,8 @@ Credentials belong in environment variables or your CI secret store:
 
 No config yet? Pass --url and --project with your command.
 Push defaults to a dry-run. Existing target translations stay protected.
-Each locale is written as <code>.<extension>; unrelated files are preserved.
+Each locale is written as <code>.<extension>; stringsdict also writes a companion
+.strings file. Unrelated files are preserved.
 `;
 
 /**
@@ -318,18 +319,20 @@ export async function pull(
           !file ||
           typeof file.name !== "string" ||
           typeof file.content !== "string" ||
-          !file.name.endsWith(`.${extension}`)
+          !(options.format === "stringsdict"
+            ? /\.(?:stringsdict|strings)$/.test(file.name)
+            : file.name.endsWith(`.${extension}`))
         )
           throw new Error("Invalid file export response.");
         return {
-          code: file.name.slice(0, -(extension.length + 1)),
+          code: file.name.slice(0, -(file.name.split(".").at(-1).length + 1)),
           name: file.name,
           content: file.content,
         };
       });
   if (!entries.length) throw new Error("The export contains no languages.");
   const seen = new Set();
-  for (const { code, translations } of entries) {
+  for (const { code, translations, name } of entries) {
     let canonical;
     try {
       canonical = Intl.getCanonicalLocales(code)[0];
@@ -338,9 +341,10 @@ export async function pull(
     }
     if (canonical !== code || !/^[a-zA-Z0-9-]+$/.test(code))
       throw new Error("Export contains an unsafe language filename.");
-    if (seen.has(code))
+    const identity = options.format === "stringsdict" ? name : code;
+    if (seen.has(identity))
       throw new Error("Export contains duplicate locale filenames.");
-    seen.add(code);
+    seen.add(identity);
     if (
       options.languages &&
       !options.languages
@@ -744,7 +748,7 @@ export async function main(args = process.argv.slice(2)) {
     } else {
       const files = await pull(options, process.env.KEYLO_TOKEN, report.step);
       report.success(
-        `Pulled ${files.length} ${files.length === 1 ? "language" : "languages"} from ${options.project}:`,
+        `Pulled ${files.length} ${options.format === "stringsdict" ? "files" : files.length === 1 ? "language" : "languages"} from ${options.project}:`,
       );
       for (const path of files) report.file(path);
     }

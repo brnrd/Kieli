@@ -98,6 +98,7 @@ export class ProjectUpdates {
               !identity.sync!.prefixes.some((prefix) =>
                 key.name.startsWith(prefix),
               )) ||
+            key.applePluralTypes !== undefined ||
             Object.keys(key.translations).some(
               (code) => code !== project.sourceLanguage,
             ),
@@ -151,6 +152,23 @@ export class ProjectUpdates {
           400,
           `New key ${input.name} needs source copy (${project.sourceLanguage}). Include the source file.`,
         );
+      const applePluralTypes = { ...before?.applePluralTypes };
+      for (const [code, type] of Object.entries(input.applePluralTypes ?? {})) {
+        if (
+          !project.languages.some((locale) => locale.code === code) ||
+          !Object.hasOwn(input.translations, code)
+        )
+          throw new HttpError(
+            400,
+            "Apple plural metadata must accompany a configured translation language.",
+          );
+        if (
+          code === project.sourceLanguage ||
+          !before?.translations[code]?.trim() ||
+          data.policy === "overwrite"
+        )
+          applePluralTypes[code] = type;
+      }
       const after = keySchema.parse(
         before
           ? {
@@ -159,6 +177,9 @@ export class ProjectUpdates {
               namespace: before.namespace,
               tags: before.tags,
               plural: input.plural ?? before.plural,
+              ...(Object.keys(applePluralTypes).length
+                ? { applePluralTypes }
+                : {}),
               translations: { ...before.translations, ...translations },
             }
           : {
@@ -170,7 +191,9 @@ export class ProjectUpdates {
       );
       const changed =
         Object.keys(translations).length > 0 ||
-        !!after.plural !== !!before?.plural;
+        !!after.plural !== !!before?.plural ||
+        JSON.stringify(after.applePluralTypes ?? {}) !==
+          JSON.stringify(before?.applePluralTypes ?? {});
       entries.push({
         name: input.name,
         action: !before ? "create" : changed ? "update" : "unchanged",
@@ -279,6 +302,7 @@ export class ProjectUpdates {
             before: entry.before
               ? {
                   ...entry.before,
+                  applePluralTypes: undefined,
                   translations: {
                     [project.sourceLanguage]:
                       entry.before.translations[project.sourceLanguage] ?? "",
@@ -287,6 +311,7 @@ export class ProjectUpdates {
               : undefined,
             after: {
               ...entry.after,
+              applePluralTypes: undefined,
               translations: {
                 [project.sourceLanguage]:
                   entry.after.translations[project.sourceLanguage] ?? "",

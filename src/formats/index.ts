@@ -84,6 +84,13 @@ export const fileFormats = [
     note: "Quoted key/value strings with comments and escaped Unicode.",
   },
   {
+    id: "stringsdict",
+    label: "Apple strings + plural dictionaries",
+    extension: "stringsdict",
+    group: "iOS",
+    note: "Single-variable cardinal plurals with d/ld/lld counts; new counts default to d. Plain copy exports in companion .strings files. No nested rules, offsets, positional arguments or width/device variants.",
+  },
+  {
     id: "plist",
     label: "Apple property list",
     extension: "plist",
@@ -127,7 +134,7 @@ export const formatGroups = [
   "Cross-platform",
 ] as const;
 export const importExtensions =
-  ".zip,.json,.yml,.yaml,.js,.ts,.php,.properties,.ini,.resx,.po,.pot,.strings,.plist,.xml,.arb,.xliff,.xlf,.csv";
+  ".zip,.json,.yml,.yaml,.js,.ts,.php,.properties,.ini,.resx,.po,.pot,.strings,.stringsdict,.plist,.xml,.arb,.xliff,.xlf,.csv";
 export function getFileFormat(id: string) {
   const format = fileFormats.find((format) => format.id === id);
   if (!format) throw new Error(`Unsupported file format: ${id}.`);

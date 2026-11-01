@@ -20,6 +20,7 @@ jobs:
       - run: npm run build
       - run: npm run smoke
       - run: npm run smoke:features
+      - run: npm run smoke:apple
       - run: npm run smoke:glossary
       - run: npm run smoke:memory
       - run: npm run smoke:local

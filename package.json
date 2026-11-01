@@ -29,7 +29,8 @@
     "smoke:features": "node scripts/smoke-features.mjs",
     "smoke:sync": "node scripts/smoke-sync.mjs",
     "smoke:glossary": "node scripts/smoke-glossary.mjs",
-    "smoke:memory": "node scripts/smoke-memory.mjs"
+    "smoke:memory": "node scripts/smoke-memory.mjs",
+    "smoke:apple": "node --import tsx scripts/smoke-apple.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",

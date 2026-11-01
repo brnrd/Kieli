@@ -53,6 +53,7 @@ const keyInput = (key: TranslationKey) => ({
   description: key.description,
   tags: key.tags,
   translations: key.translations,
+  ...(key.applePluralTypes ? { applePluralTypes: key.applePluralTypes } : {}),
   ...(key.plural !== undefined ? { plural: key.plural } : {}),
 });
 export async function batches(store: Store, changes: Change[]) {

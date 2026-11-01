@@ -1,3 +1,6 @@
+import { writeStringsDict } from "./stringsdict";
+import type { ApplePluralType, TranslationKey } from "../shared";
+import { writePlural } from "../messages";
 import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
 import { looksPlural, readPlural } from "../messages";
 import { stringify } from "yaml";
@@ -12,7 +15,9 @@ export function writeCatalog(
   locale: string,
   sourceLanguage: string,
   source: Catalog,
+  appleTypes: ReadonlyMap<string, ApplePluralType> = new Map(),
 ): string {
+  if (format === "stringsdict") return writeStringsDict(catalog, appleTypes);
   const entries = [...catalog];
   const flat = Object.fromEntries(entries);
   if (format === "flat") return JSON.stringify(flat, null, 2) + "\n";
@@ -174,11 +179,66 @@ export function exportFiles(
   format: string,
   sourceLanguage: string,
   source: Catalog,
+  keys: TranslationKey[] = [],
 ): ExportFile[] {
   const definition = getFileFormat(format);
   let size = 0;
-  return Object.entries(translations).map(([locale, values]) => {
+  return Object.entries(translations).flatMap(([locale, values]) => {
     const catalog = new Map(Object.entries(values as Record<string, string>));
+    if (format === "stringsdict") {
+      const native: Catalog = new Map(),
+        plain: Catalog = new Map();
+      const types = new Map<string, ApplePluralType>();
+      const byName = new Map(keys.map((key) => [key.name, key]));
+      for (const [name, text] of catalog) {
+        const key = byName.get(name);
+        if (!(key?.plural || looksPlural(text))) {
+          plain.set(name, text);
+          continue;
+        }
+        let value = text;
+        if (!value.trim()) {
+          const template = readPlural(source.get(name) ?? "");
+          if (!template)
+            throw new Error(
+              `Apple plural ${name} needs a valid source plural before export.`,
+            );
+          value = writePlural({ ...template, forms: { other: "" } });
+        }
+        native.set(name, value);
+        types.set(
+          name,
+          key?.applePluralTypes?.[locale] ??
+            key?.applePluralTypes?.[sourceLanguage] ??
+            "d",
+        );
+      }
+      const files = [
+        {
+          name: `${locale}.stringsdict`,
+          content: writeStringsDict(native, types),
+        },
+        {
+          name: `${locale}.strings`,
+          content: writeCatalog(
+            plain,
+            "strings",
+            locale,
+            sourceLanguage,
+            source,
+          ),
+        },
+      ];
+      size += files.reduce(
+        (sum, file) => sum + new TextEncoder().encode(file.content).length,
+        0,
+      );
+      if (size > 10 * 1024 * 1024)
+        throw new Error(
+          "Export exceeds 10 MB. Export fewer languages or split the project.",
+        );
+      return files;
+    }
     // Nested JSON is already reconstructed by the service.
     const content =
       format === "nested"

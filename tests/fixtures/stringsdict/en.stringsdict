@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>cart.items</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@itemCount@</string>
+		<key>itemCount</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>ld</string>
+			<key>one</key>
+			<string>%ld item in your cart</string>
+			<key>other</key>
+			<string>%ld items in your cart</string>
+		</dict>
+	</dict>
+	<key>counts.special</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@total@</string>
+		<key>total</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>zero</key>
+			<string>No items — 100%% ready {literal} '#'</string>
+			<key>one</key>
+			<string>%lld item &amp; &lt;tag&gt; (50%%)</string>
+			<key>other</key>
+			<string>%lld items # aren't {variables}</string>
+		</dict>
+	</dict>
+	<key>simple.count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>One item</string>
+			<key>other</key>
+			<string>%d items</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

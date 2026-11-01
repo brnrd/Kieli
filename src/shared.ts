@@ -27,7 +27,9 @@ export type Project = {
     retention: number;
   };
 };
+export type ApplePluralType = "d" | "ld" | "lld";
 export type TranslationKey = {
+  applePluralTypes?: Record<string, ApplePluralType>;
   id?: string;
   name: string;
   description: string;

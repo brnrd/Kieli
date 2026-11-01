@@ -29,9 +29,9 @@ Implemented exact-source suggestions from project history, with historical key/v
 
 Acceptance: suggestions show their origin, never cross project/access boundaries and never overwrite copy automatically. Retention/deletion behavior is documented. Avoid an external search service until measured needs justify one.
 
-## 4. Native format fidelity — next
+## 4. Native format fidelity — Apple plurals completed
 
-Choose the next format from a real consuming application rather than expanding a checklist. Candidates are Apple `.stringsdict`/`.xcstrings`, ARB metadata and native gettext plural entries. Specify the supported subset and lossless round-trip fixtures before implementing each adapter.
+The first adapter is [Apple `.stringsdict`](apple-stringsdict.md): a bounded single-variable cardinal subset, preserved d/ld/lld metadata, paired plain/native exports, safe CLI downloads and independent golden fixtures. Verified with the compiled HTTP service, real CLI and macOS Foundation rendering. Xcode catalogs, ARB metadata and native gettext plurals remain future candidates; choose the next one from a consuming application and specify its subset before implementing it.
 
 Acceptance: synthetic golden fixtures preserve arguments, plural semantics and supported metadata; unsupported structures produce actionable errors. Import, export, CLI and mobile expectations are documented separately.
 

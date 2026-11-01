@@ -267,3 +267,65 @@ test("strict pull gates are explicit and cannot be mistaken for push options", (
     /Pull options/,
   );
 });
+
+test("CLI writes Apple companion files and rejects duplicate, unsafe, foreign-language and unexpected-extension payloads before writing", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "keylo-apple-cli-")),
+    originalFetch = globalThis.fetch;
+  const options = {
+    url: "https://example.com",
+    project: "site",
+    out: directory,
+    format: "stringsdict",
+    languages: "en",
+    fallback: false,
+  };
+  try {
+    const files = [
+      {
+        name: "en.stringsdict",
+        content: '<plist version="1.0"><dict/></plist>',
+      },
+      { name: "en.strings", content: '"hello" = "Hello";' },
+    ];
+    globalThis.fetch = (async () =>
+      Response.json({
+        project: "site",
+        format: "stringsdict",
+        files,
+      })) as typeof fetch;
+    await pull(options, "test-token");
+    assert.equal(
+      await readFile(join(directory, "en.strings"), "utf8"),
+      files[1]!.content,
+    );
+    assert.equal(
+      await readFile(join(directory, "en.stringsdict"), "utf8"),
+      files[0]!.content,
+    );
+    for (const bad of [
+      [files[0], files[0]],
+      [{ name: "../en.strings", content: "bad" }],
+      [{ name: "fr.strings", content: "bad" }],
+      [{ name: "en.json", content: "bad" }],
+    ]) {
+      globalThis.fetch = (async () =>
+        Response.json({
+          project: "site",
+          format: "stringsdict",
+          files: bad,
+        })) as typeof fetch;
+      await assert.rejects(pull(options, "test-token"));
+      assert.equal(
+        await readFile(join(directory, "en.strings"), "utf8"),
+        files[1]!.content,
+      );
+      assert.equal(
+        await readFile(join(directory, "en.stringsdict"), "utf8"),
+        files[0]!.content,
+      );
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+    await rm(directory, { recursive: true, force: true });
+  }
+});

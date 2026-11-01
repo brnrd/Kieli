@@ -255,7 +255,7 @@ export default function LokaliseImport({
                   </ul>
                   <p>
                     Document translation (.doc, .docx, .pptx, .idml),
-                    spreadsheets (.xls, .xlsx), .stf, .html, .srt, .stringsdict
+                    spreadsheets (.xls, .xlsx), .stf, .html, .srt, .xcstrings
                     and .xcloc are not supported yet.
                   </p>
                 </details>

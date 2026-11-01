@@ -1,3 +1,4 @@
+import { parseStringsDict } from "./stringsdict";
 import { writePlural, PLURAL_CATEGORIES } from "../messages";
 import { DOMParser } from "@xmldom/xmldom";
 import { parseDocument, isAlias, visit } from "yaml";
@@ -524,6 +525,7 @@ export function parseCatalog(
   text = text.replace(/^\uFEFF/, "");
   if (text.length > 10 * 1024 * 1024)
     throw new Error("Translation file exceeds 10 MB.");
+  if (format === "stringsdict") return parseStringsDict(text).catalog;
   if (["flat", "nested", "arb", "yaml"].includes(format)) {
     if (format !== "yaml") JSON.parse(text); // YAML's JSON schema must not admit non-JSON syntax.
     const document = parseDocument(text, {

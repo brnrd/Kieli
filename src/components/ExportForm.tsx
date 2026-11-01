@@ -95,8 +95,10 @@ export default function ExportForm({
           <div className="info-note">
             <Code2 size={18} />
             <p>
-              Downloads a ZIP with one file per selected language. The CLI can
-              pull the same format directly into your repository.
+              {format === "stringsdict"
+                ? "Downloads a ZIP with a .stringsdict and companion .strings file per selected language."
+                : "Downloads a ZIP with one file per selected language."}{" "}
+              The CLI can pull the same format directly into your repository.
             </p>
           </div>
           {error && (

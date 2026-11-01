@@ -1,3 +1,4 @@
+import { parseStringsDict } from "./stringsdict";
 import { unzipSync } from "fflate";
 import {
   validateImportPreview,
@@ -136,10 +137,13 @@ export function parseTranslationFiles(
       throw new Error("Import up to 30 languages per project.");
     const format = detectFileFormat(name);
     try {
-      for (const [key, value] of parseCatalog(text, format, locale)) {
+      const apple =
+        format === "stringsdict" ? parseStringsDict(text) : undefined;
+      for (const [key, value] of apple?.catalog ??
+        parseCatalog(text, format, locale)) {
         if (!keys.has(key) && keys.size >= 50000)
           throw new Error("Import up to 50,000 keys per project.");
-        const entry = keys.get(key) ?? {
+        const entry: ImportKey = keys.get(key) ?? {
           name: key,
           namespace: key.includes(".") ? key.split(".")[0]! : "general",
           description: "",
@@ -149,6 +153,11 @@ export function parseTranslationFiles(
         if (Object.hasOwn(entry.translations, locale))
           throw new Error(`Duplicate ${locale} translation for ${key}.`);
         entry.translations[locale] = value;
+        if (apple)
+          entry.applePluralTypes = {
+            ...entry.applePluralTypes,
+            [locale]: apple.types.get(key)!,
+          };
         keys.set(key, entry);
       }
     } catch (error) {

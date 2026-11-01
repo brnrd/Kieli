@@ -58,6 +58,7 @@ import { mcpAudit } from "./mcp-credentials";
 import { translationBatchSchema } from "./mcp-schemas";
 
 import {
+  applePluralTypesSchema,
   keyNameSchema,
   keySchema,
   projectSchema,
@@ -221,6 +222,12 @@ export class KeyloService {
       next.version++;
       const lifecycle: Change[] = [];
       for (const change of changes) {
+        for (const code of Object.keys(change.next?.applePluralTypes ?? {}))
+          if (!project.languages.some((locale) => locale.code === code))
+            throw new HttpError(
+              400,
+              "Apple plural metadata must use configured project languages.",
+            );
         if (change.next)
           change.next = {
             ...change.next,
@@ -907,6 +914,7 @@ export class KeyloService {
         tags: z.array(z.string().trim().min(1).max(30)).max(12).optional(),
         namespace: z.string().trim().max(60).optional(),
         plural: z.boolean().optional(),
+        applePluralTypes: applePluralTypesSchema.optional(),
       })
       .strict()
       .parse(input);
@@ -924,7 +932,8 @@ export class KeyloService {
         parsed.description !== undefined ||
         parsed.tags !== undefined ||
         parsed.namespace !== undefined ||
-        parsed.plural !== undefined
+        parsed.plural !== undefined ||
+        parsed.applePluralTypes !== undefined
       )
         throw new HttpError(
           403,
@@ -969,6 +978,7 @@ export class KeyloService {
       tags: key.tags,
       translations: key.translations,
       plural: key.plural,
+      applePluralTypes: key.applePluralTypes,
     });
     await this.persistKeys(
       identity,
@@ -1095,6 +1105,10 @@ export class KeyloService {
       !Object.hasOwn(state.translations, data.language)
     )
       throw new HttpError(404, "Historical translation not found.");
+    const applePluralTypes = { ...current.applePluralTypes };
+    if (state.applePluralTypes?.[data.language])
+      applePluralTypes[data.language] = state.applePluralTypes[data.language]!;
+    else delete applePluralTypes[data.language];
     const translationSources = { ...current.translationSources };
     if (state.translationSources?.[data.language])
       translationSources[data.language] =
@@ -1102,6 +1116,9 @@ export class KeyloService {
     else delete translationSources[data.language];
     const next = indexed({
       ...current,
+      ...(current.applePluralTypes || state.applePluralTypes
+        ? { applePluralTypes }
+        : {}),
       translations: {
         ...current.translations,
         [data.language]: state.translations[data.language]!,
@@ -1117,6 +1134,7 @@ export class KeyloService {
       description: next.description,
       tags: next.tags,
       plural: next.plural,
+      applePluralTypes: next.applePluralTypes,
       translations: next.translations,
     });
     // Preserve the historical source anchor. Restoring old text cannot certify it for new source copy.
@@ -1384,7 +1402,7 @@ export class KeyloService {
           : fallback
             ? (values[project.sourceLanguage] ?? "")
             : "";
-        if (key.plural)
+        if (key.plural && (format !== "stringsdict" || fallback))
           text = exportPlural(
             values[locale] ?? "",
             project.languages.find((item) => item.code === locale)!,
@@ -1429,7 +1447,13 @@ export class KeyloService {
           ] ?? "",
         ]),
       );
-      const files = exportFiles(result, format, project.sourceLanguage, source);
+      const files = exportFiles(
+        result,
+        format,
+        project.sourceLanguage,
+        source,
+        keys,
+      );
       return { project: id, format, translations: result, files };
     } catch (error) {
       throw new HttpError(422, (error as Error).message);

@@ -172,9 +172,10 @@ export default function ProjectUpdate({
     <>
       <div className="dialog-body project-update-body">
         <p>
-          Update this project from a localization file or ZIP. Existing key
-          metadata and keys absent from the files are retained. Add new
-          languages in project settings first.
+          Update this project from a localization file or ZIP. Descriptions,
+          tags, namespaces and keys absent from the files are retained. Apple
+          integer-format changes are shown in the preview. Add new languages in
+          project settings first.
         </p>
         <details className="update-options" open={!ready}>
           <summary>File and update options</summary>
@@ -352,6 +353,22 @@ export default function ProjectUpdate({
                         </div>
                       </div>
                     </div>
+                  ))}
+                {project.languages
+                  .filter(
+                    (locale) =>
+                      selected.before?.applePluralTypes?.[locale.code] !==
+                      selected.after.applePluralTypes?.[locale.code],
+                  )
+                  .map((locale) => (
+                    <p key={`apple-${locale.code}`}>
+                      Apple integer format ({locale.name}):{" "}
+                      {selected.before?.applePluralTypes?.[locale.code] ??
+                        "d (default)"}{" "}
+                      →{" "}
+                      {selected.after.applePluralTypes?.[locale.code] ??
+                        "d (default)"}
+                    </p>
                   ))}
                 {!Object.keys(selected.translations).length && (
                   <p>No translation text will change.</p>

@@ -2,7 +2,7 @@
 
 Managers use **Update from files** in a project's header. Choose a supported localization file or ZIP, then **Preview changes**. Single files can use a locale filename (`en.json`, `fr.strings`) or an explicit language hint. Unknown languages must be added to project settings first. New keys require source copy; a target-only file can update known keys.
 
-The file is parsed in a browser worker with the existing size/format limits. Server previews show new, updated and unchanged keys, preserved target values and before/after text. Existing key context, tags and namespaces are retained; new keys use the imported metadata. Keys absent from a file are never deleted. Empty supplied values never clear stored copy.
+The file is parsed in a browser worker with the existing size/format limits. Server previews show new, updated and unchanged keys, preserved target values and before/after text. Existing key context, tags and namespaces are retained; new keys use the imported metadata. Apple native integer-format changes are also previewed: source metadata can update, while populated target metadata is kept unless overwrite is selected. Keys absent from a file are never deleted. Empty supplied values never clear stored copy.
 
 Choose an explicit policy:
 

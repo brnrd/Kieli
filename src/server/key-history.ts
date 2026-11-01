@@ -10,6 +10,7 @@ export type KeyState = Pick<
   | "description"
   | "namespace"
   | "tags"
+  | "applePluralTypes"
   | "plural"
   | "sourceRevision"
   | "translationSources"
@@ -56,6 +57,7 @@ export function keyState(key: TranslationKey): KeyState {
     namespace,
     tags,
     plural,
+    applePluralTypes,
     sourceRevision,
     translationSources,
     version,
@@ -71,6 +73,7 @@ export function keyState(key: TranslationKey): KeyState {
     namespace,
     tags,
     plural,
+    applePluralTypes,
     sourceRevision,
     translationSources,
     version,

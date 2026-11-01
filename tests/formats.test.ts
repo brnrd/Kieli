@@ -16,7 +16,10 @@ const catalog = new Map([
   ["escapes", String.raw`C:\new\folder\u0041's $value %@ %1$s`],
   ["empty", ""],
 ]);
-for (const format of fileFormats) {
+// Apple plural dictionaries and companion files have dedicated native fixtures.
+for (const format of fileFormats.filter(
+  (format) => format.id !== "stringsdict",
+)) {
   test(`${format.label} preserves Unicode, interpolation, whitespace and literal escapes`, () => {
     const text = writeCatalog(catalog, format.id, "fr", "en", catalog);
     const parsed = parseCatalog(text, format.id, "fr");
