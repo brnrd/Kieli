@@ -1,6 +1,6 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { verify } from "node:crypto";
+import { verify, randomUUID } from "node:crypto";
 import { inflateRawSync } from "node:zlib";
 import {
   samlFixture,
@@ -57,7 +57,8 @@ async function login(f: Awaited<ReturnType<typeof setup>>, changes = {}) {
   return { jar, result };
 }
 async function begin(f: Awaited<ReturnType<typeof setup>>) {
-  const user = await login(f);
+  // Separate app-initiated sign-ins model fresh IdP sessions, even within one millisecond.
+  const user = await login(f, { sessionIndex: `test-session-${randomUUID()}` });
   const saved = user.jar.values.get(sessionCookie)!;
   const url = new URL(
     await f.logout.begin(
