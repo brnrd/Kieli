@@ -28,7 +28,7 @@ let items = await copy.text("cart.items", fallback: "3 items", arguments: ["coun
 
 ## Android / Kotlin
 
-Include `android/` as a library module in your Gradle project. The standalone module uses Gradle 8.11.1, AGP 8.9.2, Kotlin 2.2.21, JDK 17, compile SDK 35 and min SDK 24. Adjust its plugin versions to your application's compatible versions when integrating. Import `io.keylo.KeyloClient`:
+Include `android/` as a library module in your Gradle project. The standalone module uses Gradle 8.11.1, AGP 8.9.2, Kotlin 2.2.21, a JDK 17 toolchain with matching Java/Kotlin JVM 17 targets, compile SDK 35 and min SDK 24. Adjust its plugin versions to your application's compatible versions when integrating; keep the Java and Kotlin compilation targets aligned. Import `io.keylo.KeyloClient`:
 
 ```kotlin
 val copy = KeyloClient("https://copy.example.com", "mobile", "en",
