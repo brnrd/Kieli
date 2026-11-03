@@ -1,8 +1,8 @@
-> **Experimental:** Keylo is currently undergoing real-world testing and may not yet be ready for production use.
+> **Experimental:** Kieli is currently undergoing real-world testing and may not yet be ready for production use.
 
 <div align="center">
 
-# Keylo
+# Kieli
 
 ### Good words. Every language. Your infrastructure.
 
@@ -14,11 +14,11 @@ An open-source workspace for product copy and translations.<br />Keep your keys 
 
 </div>
 
-![Keylo translation editor showing source copy and stacked French and Dutch translations](docs/images/translation-editor.png)
+![Kieli translation editor showing source copy and stacked French and Dutch translations](docs/images/translation-editor.png)
 
 ## A focused home for your copy
 
-Keylo gives product teams and developers a shared place to manage the words in their apps. Organize separate projects, work in several languages, and ship localization files through your existing build pipeline. The interface stays compact as your project directory and key lists grow.
+Kieli gives product teams and developers a shared place to manage the words in their apps. Organize separate projects, work in several languages, and ship localization files through your existing build pipeline. The interface stays compact as your project directory and key lists grow.
 
 ### Keep every language in view
 
@@ -33,7 +33,7 @@ Keylo gives product teams and developers a shared place to manage the words in t
 - **Safer changes.** Argument checks, version conflicts, per-translation history, recoverable key deletion and project snapshots help protect your work.
 - **Rename keys safely.** Preview linked keys, update references together, and retain translations, freshness and history. [Key renaming](docs/key-renaming.md).
 
-![Keylo project directory with separate product projects](docs/images/projects.png)
+![Kieli project directory with separate product projects](docs/images/projects.png)
 
 ### Fit your development workflow
 
@@ -43,11 +43,11 @@ Keylo gives product teams and developers a shared place to manage the words in t
 - **Connect Claude Code.** An optional MCP connection lets your Claude client read a project's context and save translations in selected target languages, with explicit overwrite permission.
 - **Deliver mobile copy updates.** Publish immutable releases for iOS, Android and Flutter, with channels, rollback and offline fallback. [Mobile SDKs and delivery](docs/ota.md).
 
-Keylo keeps the workflow small: manual editing and explicit publication, without translation-review stages or a built-in automatic translation service.
+Kieli keeps the workflow small: manual editing and explicit publication, without translation-review stages or a built-in automatic translation service.
 
 ## Built for control
 
-**Keep your copy on your infrastructure.** Keylo is designed for a self-hosted organizational workspace, with project access enforced by the backend.
+**Keep your copy on your infrastructure.** Kieli is designed for a self-hosted organizational workspace, with project access enforced by the backend.
 
 - **Choose how people sign in:** built-in email/password accounts, Okta OIDC or SAML SSO with optional signed Single Logout.
 - **Manage access centrally:** workspace administration, project roles, account disabling and revocable server-side sessions. SSO supports SCIM provisioning and optional Okta reconciliation.
@@ -55,7 +55,7 @@ Keylo keeps the workflow small: manual editing and explicit publication, without
 - **Protect changes:** atomic write batches, optimistic concurrency, placeholder validation and security audit events.
 - **Recover your work:** translation history, 30-day recoverable key deletion, and manual or scheduled project snapshots.
 
-![Keylo workspace administration with project and translation statistics](docs/images/workspace-admin.png)
+![Kieli workspace administration with project and translation statistics](docs/images/workspace-admin.png)
 
 The [security model](SECURITY.md) documents credential lifecycles, trust boundaries and current limitations. [SAML Single Logout](docs/saml.md#single-logout) supports provider sign-out and verified IdP-initiated session revocation when configured; local-only sign-out remains available. Local tests are not an independent security audit, and real IdP/AWS integrations need staging verification.
 
@@ -69,7 +69,7 @@ npm run seed # optional sample projects; omit for an empty workspace
 npm run dev
 ```
 
-Open the printed local URL. The demo runs only on loopback outside production; SQLite data persists in `.data/keylo.sqlite`.
+Open the printed local URL. The demo runs only on loopback outside production; SQLite data persists in `.data/kieli.sqlite`.
 
 For your team, enable **built-in accounts** or **SSO**, set `APP_ORIGIN`, and follow the relevant setup guide. Production requires HTTPS and rejects demo authentication.
 
@@ -83,10 +83,10 @@ A guided AWS installer and first-administrator setup are implemented. **No publi
 
 ### Pull translations into your app
 
-Create an export token in **Project → Developers**, then store it as `KEYLO_TOKEN` in your shell or CI secrets.
+Create an export token in **Project → Developers**, then store it as `KIELI_TOKEN` in your shell or CI secrets.
 
 ```sh
-node cli/keylo.mjs pull \
+node cli/kieli.mjs pull \
   --url https://copy.example.com \
   --project acme-website \
   --languages en,fr,nl \
@@ -95,13 +95,13 @@ node cli/keylo.mjs pull \
   --require-current
 ```
 
-The terminal CLI adds Kip, a small original key character, clear progress stages and a concise summary. CI and piped output stay plain; use `--plain` or `--no-color` to choose your style. Run `node cli/keylo.mjs --help` to explore.
+The terminal CLI adds Kip, a small original key character, clear progress stages and a concise summary. CI and piped output stay plain; use `--plain` or `--no-color` to choose your style. Run `node cli/kieli.mjs --help` to explore.
 
 The standalone CLI uses Node built-ins and writes individual locale files. [Source push and repository configuration](docs/source-sync.md) use a separate source-sync credential.
 
 ## Documentation
 
-| Work with Keylo | Operate Keylo |
+| Work with Kieli | Operate Kieli |
 | --- | --- |
 | [Imports and file formats](docs/file-formats.md) | [Built-in accounts and recovery](docs/built-in-accounts.md) |
 | [Migrating from Lokalise](docs/lokalise-import.md) | [Okta OIDC](docs/okta.md) · [SAML](docs/saml.md) |
@@ -126,6 +126,6 @@ npm run build
 npm run smoke
 ```
 
-See the [next essentials](docs/roadmap.md) for the implementation sequence. Keylo is released under the [MIT license](LICENSE).
+See the [next essentials](docs/roadmap.md) for the implementation sequence. Kieli is released under the [MIT license](LICENSE).
 
 *Screenshots use synthetic demonstration projects.*

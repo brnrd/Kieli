@@ -287,7 +287,7 @@ export default function WorkspaceAdmin({
             </>
           )}
           <div className="admin-panel">
-            <h2>Bring your copy into Keylo</h2>
+            <h2>Bring your copy into Kieli</h2>
             <p>
               Preview a new project before importing. Update an existing project
               from its own page.

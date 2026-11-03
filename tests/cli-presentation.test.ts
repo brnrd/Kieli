@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { createReporter, parseArgs } from "../cli/keylo.mjs";
+import { createReporter, parseArgs } from "../cli/kieli.mjs";
 function terminal({
   tty = true,
   columns = 80,
@@ -74,7 +74,7 @@ test("NO_COLOR and --no-color retain readable interactive output without ANSI; n
   const narrow = terminal({ columns: 40 });
   narrow.reporter.banner();
   assert.doesNotMatch(narrow.output(), /\(o  o\)/);
-  assert.match(narrow.output(), /keylo/);
+  assert.match(narrow.output(), /kieli/);
   const options = parseArgs([
     "pull",
     "--url",
@@ -90,7 +90,7 @@ test("NO_COLOR and --no-color retain readable interactive output without ANSI; n
 });
 test("displayed paths and errors cannot inject terminal commands, new lines or known credentials", () => {
   const term = terminal({
-    env: { KEYLO_TOKEN: "private-token", KEYLO_SYNC_TOKEN: "private-sync" },
+    env: { KIELI_TOKEN: "private-token", KIELI_SYNC_TOKEN: "private-sync" },
   });
   term.reporter.file("/tmp/\u001b[2Jfile\nname\u202e.json");
   term.reporter.failure(
@@ -101,18 +101,18 @@ test("displayed paths and errors cannot inject terminal commands, new lines or k
   assert.match(term.errors(), /\[redacted\]/);
   assert.equal(term.errors().split("\n").length, 2);
   const escapedSecret = terminal({
-    env: { KEYLO_TOKEN: "secret\u001b[31mvalue" },
+    env: { KIELI_TOKEN: "secret\u001b[31mvalue" },
   });
   escapedSecret.reporter.failure(new Error("secret\u001b[31mvalue"));
   assert.doesNotMatch(escapedSecret.errors(), /secretvalue/);
   assert.match(escapedSecret.errors(), /\[redacted\]/);
 });
 test("help works even with a broken config and real command failures retain nonzero exit codes without secrets", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "keylo-cli-presentation-")),
-    cli = resolve("cli/keylo.mjs");
+  const directory = await mkdtemp(join(tmpdir(), "kieli-cli-presentation-")),
+    cli = resolve("cli/kieli.mjs");
   try {
     await writeFile(
-      join(directory, ".keylo.json"),
+      join(directory, ".kieli.json"),
       "not valid JSON private-token",
     );
     const help = spawnSync(process.execPath, [cli, "--help"], {
@@ -123,7 +123,7 @@ test("help works even with a broken config and real command failures retain nonz
     assert.equal(help.status, 0, help.stderr);
     assert.match(help.stdout, /Commands:/);
     assert.doesNotMatch(help.stdout, /private-token|\u001b/);
-    await rm(join(directory, ".keylo.json"));
+    await rm(join(directory, ".kieli.json"));
     const failed = spawnSync(
       process.execPath,
       [
@@ -139,7 +139,7 @@ test("help works even with a broken config and real command failures retain nonz
       {
         cwd: directory,
         encoding: "utf8",
-        env: { ...process.env, KEYLO_SYNC_TOKEN: "private-token", CI: "true" },
+        env: { ...process.env, KIELI_SYNC_TOKEN: "private-token", CI: "true" },
       },
     );
     assert.equal(failed.status, 1);

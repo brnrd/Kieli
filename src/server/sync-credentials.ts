@@ -55,7 +55,7 @@ export class SyncCredentials {
       .parse(input);
     if (!(await this.store.get<Project>("WORKSPACE", `PROJECT#${id}`)))
       throw new HttpError(404, "Project not found.");
-    const secret = `keylo_sync_${id}.${randomBytes(32).toString("hex")}`,
+    const secret = `kieli_sync_${id}.${randomBytes(32).toString("hex")}`,
       credential: Credential = {
         version: 1,
         id: hashToken(secret),
@@ -114,7 +114,7 @@ export class SyncCredentials {
   }
   async authenticate(request: Request) {
     const match =
-      /^Bearer (keylo_sync_([a-z0-9][a-z0-9-]{0,47})\.[a-f0-9]{64})$/.exec(
+      /^Bearer (kieli_sync_([a-z0-9][a-z0-9-]{0,47})\.[a-f0-9]{64})$/.exec(
         request.headers.get("authorization") ?? "",
       );
     if (!match) throw invalid();

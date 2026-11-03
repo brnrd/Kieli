@@ -263,7 +263,7 @@ export default function LokaliseImport({
             )}
             <p className="import-privacy">
               Files are read locally for the preview. Translations are sent to
-              Keylo only when you choose Import project.
+              Kieli only when you choose Import project.
               {kind === "lokalise" && " No Lokalise credentials needed."}
             </p>
           </>

@@ -14,8 +14,8 @@ import {
 
 const parameters = {
   region: "eu-west-1",
-  bucket: "keylo-release-fixture",
-  key: "releases/0.1.0/keylo.zip",
+  bucket: "kieli-release-fixture",
+  key: "releases/0.1.0/kieli.zip",
   objectVersion: "immutable-version",
   version: "0.1.0",
 };
@@ -82,7 +82,7 @@ test("customer stack retains data, pins code versions, limits IAM and never outp
   );
   assert.ok(!JSON.stringify(t.Outputs).includes("resolve:secretsmanager"));
   assert.deepEqual(
-    r.App.Properties.Environment.Variables.KEYLO_INSTALL_SECRET_ARN,
+    r.App.Properties.Environment.Variables.KIELI_INSTALL_SECRET_ARN,
     {
       "Fn::If": ["UseLocal", { Ref: "InstallSecret" }, { Ref: "AWS::NoValue" }],
     },
@@ -102,25 +102,25 @@ test("customer stack retains data, pins code versions, limits IAM and never outp
 });
 test("launch links preserve encoded template versions and never carry credentials", () => {
   const target =
-    "https://keylo-release-fixture.s3.eu-west-1.amazonaws.com/releases/0.1.0/install.yaml?versionId=abc%2Bxyz";
+    "https://kieli-release-fixture.s3.eu-west-1.amazonaws.com/releases/0.1.0/install.yaml?versionId=abc%2Bxyz";
   const url = new URL(launchUrl("eu-west-1", target));
   const query = new URLSearchParams(url.hash.split("?")[1]);
   assert.equal(query.get("templateURL"), target);
   assert.equal(query.get("param_AuthMode"), "local");
-  assert.equal(query.get("stackName"), "keylo");
+  assert.equal(query.get("stackName"), "kieli");
   assert.throws(() =>
     launchUrl("eu-west-1", "https://evil.example/install.yaml"),
   );
 });
 test("publishing validates checksums, pins object versions and is immutable on retries", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "keylo-release-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "kieli-release-test-"));
   try {
     const bytes = Buffer.from("synthetic test archive");
     const sha256 = createHash("sha256").update(bytes).digest("hex");
     const manifest = {
       version: "0.1.0",
       sha256,
-      file: `keylo-0.1.0-${sha256.slice(0, 16)}.zip`,
+      file: `kieli-0.1.0-${sha256.slice(0, 16)}.zip`,
       bytes: bytes.length,
       platform: "linux",
       architecture: "x64",
@@ -229,7 +229,7 @@ test("automatic snapshots use a scoped secret, isolated runner and bounded Event
     2,
   );
   assert.deepEqual(
-    r.App.Properties.Environment.Variables.KEYLO_SNAPSHOT_JOB_SECRET_ARN,
+    r.App.Properties.Environment.Variables.KIELI_SNAPSHOT_JOB_SECRET_ARN,
     { Ref: "SnapshotJobSecret" },
   );
   assert.ok(JSON.stringify(r.AppRole).includes("SnapshotJobSecret"));

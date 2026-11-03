@@ -5,7 +5,7 @@ import { parseCatalog, csvRows } from "../src/formats/parse";
 import { writeCatalog } from "../src/formats/write";
 import { parseTranslationFiles } from "../src/formats/import";
 import { fileFormats } from "../src/formats";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { sqliteStore } from "../src/server/store";
 import type { Identity } from "../src/shared";
 
@@ -331,7 +331,7 @@ test("mixed format ZIP previews merge locales, infer Apple/Android directories a
 });
 
 test("format exports retain authorization, explicit fallback, deterministic filenames and clear errors", async () => {
-  const service = new KeyloService(await sqliteStore(":memory:"));
+  const service = new KieliService(await sqliteStore(":memory:"));
   const admin: Identity = {
     sub: "admin",
     name: "Admin",

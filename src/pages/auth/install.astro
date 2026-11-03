@@ -5,9 +5,9 @@ import InstallForm from '../../components/InstallForm';
 import { installation } from '../../server/installation';
 if (!await (await installation()).available()) return Astro.redirect('/login');
 ---
-<Layout title="Set up your workspace · Keylo">
+<Layout title="Set up your workspace · Kieli">
   <main class="login-page install-page">
-    <a href="/" class="wordmark"><img src="/favicon.svg" alt="" width="36" height="36"/>keylo<span class="wordmark-dot">.</span></a>
+    <a href="/" class="wordmark"><img src="/favicon.svg" alt="" width="36" height="36"/>kieli<span class="wordmark-dot">.</span></a>
     <div class="login-card local-login-card install-card">
       <h1>Set up workspace</h1>
       <p>Create the first administrator for your workspace.</p>

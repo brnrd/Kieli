@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Keylo - Astro, Lambda, API Gateway, and DynamoDB. No VPC or database server.
+Description: Kieli - Astro, Lambda, API Gateway, and DynamoDB. No VPC or database server.
 Metadata:
   # The optional SSO secret is empty in local-account deployments. IAM policies
   # for it are emitted only in the corresponding SSO mode.
@@ -93,7 +93,7 @@ Resources:
   SnapshotJobSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Description: Keylo internal snapshot job credential
+      Description: Kieli internal snapshot job credential
       GenerateSecretString:
         PasswordLength: 48
         ExcludePunctuation: true
@@ -114,7 +114,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: RunKeyloSnapshots
+        - PolicyName: RunKieliSnapshots
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -160,7 +160,7 @@ Resources:
             const secret=await secrets.send(new GetSecretValueCommand({SecretId:process.env.JOB_SECRET}));
             if(!secret.SecretString||secret.SecretString.length<32) throw Error('Job secret unavailable');
             async function invoke(path) {
-              const event={version:'2.0',routeKey:'POST '+path,rawPath:path,rawQueryString:'',headers:{host:'internal.keylo',authorization:'Bearer '+secret.SecretString,'content-type':'application/json'},requestContext:{accountId:'internal',apiId:'internal',domainName:'internal.keylo',domainPrefix:'internal',http:{method:'POST',path,protocol:'HTTP/1.1',sourceIp:'127.0.0.1',userAgent:'keylo-maintenance-runner'},requestId:'maintenance-job',routeKey:'POST '+path,stage:'$default',time:'',timeEpoch:Date.now()},body:'{}',isBase64Encoded:false};
+              const event={version:'2.0',routeKey:'POST '+path,rawPath:path,rawQueryString:'',headers:{host:'internal.kieli',authorization:'Bearer '+secret.SecretString,'content-type':'application/json'},requestContext:{accountId:'internal',apiId:'internal',domainName:'internal.kieli',domainPrefix:'internal',http:{method:'POST',path,protocol:'HTTP/1.1',sourceIp:'127.0.0.1',userAgent:'kieli-maintenance-runner'},requestId:'maintenance-job',routeKey:'POST '+path,stage:'$default',time:'',timeEpoch:Date.now()},body:'{}',isBase64Encoded:false};
               const response=await lambda.send(new InvokeCommand({FunctionName:process.env.APP_FUNCTION,InvocationType:'RequestResponse',Payload:Buffer.from(JSON.stringify(event))}));
               if(response.FunctionError) throw Error('Maintenance invocation failed');
               const output=JSON.parse(Buffer.from(response.Payload).toString());
@@ -189,7 +189,7 @@ Resources:
   SnapshotSchedule:
     Type: AWS::Events::Rule
     Properties:
-      Description: Keylo snapshot scheduler and abandoned-data cleanup
+      Description: Kieli snapshot scheduler and abandoned-data cleanup
       ScheduleExpression: rate(5 minutes)
       State: ENABLED
       Targets:
@@ -261,7 +261,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: KeyloSnapshotSecret
+        - PolicyName: KieliSnapshotSecret
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -270,7 +270,7 @@ Resources:
                 Resource: !Ref SnapshotJobSecret
         - !If
           - UseScim
-          - PolicyName: KeyloScimSecret
+          - PolicyName: KieliScimSecret
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
@@ -280,7 +280,7 @@ Resources:
           - !Ref "AWS::NoValue"
         - !If
           - HasSsoReconciliation
-          - PolicyName: KeyloReconciliationSecret
+          - PolicyName: KieliReconciliationSecret
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
@@ -288,7 +288,7 @@ Resources:
                   Action: secretsmanager:GetSecretValue
                   Resource: !Ref ReconciliationSecretArn
           - !Ref "AWS::NoValue"
-        - PolicyName: KeyloDataAndLogs
+        - PolicyName: KieliDataAndLogs
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -307,7 +307,7 @@ Resources:
                 Resource: !GetAtt AppLogGroup.Arn
         - !If
           - UseSaml
-          - PolicyName: KeyloSamlSigningCredentials
+          - PolicyName: KieliSamlSigningCredentials
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
@@ -332,7 +332,7 @@ Resources:
     Metadata:
       Dockerfile: Dockerfile
       DockerContext: ..
-      DockerTag: keylo-v1
+      DockerTag: kieli-v1
     Properties:
       FunctionName: !Sub "${AWS::StackName}-app"
       PackageType: Image
@@ -350,7 +350,7 @@ Resources:
           SSO_RECONCILE_SECRET_ARN: !If [HasSsoReconciliation, !Ref ReconciliationSecretArn, !Ref "AWS::NoValue"]
           STORAGE_DRIVER: dynamodb
           DYNAMODB_TABLE: !Ref Data
-          KEYLO_SNAPSHOT_JOB_SECRET_ARN: !Ref SnapshotJobSecret
+          KIELI_SNAPSHOT_JOB_SECRET_ARN: !Ref SnapshotJobSecret
           SAML_ENTRY_POINT:
             !If [UseSaml, !Ref SamlEntryPoint, !Ref "AWS::NoValue"]
           SAML_LOGOUT_URL: !If [UseSaml, !Ref SamlLogoutUrl, !Ref "AWS::NoValue"]
@@ -374,7 +374,7 @@ Resources:
               !Sub "{{resolve:secretsmanager:${AppSecretsArn}:SecretString:SESSION_SECRET}}",
               !Ref "AWS::NoValue",
             ]
-          KEYLO_SECRETS_REVISION: !Ref SecretsRevision
+          KIELI_SECRETS_REVISION: !Ref SecretsRevision
       Events:
         Root:
           Type: HttpApi

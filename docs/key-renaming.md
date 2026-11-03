@@ -6,7 +6,7 @@ Enter a new name and choose **Preview rename**. The preview lists keys with exac
 
 The key keeps its stable identity, translations, native metadata, creation time and history. Key versions increase; before/after names appear in history. References in every configured language are rewritten, including references inside plural messages. Related source-context stamps change without certifying outdated translations as current. Transitive dependents receive newer versions when their context changes. Counts and completion remain unchanged.
 
-Update the key name in your application source, source-sync files and other external consumers yourself. Keylo creates no alias for the old name. Existing published mobile releases and snapshots remain immutable; publish a new release when ready. Source-syncing an unchanged old file can recreate the former key name as a separate identity.
+Update the key name in your application source, source-sync files and other external consumers yourself. Kieli creates no alias for the old name. Existing published mobile releases and snapshots remain immutable; publish a new release when ready. Source-syncing an unchanged old file can recreate the former key name as a separate identity.
 
 ## Atomicity and recovery
 

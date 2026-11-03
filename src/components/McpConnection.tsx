@@ -27,7 +27,7 @@ export default function McpConnection({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [revoke, setRevoke] = useState<McpTokenView | null>(null);
-  const [origin, setOrigin] = useState("https://keylo.example.com");
+  const [origin, setOrigin] = useState("https://kieli.example.com");
   const path = `projects/${project.id}/mcp-tokens`;
   const sso = authMode === "okta" || authMode === "saml";
   useEffect(() => {
@@ -40,10 +40,10 @@ export default function McpConnection({
   const configuration = JSON.stringify(
     {
       mcpServers: {
-        keylo: {
+        kieli: {
           type: "http",
           url: `${origin}/mcp`,
-          headers: { Authorization: "Bearer ${KEYLO_MCP_TOKEN}" },
+          headers: { Authorization: "Bearer ${KIELI_MCP_TOKEN}" },
         },
       },
     },
@@ -132,7 +132,7 @@ export default function McpConnection({
               repository. Merge it with existing MCP servers.
             </li>
             <li>
-              Set <code>KEYLO_MCP_TOKEN</code> securely in the environment that
+              Set <code>KIELI_MCP_TOKEN</code> securely in the environment that
               launches Claude Code.
             </li>
             <li>
@@ -141,7 +141,7 @@ export default function McpConnection({
             </li>
           </ol>
           <p className="muted">
-            Try: “Translate missing French copy in Keylo. Preserve placeholders
+            Try: “Translate missing French copy in Kieli. Preserve placeholders
             and save the translations.”
           </p>
           <p className="muted">

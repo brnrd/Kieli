@@ -100,18 +100,18 @@ export default function SyncConnection({
       <details className="key-history">
         <summary>Repository configuration</summary>
         <p>
-          Save as <code>.keylo.json</code> in the consuming repository.
+          Save as <code>.kieli.json</code> in the consuming repository.
           Credentials belong in CI secrets.
         </p>
         <pre className="sync-config">{config}</pre>
         <pre className="sync-config">
           {
-            "node cli/keylo.mjs push --config .keylo.json\n# Inspect the dry run, then apply:\nnode cli/keylo.mjs push --config .keylo.json --apply"
+            "node cli/kieli.mjs push --config .kieli.json\n# Inspect the dry run, then apply:\nnode cli/kieli.mjs push --config .kieli.json --apply"
           }
         </pre>
         <p>
-          Set <code>KEYLO_SYNC_TOKEN</code> for push and a separate{" "}
-          <code>KEYLO_TOKEN</code> for pull. Push supports flat/nested source
+          Set <code>KIELI_SYNC_TOKEN</code> for push and a separate{" "}
+          <code>KIELI_TOKEN</code> for pull. Push supports flat/nested source
           JSON with ICU strings for plurals.
         </p>
       </details>

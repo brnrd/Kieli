@@ -1,6 +1,6 @@
 # Built-in accounts
 
-Set `AUTH_MODE=local` to run Keylo without an identity provider. The same projects, permissions, exports, and CLI work with built-in accounts, Okta OIDC, or SAML. One authentication mode is enabled per deployment; local credentials are never a fallback that bypasses an SSO-only deployment.
+Set `AUTH_MODE=local` to run Kieli without an identity provider. The same projects, permissions, exports, and CLI work with built-in accounts, Okta OIDC, or SAML. One authentication mode is enabled per deployment; local credentials are never a fallback that bypasses an SSO-only deployment.
 
 ## First administrator
 
@@ -12,7 +12,7 @@ For local development, copy `.env.example` to `.env` and set:
 AUTH_MODE=local
 APP_ORIGIN=http://localhost:4321
 STORAGE_DRIVER=sqlite
-SQLITE_PATH=.data/keylo.sqlite
+SQLITE_PATH=.data/kieli.sqlite
 ```
 
 Then run from the checkout:
@@ -39,7 +39,7 @@ Workspace admins get a **People & access** screen:
 - Revoke all of a user's sessions.
 - Read paginated security events for login, activation, recovery, password changes, and account/access administration.
 
-Activation/reset URLs are shown only when issued. Share them through a private, trusted channel with the intended recipient. Keylo does not send emails automatically. Invites expire in 24 hours; password-reset links expire in 30 minutes. Links are single-use and stored only as SHA-256 hashes. Account/access edits invalidate outstanding links; issue a fresh one after an edit if needed.
+Activation/reset URLs are shown only when issued. Share them through a private, trusted channel with the intended recipient. Kieli does not send emails automatically. Invites expire in 24 hours; password-reset links expire in 30 minutes. Links are single-use and stored only as SHA-256 hashes. Account/access edits invalidate outstanding links; issue a fresh one after an edit if needed.
 
 There must always be at least one **active** workspace admin. An invited admin does not count until they activate their account. Disabling or demoting the last active admin is rejected transactionally, including concurrent changes. Managing users requires a sign-in within the last 15 minutes; sign in again if asked.
 
@@ -71,7 +71,7 @@ Deploy the SAM template with `AuthMode=local` (its default), configure the actua
 
 ```sh
 AUTH_MODE=local \
-APP_ORIGIN=https://YOUR-KEYLO-HOST \
+APP_ORIGIN=https://YOUR-KIELI-HOST \
 STORAGE_DRIVER=dynamodb \
 DYNAMODB_TABLE=YOUR-TABLE \
 AWS_REGION=eu-west-1 \

@@ -169,7 +169,7 @@ export function writeCatalog(
   if (format === "xliff")
     return (
       declaration +
-      `<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">\n  <file original="keylo" source-language="${xml(sourceLanguage)}" target-language="${xml(locale)}" datatype="plaintext"><body>\n${entries.map(([key, value]) => `    <trans-unit id="${xml(key)}" xml:space="preserve"><source>${xml(source.get(key) ?? "")}</source><target>${xml(value)}</target></trans-unit>`).join("\n")}\n  </body></file>\n</xliff>\n`
+      `<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">\n  <file original="kieli" source-language="${xml(sourceLanguage)}" target-language="${xml(locale)}" datatype="plaintext"><body>\n${entries.map(([key, value]) => `    <trans-unit id="${xml(key)}" xml:space="preserve"><source>${xml(source.get(key) ?? "")}</source><target>${xml(value)}</target></trans-unit>`).join("\n")}\n  </body></file>\n</xliff>\n`
     );
   throw new Error("Unsupported export format.");
 }

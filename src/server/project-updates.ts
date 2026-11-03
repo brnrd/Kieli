@@ -17,7 +17,7 @@ import {
 import { authorize } from "./auth";
 import { HttpError } from "./errors";
 import { Conflict, type Store, type Change } from "./store";
-import type { KeyloService } from "./service";
+import type { KieliService } from "./service";
 import { freshnessView } from "./freshness";
 import { dataPrefix } from "./project-data";
 import { keyState, type KeyState, type EditOrigin } from "./key-history";
@@ -68,7 +68,7 @@ const summary = (entries: UpdateEntry[]) => ({
 export class ProjectUpdates {
   constructor(
     readonly store: Store,
-    readonly service: KeyloService,
+    readonly service: KieliService,
     readonly commit: (
       changes: KeyChange[],
       additional: Change[],

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { sqliteStore, Conflict } from "../src/server/store";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import type { Identity } from "../src/shared";
 import { HttpError } from "../src/server/errors";
 const admin: Identity = {
@@ -19,7 +19,7 @@ const user: Identity = {
 };
 async function fixture() {
   const store = await sqliteStore(":memory:"),
-    svc = new KeyloService(store);
+    svc = new KieliService(store);
   await svc.createProject(admin, {
     id: "web",
     name: "Web",
@@ -207,7 +207,7 @@ test("ordinary source updates do not load the entire project key collection", as
       return store.list<T>(pk, prefix);
     },
   };
-  const svc = new KeyloService(wrapped);
+  const svc = new KieliService(wrapped);
   const plan = await svc.previewUpdate(admin, "web", {
     policy: "source",
     keys: [{ name: "greeting", translations: { en: "Updated" } }],

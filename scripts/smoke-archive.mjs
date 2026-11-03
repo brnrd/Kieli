@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-const directory = await mkdtemp(join(tmpdir(), "keylo-archive-"));
+const directory = await mkdtemp(join(tmpdir(), "kieli-archive-"));
 const origin = "http://127.0.0.1:4343";
 const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
   env: {
@@ -122,7 +122,7 @@ try {
   const cli = spawnSync(
     process.execPath,
     [
-      "cli/keylo.mjs",
+      "cli/kieli.mjs",
       "pull",
       "--url",
       origin,
@@ -137,7 +137,7 @@ try {
       "--plain",
     ],
     {
-      env: { ...process.env, KEYLO_TOKEN: token.secret },
+      env: { ...process.env, KIELI_TOKEN: token.secret },
       encoding: "utf8",
       timeout: 20000,
     },

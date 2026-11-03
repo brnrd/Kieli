@@ -25,7 +25,7 @@ export function launchUrl(region, templateUrl) {
     throw new Error("A regional S3 release template URL is required.");
   const params = new URLSearchParams({
     templateURL: target.href,
-    stackName: "keylo",
+    stackName: "kieli",
     param_AuthMode: "local",
   });
   return `https://${region}.console.aws.amazon.com/cloudformation/home?region=${region}#/stacks/create/review?${params}`;
@@ -41,7 +41,7 @@ export async function validateRelease(directory) {
     !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(manifest.version) ||
     !/^[a-f0-9]{64}$/.test(manifest.sha256) ||
     manifest.file !==
-      `keylo-${manifest.version}-${manifest.sha256.slice(0, 16)}.zip`
+      `kieli-${manifest.version}-${manifest.sha256.slice(0, 16)}.zip`
   )
     throw new Error(
       "Only a verified Linux x64 release package can be published.",
@@ -165,7 +165,7 @@ export async function publishAws({
   await put(manifestFile, `${prefix}/release.json`, "application/json");
   await writeFile(
     join(directory, `launch-${region}.md`),
-    `# Keylo ${manifest.version}\n\n[Deploy Keylo in ${region}](${links.launchUrl})\n\n[Review template](${templateUrl})\n\nSHA-256: \`${manifest.sha256}\`\n\nCreates billable resources in your AWS account. Local accounts use protected first-run setup.\n`,
+    `# Kieli ${manifest.version}\n\n[Deploy Kieli in ${region}](${links.launchUrl})\n\n[Review template](${templateUrl})\n\nSHA-256: \`${manifest.sha256}\`\n\nCreates billable resources in your AWS account. Local accounts use protected first-run setup.\n`,
   );
   return links;
 }

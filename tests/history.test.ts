@@ -6,7 +6,7 @@ import {
   type Store,
   type Change,
 } from "../src/server/store";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { McpCredentials } from "../src/server/mcp-credentials";
 import { ProjectHistory } from "../src/server/project-history";
 import { HttpError } from "../src/server/errors";
@@ -44,7 +44,7 @@ const denied = (status: number) => (error: unknown) =>
   error instanceof HttpError && error.status === status;
 async function fixture() {
   const store = await sqliteStore(":memory:");
-  const svc = new KeyloService(store);
+  const svc = new KieliService(store);
   await svc.createProject(admin, settings);
   await svc.createKey(admin, "website", initial);
   return { store, svc, history: new ProjectHistory(store) };
@@ -204,7 +204,7 @@ test("project guard blocks edits racing a snapshot restore", async () => {
     },
   };
   await assert.rejects(
-    new KeyloService(wrapped).updateKey(admin, "website", "hello", {
+    new KieliService(wrapped).updateKey(admin, "website", "hello", {
       version: old.version,
       translations: { fr: "Concurrent {name}" },
     }),
@@ -575,7 +575,7 @@ test("advanced projects paginate thousands of keys and reuse a revision-bounded 
       return store.list<T>(pk, prefix);
     },
   };
-  const paged = new KeyloService(measured);
+  const paged = new KieliService(measured);
   const first = await paged.keyPage(admin, "website", { limit: 100 });
   assert.equal(first.items.length, 100);
   assert.ok(first.nextCursor);

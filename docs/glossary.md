@@ -2,7 +2,7 @@
 
 Open **Project → Glossary** to keep source terms, preferred target wording and short usage notes together. Project members can search and export terminology; managers and workspace admins can add, edit, import and delete terms. All permissions are enforced by the backend.
 
-The translation editor offers a collapsible glossary with source-copy matches and manual search. It shows the focused target language, or all targets when no target is focused. Wording is guidance: Keylo never inserts glossary text automatically or blocks publication based on terminology. Existing placeholder checks still apply to saved translations.
+The translation editor offers a collapsible glossary with source-copy matches and manual search. It shows the focused target language, or all targets when no target is focused. Wording is guidance: Kieli never inserts glossary text automatically or blocks publication based on terminology. Existing placeholder checks still apply to saved translations.
 
 ![Shared glossary with stacked target languages](images/glossary.png)
 
@@ -18,7 +18,7 @@ A project can hold 1,000 terms. Each term allows a 200-character single-line sou
 
 ```json
 {
-  "format": "keylo-glossary",
+  "format": "kieli-glossary",
   "version": 1,
   "sourceLanguage": "en",
   "terms": [

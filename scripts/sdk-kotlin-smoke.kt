@@ -1,4 +1,4 @@
-import io.keylo.KeyloClient
+import io.kieli.KieliClient
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -7,11 +7,11 @@ fun main(args: Array<String>) {
     val fixtures=JSONArray(File(args[0]).readText());var count=0
     for(i in 0 until fixtures.length()) {
         val fixture=fixtures.getJSONObject(i);val locale=fixture.getString("locale")
-        val directory=Files.createTempDirectory("keylo-kotlin-test").toFile()
+        val directory=Files.createTempDirectory("kieli-kotlin-test").toFile()
         try {
             val saved=JSONObject().put("endpoint","https://copy.example.com/ota/mobile/$locale?channel=production").put("etag","fixture").put("bundle",fixture.getJSONObject("bundle"))
-            File(directory,"keylo-mobile-$locale-production.json").writeText(saved.toString())
-            val client=KeyloClient("https://copy.example.com","mobile",locale,"a".repeat(32),directory)
+            File(directory,"kieli-mobile-$locale-production.json").writeText(saved.toString())
+            val client=KieliClient("https://copy.example.com","mobile",locale,"a".repeat(32),directory)
             val checks=fixture.getJSONArray("checks")
             for(j in 0 until checks.length()) {
                 val item=checks.getJSONArray(j);val arguments=item.getJSONObject(1)

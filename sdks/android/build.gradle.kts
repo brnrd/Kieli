@@ -6,7 +6,7 @@ kotlin {
     jvmToolchain(17)
 }
 android {
-    namespace = "io.keylo"
+    namespace = "io.kieli"
     compileSdk = 35
     defaultConfig { minSdk = 24 }
     compileOptions {

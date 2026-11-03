@@ -24,7 +24,7 @@ export async function hashPassword(password: string, context: string[] = []) {
       400,
       "Use a password between 15 and 128 characters. A unique passphrase works well.",
     );
-  if (strength.check(text, ["keylo", ...context]).score < 3)
+  if (strength.check(text, ["kieli", ...context]).score < 3)
     throw new HttpError(
       400,
       "Choose a less predictable password. Try several unrelated words or a password manager.",

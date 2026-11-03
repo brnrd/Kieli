@@ -4,7 +4,7 @@ import { once } from "node:events";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-const directory = await mkdtemp(join(tmpdir(), "keylo-sync-smoke-")),
+const directory = await mkdtemp(join(tmpdir(), "kieli-sync-smoke-")),
   origin = "http://127.0.0.1:4332";
 const env = {
   ...process.env,
@@ -35,8 +35,8 @@ async function json(response, status = 200) {
   return response.json();
 }
 async function cli(args, token, success = true) {
-  const processCLI = spawn(process.execPath, ["cli/keylo.mjs", ...args], {
-    env: { ...env, KEYLO_SYNC_TOKEN: token },
+  const processCLI = spawn(process.execPath, ["cli/kieli.mjs", ...args], {
+    env: { ...env, KIELI_SYNC_TOKEN: token },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let output = "",
@@ -85,7 +85,7 @@ try {
     }),
     201,
   );
-  const path = join(directory, ".keylo.json");
+  const path = join(directory, ".kieli.json");
   await writeFile(
     join(directory, "en.json"),
     JSON.stringify({ home: { title: "Welcome {name}", button: "Continue" } }),

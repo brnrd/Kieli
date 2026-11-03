@@ -12,20 +12,20 @@ import { randomUUID } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { stripVTControlCharacters } from "node:util";
 
-const help = `keylo — good words, every language
+const help = `kieli — good words, every language
 
 Commands:
   pull                  Bring translation files into your app
   push                  Preview source changes; add --apply to save
 
 Start here:
-  node cli/keylo.mjs pull --config .keylo.json --require-current
-  node cli/keylo.mjs push --config .keylo.json
+  node cli/kieli.mjs pull --config .kieli.json --require-current
+  node cli/kieli.mjs push --config .kieli.json
 
 Connection:
-  --config <file>       JSON config (default: .keylo.json when present)
-  --url <origin>        Keylo origin (or KEYLO_URL)
-  --project <id>        Project ID (or KEYLO_PROJECT)
+  --config <file>       JSON config (default: .kieli.json when present)
+  --url <origin>        Kieli origin (or KIELI_URL)
+  --project <id>        Project ID (or KIELI_PROJECT)
   --demo                Local pull without a token; loopback only
 
 Pull:
@@ -49,8 +49,8 @@ Appearance:
   --help                Show this help
 
 Credentials belong in environment variables or your CI secret store:
-  KEYLO_TOKEN           Read-only project export token for pull
-  KEYLO_SYNC_TOKEN      Source-only project credential for push
+  KIELI_TOKEN           Read-only project export token for pull
+  KIELI_SYNC_TOKEN      Source-only project credential for push
 
 No config yet? Pass --url and --project with your command.
 Push defaults to a dry-run. Existing target translations stay protected.
@@ -74,9 +74,9 @@ export function createReporter({
   const human = !!stdout.isTTY && !ci && env.TERM !== "dumb" && !plain;
   const color = human && !noColor && env.NO_COLOR === undefined;
   const secrets = [
-    env.KEYLO_TOKEN,
-    env.KEYLO_SYNC_TOKEN,
-    env.KEYLO_MCP_TOKEN,
+    env.KIELI_TOKEN,
+    env.KIELI_SYNC_TOKEN,
+    env.KIELI_MCP_TOKEN,
   ].filter(Boolean);
   const started = performance.now();
   function clean(value) {
@@ -92,11 +92,11 @@ export function createReporter({
   function banner() {
     if (!human) return;
     if ((stdout.columns ?? 80) < 54) {
-      stdout.write(`\n  ${paint("keylo", "1;32")}\n\n`);
+      stdout.write(`\n  ${paint("kieli", "1;32")}\n\n`);
       return;
     }
     stdout.write(
-      `\n   ${paint(".--.", "32")}\n  ${paint("(o  o)---+", "32")}  ${paint("keylo", "1;32")}\n   ${paint("'--'   |", "32")}   Your words, ready to travel.\n\n`,
+      `\n   ${paint(".--.", "32")}\n  ${paint("(o  o)---+", "32")}  ${paint("kieli", "1;32")}\n   ${paint("'--'   |", "32")}   Your words, ready to travel.\n\n`,
     );
   }
   return {
@@ -131,7 +131,7 @@ export function createReporter({
     },
     failure: (error) =>
       stderr.write(
-        `${human ? paint("  x keylo", "31") : "keylo"}: ${clean(error instanceof Error ? error.message : "Unable to complete this command.")}\n`,
+        `${human ? paint("  x kieli", "31") : "kieli"}: ${clean(error instanceof Error ? error.message : "Unable to complete this command.")}\n`,
       ),
   };
 }
@@ -145,13 +145,13 @@ export function parseArgs(args, defaults = {}) {
     throw new Error("Expected pull or push. Use --help for usage.");
   const options = {
     command: args[0],
-    url: process.env.KEYLO_URL ?? defaults.url ?? "",
-    project: process.env.KEYLO_PROJECT ?? defaults.project ?? "",
+    url: process.env.KIELI_URL ?? defaults.url ?? "",
+    project: process.env.KIELI_PROJECT ?? defaults.project ?? "",
     out: defaults.out ?? "./locales",
     format: defaults.format ?? "flat",
     languages: defaults.languages ?? "",
     source: "",
-    language: process.env.KEYLO_SOURCE_LANGUAGE ?? defaults.language ?? "en",
+    language: process.env.KIELI_SOURCE_LANGUAGE ?? defaults.language ?? "en",
     namespace: "general",
     config: "",
     files: defaults.files ?? [],
@@ -252,12 +252,12 @@ export function parseArgs(args, defaults = {}) {
 }
 export async function pull(
   options,
-  token = process.env.KEYLO_TOKEN,
+  token = process.env.KIELI_TOKEN,
   onProgress = (_message) => {},
 ) {
   if (!token && !options.demo)
     throw new Error(
-      "Set KEYLO_TOKEN to a project export token, or use --demo on loopback.",
+      "Set KIELI_TOKEN to a project export token, or use --demo on loopback.",
     );
   onProgress("Fetching translations…");
   const url = new URL(`/api/projects/${options.project}/export`, options.url);
@@ -387,7 +387,7 @@ export async function loadConfig(args) {
     explicit = index >= 0;
   if (explicit && (!args[index + 1] || args[index + 1].startsWith("--")))
     throw new Error("Missing value for --config");
-  const path = resolve(explicit ? args[index + 1] : ".keylo.json");
+  const path = resolve(explicit ? args[index + 1] : ".kieli.json");
   let bytes;
   try {
     if ((await stat(path)).size > 65536)
@@ -584,12 +584,12 @@ async function syncRequest(options, path, body, token) {
 }
 export async function push(
   options,
-  token = process.env.KEYLO_SYNC_TOKEN,
+  token = process.env.KIELI_SYNC_TOKEN,
   onProgress = (_message) => {},
 ) {
   if (!token)
     throw new Error(
-      "Set KEYLO_SYNC_TOKEN to a source-sync credential. Export tokens cannot push.",
+      "Set KIELI_SYNC_TOKEN to a source-sync credential. Export tokens cannot push.",
     );
   onProgress("Reading source files…");
   const files = options.source
@@ -737,7 +737,7 @@ export async function main(args = process.argv.slice(2)) {
     if (options.command === "push") {
       const result = await push(
         options,
-        process.env.KEYLO_SYNC_TOKEN,
+        process.env.KIELI_SYNC_TOKEN,
         report.step,
       );
       report.success(
@@ -746,7 +746,7 @@ export async function main(args = process.argv.slice(2)) {
       if (!options.apply)
         report.note("No live copy changed. Run with --apply to save.");
     } else {
-      const files = await pull(options, process.env.KEYLO_TOKEN, report.step);
+      const files = await pull(options, process.env.KIELI_TOKEN, report.step);
       report.success(
         `Pulled ${files.length} ${options.format === "stringsdict" ? "files" : files.length === 1 ? "language" : "languages"} from ${options.project}:`,
       );

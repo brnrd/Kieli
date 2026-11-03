@@ -1,6 +1,6 @@
-name: keylo
+name: kieli
 version: 0.1.0
-description: Self-hosted Keylo translation delivery for Flutter mobile apps.
+description: Self-hosted Kieli translation delivery for Flutter mobile apps.
 environment:
   sdk: '>=3.3.0 <4.0.0'
 dependencies:

@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem in Keylo.
+description: Report a reproducible problem in Kieli.
 title: "[Bug]: "
 body:
   - type: markdown
@@ -27,7 +27,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Keylo version or commit
+      label: Kieli version or commit
       placeholder: A release version or Git commit SHA
     validations:
       required: true

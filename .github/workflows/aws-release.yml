@@ -43,7 +43,7 @@ jobs:
       - run: pipx run cfn-lint .aws-release/install-example.yaml infra/release-publisher.yaml infra/template.yaml
       - uses: actions/upload-artifact@v4
         with:
-          name: keylo-aws-package
+          name: kieli-aws-package
           path: |
             .aws-release/*.zip
             .aws-release/release.json
@@ -80,7 +80,7 @@ jobs:
       - run: npm ci
       - uses: actions/download-artifact@v4
         with:
-          name: keylo-aws-package
+          name: kieli-aws-package
           path: .aws-release
       - uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
@@ -95,7 +95,7 @@ jobs:
           cat ".aws-release/launch-$RELEASE_REGION.md" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
-          name: keylo-launch-${{ matrix.region }}
+          name: kieli-launch-${{ matrix.region }}
           path: |
             .aws-release/install-*.yaml
             .aws-release/launch-*.md

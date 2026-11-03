@@ -10,7 +10,7 @@ import { sourceContexts, freshnessView } from "./freshness";
 import { editChange, legacyKeyId, type KeyEdit } from "./key-history";
 import { memoryChanges } from "./translation-memory";
 import { mcpAudit } from "./mcp-credentials";
-import { indexed, type KeyloService } from "./service";
+import { indexed, type KieliService } from "./service";
 
 const inputSchema = z
   .object({
@@ -26,7 +26,7 @@ const inputSchema = z
 export class KeyRenames {
   constructor(
     private store: Store,
-    private service: KeyloService,
+    private service: KieliService,
   ) {}
   async run(
     identity: Identity,

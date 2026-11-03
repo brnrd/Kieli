@@ -34,7 +34,7 @@ export function installTemplate({
   };
   return {
     AWSTemplateFormatVersion: "2010-09-09",
-    Description: `Keylo ${version}: self-hosted translations, protected first-run setup. Creates billable AWS resources. Single organization; no SaaS services.`,
+    Description: `Kieli ${version}: self-hosted translations, protected first-run setup. Creates billable AWS resources. Single organization; no SaaS services.`,
     Metadata: {
       // Optional SSO ARN is empty for local installs. W1030 cannot infer that
       // the SSO rules require it before the conditional IAM policy is emitted.
@@ -79,7 +79,7 @@ export function installTemplate({
           },
         },
       },
-      KeyloRelease: { version, region, artifact: key },
+      KieliRelease: { version, region, artifact: key },
     },
     Parameters: {
       SsoProvisioningMode: {
@@ -265,9 +265,9 @@ export function installTemplate({
         Condition: "UseLocal",
         Properties: {
           Description:
-            "Keylo first administrator setup. Unusable after initialization. Retrieve token from your AWS account; never put it in a URL.",
+            "Kieli first administrator setup. Unusable after initialization. Retrieve token from your AWS account; never put it in a URL.",
           GenerateSecretString: {
-            SecretStringTemplate: '{"purpose":"keylo-install-v1"}',
+            SecretStringTemplate: '{"purpose":"kieli-install-v1"}',
             GenerateStringKey: "token",
             PasswordLength: 48,
             ExcludePunctuation: true,
@@ -299,7 +299,7 @@ export function installTemplate({
           },
           Policies: [
             {
-              PolicyName: "KeyloDataAndLogs",
+              PolicyName: "KieliDataAndLogs",
               PolicyDocument: {
                 Version: "2012-10-17",
                 Statement: [
@@ -328,7 +328,7 @@ export function installTemplate({
               },
             },
             when("UseLocal", {
-              PolicyName: "KeyloInstallSecret",
+              PolicyName: "KieliInstallSecret",
               PolicyDocument: {
                 Version: "2012-10-17",
                 Statement: [
@@ -341,7 +341,7 @@ export function installTemplate({
               },
             }),
             when("UseSaml", {
-              PolicyName: "KeyloSamlSecret",
+              PolicyName: "KieliSamlSecret",
               PolicyDocument: {
                 Version: "2012-10-17",
                 Statement: [
@@ -354,7 +354,7 @@ export function installTemplate({
               },
             }),
             when("UseScim", {
-              PolicyName: "KeyloScimSecret",
+              PolicyName: "KieliScimSecret",
               PolicyDocument: {
                 Version: "2012-10-17",
                 Statement: [
@@ -367,7 +367,7 @@ export function installTemplate({
               },
             }),
             when("HasSsoReconciliation", {
-              PolicyName: "KeyloReconciliationSecret",
+              PolicyName: "KieliReconciliationSecret",
               PolicyDocument: {
                 Version: "2012-10-17",
                 Statement: [
@@ -388,7 +388,7 @@ export function installTemplate({
         Type: "AWS::ApiGatewayV2::Api",
         Properties: {
           ProtocolType: "HTTP",
-          Name: sub("${AWS::StackName}-keylo"),
+          Name: sub("${AWS::StackName}-kieli"),
         },
       },
       App: {
@@ -442,9 +442,9 @@ export function installTemplate({
               ),
               STORAGE_DRIVER: "dynamodb",
               DYNAMODB_TABLE: ref("Data"),
-              KEYLO_VERSION: version,
-              KEYLO_SNAPSHOT_JOB_SECRET_ARN: ref("SnapshotJobSecret"),
-              KEYLO_INSTALL_SECRET_ARN: when("UseLocal", ref("InstallSecret")),
+              KIELI_VERSION: version,
+              KIELI_SNAPSHOT_JOB_SECRET_ARN: ref("SnapshotJobSecret"),
+              KIELI_INSTALL_SECRET_ARN: when("UseLocal", ref("InstallSecret")),
               SAML_ENTRY_POINT: when("UseSaml", ref("SamlEntryPoint")),
               SAML_LOGOUT_URL: when("UseSaml", ref("SamlLogoutUrl")),
               SAML_IDP_ISSUER: when("UseSaml", ref("SamlIdpIssuer")),
@@ -467,7 +467,7 @@ export function installTemplate({
                   "{{resolve:secretsmanager:${AppSecretsArn}:SecretString:SESSION_SECRET}}",
                 ),
               ),
-              KEYLO_SECRETS_REVISION: ref("SecretsRevision"),
+              KIELI_SECRETS_REVISION: ref("SecretsRevision"),
             },
           },
         },
@@ -524,7 +524,7 @@ export function installTemplate({
     Outputs: {
       Url: {
         Description:
-          "Open Keylo. For local accounts, the first visit opens protected setup.",
+          "Open Kieli. For local accounts, the first visit opens protected setup.",
         Value: origin,
       },
       SetupUrl: {

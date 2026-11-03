@@ -21,8 +21,8 @@ export default function Appearance() {
       setMode(value === "light" || value === "dark" ? value : "auto");
     };
     sync();
-    window.addEventListener("keylo:appearance-change", sync);
-    return () => window.removeEventListener("keylo:appearance-change", sync);
+    window.addEventListener("kieli:appearance-change", sync);
+    return () => window.removeEventListener("kieli:appearance-change", sync);
   }, []);
   return (
     <div className="appearance-picker" role="group" aria-label="Appearance">
@@ -36,7 +36,7 @@ export default function Appearance() {
           title={title}
           onClick={() =>
             window.dispatchEvent(
-              new CustomEvent("keylo:appearance-select", { detail: value }),
+              new CustomEvent("kieli:appearance-select", { detail: value }),
             )
           }
         >

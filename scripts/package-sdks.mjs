@@ -14,7 +14,7 @@ async function walk(directory, relative = "") {
     );
     const name = relative + entry.name;
     if (entry.isDirectory()) await walk(path, name + "/");
-    else files["keylo-sdks/" + name] = new Uint8Array(await readFile(path));
+    else files["kieli-sdks/" + name] = new Uint8Array(await readFile(path));
   }
 }
 await walk(new URL("../sdks/", import.meta.url));
@@ -22,7 +22,7 @@ await mkdir(new URL("../public/downloads/", import.meta.url), {
   recursive: true,
 });
 await writeFile(
-  new URL("../public/downloads/keylo-sdks.zip", import.meta.url),
+  new URL("../public/downloads/kieli-sdks.zip", import.meta.url),
   zipSync(files, { level: 6 }),
 );
-console.log("Packaged Keylo client SDK sources.");
+console.log("Packaged Kieli client SDK sources.");

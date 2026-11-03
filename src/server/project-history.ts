@@ -4,7 +4,7 @@ import { canonicalJSON } from "../canonical-json";
 import { randomUUID, createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { authorize, HttpError } from "./auth";
-import { KeyloService, indexed, count, emptyStats } from "./service";
+import { KieliService, indexed, count, emptyStats } from "./service";
 import { dataPrefix } from "./project-data";
 import { Conflict, type Store, type Change } from "./store";
 import type {
@@ -98,9 +98,9 @@ function settings(project: Project) {
 }
 
 export class ProjectHistory {
-  private svc: KeyloService;
+  private svc: KieliService;
   constructor(private store: Store) {
-    this.svc = new KeyloService(store);
+    this.svc = new KieliService(store);
   }
   async list(identity: Identity, id: string) {
     authorize(identity, id, "manager");

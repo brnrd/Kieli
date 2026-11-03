@@ -2,7 +2,7 @@
 
 Set `AUTH_MODE=saml` when your organization requires SAML. Built-in accounts (`local`) and Okta OIDC (`okta`) remain separate deployment choices. Only one mode is active; SAML does not enable a password fallback or link identities by email.
 
-Keylo is a single-IdP service provider (SP). It sends a signed AuthnRequest over **HTTP-Redirect** and receives a signed SAML Response over **HTTP-POST**. Start sign-in at Keylo. Unsolicited IdP-initiated responses are rejected.
+Kieli is a single-IdP service provider (SP). It sends a signed AuthnRequest over **HTTP-Redirect** and receives a signed SAML Response over **HTTP-POST**. Start sign-in at Kieli. Unsolicited IdP-initiated responses are rejected.
 
 ## Endpoints
 
@@ -24,13 +24,13 @@ Use a dedicated RSA signing key (at least 2048 bits) and its current X.509 certi
 ```sh
 umask 077
 openssl req -x509 -newkey rsa:3072 -nodes -sha256 -days 365 \
-  -subj "/CN=Keylo SAML signing" \
-  -keyout keylo-saml.key -out keylo-saml.crt
+  -subj "/CN=Kieli SAML signing" \
+  -keyout kieli-saml.key -out kieli-saml.crt
 ```
 
-Keep the private key out of Git, logs, chat, and the browser. Give the **public certificate** to your IdP so it can verify signed requests. Keylo publishes it in signed SP metadata. The certificate must match the private key and be within its validity dates.
+Keep the private key out of Git, logs, chat, and the browser. Give the **public certificate** to your IdP so it can verify signed requests. Kieli publishes it in signed SP metadata. The certificate must match the private key and be within its validity dates.
 
-Obtain the IdP's signing certificate through a trusted administrator/metadata exchange. Keylo trusts only the configured certificate, not a certificate embedded in an incoming response. Automatic remote metadata fetching is deliberately absent. `SAML_IDP_CERT` accepts a PEM bundle of up to three certificates for planned rollover; only currently valid RSA certificates are used.
+Obtain the IdP's signing certificate through a trusted administrator/metadata exchange. Kieli trusts only the configured certificate, not a certificate embedded in an incoming response. Automatic remote metadata fetching is deliberately absent. `SAML_IDP_CERT` accepts a PEM bundle of up to three certificates for planned rollover; only currently valid RSA certificates are used.
 
 ## Okta configuration
 
@@ -39,7 +39,7 @@ Create a **SAML 2.0** app integration, then configure:
 - **Single sign-on URL:** the ACS above. Use that same exact URL for Recipient and Destination.
 - **Audience URI:** the SP entity ID above.
 - **Name ID format:** Persistent (`urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`). Map the application username to an immutable directory identifier, for example `user.getInternalProperty("id")`, rather than an email or editable profile field. Keep that mapping stable.
-- **Default RelayState:** leave blank. Keylo generates a one-time value; it is never a redirect URL.
+- **Default RelayState:** leave blank. Kieli generates a one-time value; it is never a redirect URL.
 - **Response:** Signed. **Assertion Signature:** Signed. Require both.
 - **Signature Algorithm:** RSA-SHA256. **Digest Algorithm:** SHA256.
 - **Assertion Encryption:** Unencrypted. HTTPS protects transport; encrypted assertions are not supported by this implementation.
@@ -53,11 +53,11 @@ Send these case-sensitive Attribute Statements:
 | --------- | ---------------------------------------------- |
 | `email`   | `user.email` (display/contact data only)       |
 | `name`    | `user.firstName + " " + user.lastName`         |
-| `groups`  | Group Attribute Statement filtered to `^keylo` |
+| `groups`  | Group Attribute Statement filtered to `^kieli` |
 
-Groups use the existing rules: `keylo-admin` grants workspace admin; `keylo:<project-id>:admin`, `:manager`, or `:user` grants that exact project role. The highest matching role wins. Missing groups grant no project access. Keylo accepts up to 500 group values; filter unrelated groups at the IdP.
+Groups use the existing rules: `kieli-admin` grants workspace admin; `kieli:<project-id>:admin`, `:manager`, or `:user` grants that exact project role. The highest matching role wins. Missing groups grant no project access. Kieli accepts up to 500 group values; filter unrelated groups at the IdP.
 
-Copy Okta's **Identity Provider Single Sign-On URL**, **Identity Provider Issuer**, and trusted **X.509 signing certificate** into the settings below. For an Okta dashboard entry, use a bookmark to Keylo's start-sign-in URL; a direct IdP-initiated SAML app launch has no corresponding Keylo login request and is rejected.
+Copy Okta's **Identity Provider Single Sign-On URL**, **Identity Provider Issuer**, and trusted **X.509 signing certificate** into the settings below. For an Okta dashboard entry, use a bookmark to Kieli's start-sign-in URL; a direct IdP-initiated SAML app launch has no corresponding Kieli login request and is rejected.
 
 ## Runtime configuration
 
@@ -74,7 +74,7 @@ SAML_SP_ENTITY_ID=https://copy.example.com/auth/saml/metadata
 STORAGE_DRIVER=dynamodb
 DYNAMODB_TABLE=your-table
 AWS_REGION=eu-west-1
-SAML_SECRETS_ARN=arn:aws:secretsmanager:REGION:ACCOUNT:secret:keylo-saml-...
+SAML_SECRETS_ARN=arn:aws:secretsmanager:REGION:ACCOUNT:secret:kieli-saml-...
 ```
 
 On AWS, the referenced Secrets Manager JSON must contain `SAML_IDP_CERT`, `SAML_SP_PRIVATE_KEY`, and `SAML_SP_CERT`, each a PEM string. Enter them through your trusted secret-entry workflow. The runtime reads this one secret and caches it for at most five minutes. This avoids Lambda's environment-size limit for multiple PEM certificates and keys. The SAM role grants `GetSecretValue` only for that ARN. The default AWS-managed Secrets Manager encryption key needs no additional template permission; a customer-managed KMS key requires an explicitly scoped runtime decrypt grant.
@@ -89,38 +89,38 @@ If you need the generated API Gateway hostname before configuring Okta, deploy a
 
 ## Validation and sessions
 
-The maintained `@node-saml/node-saml` library verifies both XML signatures, audience, issuer, temporal constraints, and request correlation. Keylo also enforces exact destination/recipient, a bearer confirmation, a persistent subject, explicit expiry, and SHA-256-or-stronger RSA signatures. It rejects XML DTDs/entities, malformed/duplicate form fields, multiple assertions, unsigned content, and bodies over 256 KB.
+The maintained `@node-saml/node-saml` library verifies both XML signatures, audience, issuer, temporal constraints, and request correlation. Kieli also enforces exact destination/recipient, a bearer confirmation, a persistent subject, explicit expiry, and SHA-256-or-stronger RSA signatures. It rejects XML DTDs/entities, malformed/duplicate form fields, multiple assertions, unsigned content, and bodies over 256 KB.
 
 Requests live for ten minutes; assertions must be issued within five minutes, with one minute of clock tolerance. Keep servers and the IdP time-synchronized. A browser-bound Secure/HttpOnly/SameSite=None cookie is used **only** for the SAML callback, with path `/auth/saml` and a ten-minute lifetime. RelayState and the browser secret are independent. The main session remains SameSite=Lax. The ordinary Origin check is bypassed only for POST to the active SAML ACS and logout callback. Those endpoints authenticate signed protocol messages; sign-in and app-initiated logout responses also require browser binding and correlation. The logout callback accepts signed HTTP-Redirect messages too. All other browser writes, including initiating logout, still require exact `APP_ORIGIN`.
 
 Requests, one-time browser flows, and assertion replay markers use shared database records and atomic conditional writes, including when separate Lambda instances handle the request and callback. DynamoDB TTL cleans up expired records eventually; validation checks expiry without waiting for deletion.
 
-Sessions refer to a central issuer/subject directory whose current permissions are checked on authentication. The cookie contains only a random opaque identifier. Identities use the IdP issuer plus persistent NameID, never email. Sessions last at most one hour, are capped by `SessionNotOnOrAfter` when supplied, expire after 30 minutes idle, and are revoked on Keylo sign-out. Successful reauthentication also revokes the prior browser session captured at initiation, even when its SameSite=Lax cookie is absent on the IdP POST. SAML login success/failure events omit assertions, credentials, and profile attributes.
+Sessions refer to a central issuer/subject directory whose current permissions are checked on authentication. The cookie contains only a random opaque identifier. Identities use the IdP issuer plus persistent NameID, never email. Sessions last at most one hour, are capped by `SessionNotOnOrAfter` when supplied, expire after 30 minutes idle, and are revoked on Kieli sign-out. Successful reauthentication also revokes the prior browser session captured at initiation, even when its SameSite=Lax cookie is absent on the IdP POST. SAML login success/failure events omit assertions, credentials, and profile attributes.
 
-**Lifecycle:** optional [SCIM provisioning and Okta reconciliation](sso-lifecycle.md) invalidate access after upstream changes arrive. Administrators can block/revoke access immediately in Keylo, preserving contributions. JIT-only deployments still refresh upstream groups at sign-in. Optional Single Logout ends sessions rather than deactivating an account; it complements provisioning. Assertion encryption and unsolicited IdP-initiated login remain unsupported.
+**Lifecycle:** optional [SCIM provisioning and Okta reconciliation](sso-lifecycle.md) invalidate access after upstream changes arrive. Administrators can block/revoke access immediately in Kieli, preserving contributions. JIT-only deployments still refresh upstream groups at sign-in. Optional Single Logout ends sessions rather than deactivating an account; it complements provisioning. Assertion encryption and unsolicited IdP-initiated login remain unsupported.
 
 ## Single Logout
 
-Single Logout (SLO) is optional. Configure `SAML_LOGOUT_URL` with the trusted IdP's HTTPS SLO endpoint (AWS parameter `SamlLogoutUrl`). Keylo uses its existing SP signing key/certificate and pinned IdP certificates; no extra secret or infrastructure is required. Never substitute the ordinary SSO URL or an arbitrary return URL.
+Single Logout (SLO) is optional. Configure `SAML_LOGOUT_URL` with the trusted IdP's HTTPS SLO endpoint (AWS parameter `SamlLogoutUrl`). Kieli uses its existing SP signing key/certificate and pinned IdP certificates; no extra secret or infrastructure is required. Never substitute the ordinary SSO URL or an arbitrary return URL.
 
-When enabled, signed SP metadata advertises **HTTP-POST** SingleLogoutService at `APP_ORIGIN/auth/saml/logout`. The callback also accepts signed HTTP-Redirect messages. Keylo sends outbound LogoutRequest and LogoutResponse messages through signed **HTTP-Redirect**. Configure the IdP to accept that response binding; this version does not send outbound POST logout forms or process encrypted NameIDs.
+When enabled, signed SP metadata advertises **HTTP-POST** SingleLogoutService at `APP_ORIGIN/auth/saml/logout`. The callback also accepts signed HTTP-Redirect messages. Kieli sends outbound LogoutRequest and LogoutResponse messages through signed **HTTP-Redirect**. Configure the IdP to accept that response binding; this version does not send outbound POST logout forms or process encrypted NameIDs.
 
-For Okta, enable **Allow application to initiate Single Logout**, set **Single Logout URL** to `https://copy.example.com/auth/saml/logout`, **SP Issuer** to Keylo's entity ID, and upload the same SP public signing certificate. Copy the actual Okta SLO endpoint to `SAML_LOGOUT_URL`. If your tenant supports logout notifications to participating apps, configure that same Keylo callback and enable signed app notifications. Okta feature availability and field names can vary; verify the resulting requests and bindings in staging. See [Okta Single Logout configuration](https://help.okta.com/en-us/Content/topics/apps/apps_single_logout.htm).
+For Okta, enable **Allow application to initiate Single Logout**, set **Single Logout URL** to `https://copy.example.com/auth/saml/logout`, **SP Issuer** to Kieli's entity ID, and upload the same SP public signing certificate. Copy the actual Okta SLO endpoint to `SAML_LOGOUT_URL`. If your tenant supports logout notifications to participating apps, configure that same Kieli callback and enable signed app notifications. Okta feature availability and field names can vary; verify the resulting requests and bindings in staging. See [Okta Single Logout configuration](https://help.okta.com/en-us/Content/topics/apps/apps_single_logout.htm).
 
 **Your account → Sign out** offers two actions when SLO is configured:
 
-- **Sign out of Keylo** revokes this browser session only. The sidebar sign-out also remains local-only.
-- **Sign out of Keylo and identity provider** revokes local access first, fences other Keylo sessions for the same IdP session index (all this subject's sessions if no index was supplied), then sends the signed logout request. Provider sign-out can affect other participating apps. A verified, successful response confirms completion. Failure, partial logout, expiry or missing browser binding never reports success; the login screen explains that provider logout is unconfirmed. Closing the browser before the return leaves local access revoked but cannot establish provider logout.
+- **Sign out of Kieli** revokes this browser session only. The sidebar sign-out also remains local-only.
+- **Sign out of Kieli and identity provider** revokes local access first, fences other Kieli sessions for the same IdP session index (all this subject's sessions if no index was supplied), then sends the signed logout request. Provider sign-out can affect other participating apps. A verified, successful response confirms completion. Failure, partial logout, expiry or missing browser binding never reports success; the login screen explains that provider logout is unconfirmed. Closing the browser before the return leaves local access revoked but cannot establish provider logout.
 
-Verified IdP-initiated LogoutRequests revoke matching Keylo browser sessions without requiring a browser cookie. Matching uses the exact issuer and persistent NameID; supplied NameQualifier/SPNameQualifier must match the issuer/SP entity ID. Up to 20 session indexes are revoked atomically; an absent index list revokes all sessions for that subject. Other users and unlisted session indexes remain active. Responses go only to the configured IdP endpoint. RelayState is an opaque value of at most 80 bytes, never a redirect destination.
+Verified IdP-initiated LogoutRequests revoke matching Kieli browser sessions without requiring a browser cookie. Matching uses the exact issuer and persistent NameID; supplied NameQualifier/SPNameQualifier must match the issuer/SP entity ID. Up to 20 session indexes are revoked atomically; an absent index list revokes all sessions for that subject. Other users and unlisted session indexes remain active. Responses go only to the configured IdP endpoint. RelayState is an opaque value of at most 80 bytes, never a redirect destination.
 
-Both callback bindings require RSA-SHA256 or RSA-SHA512 signatures from a pinned, current IdP certificate. Keylo rejects wrong destinations/issuers, malformed/ambiguous forms, DTDs/entities, unsigned messages, stale or future messages and replays. Messages must be issued within five minutes, with up to one minute of future clock tolerance; logout form/query and decompression limits are enforced. App-initiated responses also require the pending request ID, independent one-time RelayState and a ten-minute Secure/HttpOnly/SameSite=None cookie.
+Both callback bindings require RSA-SHA256 or RSA-SHA512 signatures from a pinned, current IdP certificate. Kieli rejects wrong destinations/issuers, malformed/ambiguous forms, DTDs/entities, unsigned messages, stale or future messages and replays. Messages must be issued within five minutes, with up to one minute of future clock tolerance; logout form/query and decompression limits are enforced. App-initiated responses also require the pending request ID, independent one-time RelayState and a ten-minute Secure/HttpOnly/SameSite=None cookie.
 
 Shared conditional transactions publish replay markers, session revocation fences and audit events. Fences last two hours, beyond the maximum one-hour browser session and ten-minute in-flight login window; validation checks their expiry independently of eventual database TTL deletion. Sign-in flows started before a matching logout cannot restore access, even if session insertion races logout. An already-running request may finish. Audit events record hashed actor IDs and outcomes through action names, without NameIDs, session indexes, protocol payloads or credentials.
 
 **Upgrade:** new SAML sign-ins retain validated logout context, including the SessionIndex, in the server-side session record; that context is not added to browser bootstrap or integration credentials. Enabling SLO invalidates older SAML sessions that lack this context; users sign in again. No translation data migration is needed. SLO configuration is optional, and removing it restores local-only logout; previously written revocation fences remain effective until expiry.
 
-**Independent credentials:** SLO does not revoke MCP, export, source-sync or mobile credentials. Use **Sign out and revoke my connections** for account-wide Keylo/MCP revocation, administrator offboarding for access removal, and the relevant project credential controls for service keys. SLO does not disable the account or replace SCIM/reconciliation.
+**Independent credentials:** SLO does not revoke MCP, export, source-sync or mobile credentials. Use **Sign out and revoke my connections** for account-wide Kieli/MCP revocation, administrator offboarding for access removal, and the relevant project credential controls for service keys. SLO does not disable the account or replace SCIM/reconciliation.
 
 ## Verification
 

@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Security policy
-    url: https://github.com/brnrd/keylo/security/policy
+    url: https://github.com/brnrd/Kieli/security/policy
     about: Read the reporting guidance before sharing a potential vulnerability. Do not post security details in public issues.

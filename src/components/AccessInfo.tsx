@@ -31,17 +31,17 @@ export default function AccessInfo({
         {[
           {
             role: "Admin",
-            group: "keylo-admin",
+            group: "kieli-admin",
             text: "Workspace admins manage all projects, users, settings, keys, translations, and export tokens.",
           },
           {
             role: "Manager",
-            group: `keylo:${project.id}:manager`,
+            group: `kieli:${project.id}:manager`,
             text: "Project settings, key creation and deletion, source copy, translations, and export tokens.",
           },
           {
             role: "User",
-            group: `keylo:${project.id}:user`,
+            group: `kieli:${project.id}:user`,
             text: "Read project copy and edit target translations.",
           },
         ].map((item) => (

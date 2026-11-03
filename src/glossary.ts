@@ -37,7 +37,7 @@ export type GlossaryPage = {
 };
 export const glossaryFileSchema = z
   .object({
-    format: z.literal("keylo-glossary"),
+    format: z.literal("kieli-glossary"),
     version: z.literal(1),
     sourceLanguage: z.string().min(2).max(35),
     terms: z.array(glossaryTermSchema).max(1000),

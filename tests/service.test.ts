@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ZodError } from "zod";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { Conflict, getStore, sqliteStore } from "../src/server/store";
 import {
   authenticate,
@@ -59,7 +59,7 @@ const key = {
 };
 async function fixture() {
   const store = await sqliteStore(":memory:");
-  const svc = new KeyloService(store);
+  const svc = new KieliService(store);
   await svc.createProject(admin, project);
   return { svc, store };
 }
@@ -71,9 +71,9 @@ test("Okta groups grant exact project roles and preserve the highest role", () =
     sub: "okta-user",
     groups: [
       "unrelated",
-      "keylo:website:manager",
-      "keylo:website:user",
-      "keylo:other:user",
+      "kieli:website:manager",
+      "kieli:website:user",
+      "kieli:other:user",
     ],
   });
   assert.equal(identity.projects.website, "manager");
@@ -81,7 +81,7 @@ test("Okta groups grant exact project roles and preserve the highest role", () =
   assert.equal(identity.admin, false);
   assert.throws(() => authorize(identity, "web", "user"), denied(403));
   assert.equal(
-    identityFromClaims({ sub: "admin", groups: ["keylo-admin"] }).admin,
+    identityFromClaims({ sub: "admin", groups: ["kieli-admin"] }).admin,
     true,
   );
 });
@@ -248,7 +248,7 @@ test("prototype keys and nested JSON collisions are rejected safely", async () =
 });
 test("export tokens are stored as hashes, project-scoped, expiring, and immediately revocable", async () => {
   const store = await getStore();
-  const svc = new KeyloService(store);
+  const svc = new KieliService(store);
   await svc.createProject(admin, project);
   const token = await svc.createToken(manager, "website", {
     name: "CI",

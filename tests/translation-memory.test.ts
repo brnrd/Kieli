@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { sqliteStore, Conflict, type Store } from "../src/server/store";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { TranslationMemory } from "../src/server/translation-memory";
 import { ProjectHistory } from "../src/server/project-history";
 import { HttpError } from "../src/server/errors";
@@ -18,7 +18,7 @@ const user: Identity = { ...admin, admin: false, projects: { web: "user" } };
 const lookup = { source: "Hello {name}", language: "fr" };
 async function fixture() {
   const store = await sqliteStore(":memory:"),
-    svc = new KeyloService(store),
+    svc = new KieliService(store),
     memory = new TranslationMemory(store);
   await svc.createProject(admin, {
     id: "web",
@@ -208,7 +208,7 @@ test("history pointers commit atomically, and a concurrent edit has exactly one 
     },
   };
   await assert.rejects(
-    new KeyloService(failing).updateKey(user, "web", "hello", {
+    new KieliService(failing).updateKey(user, "web", "hello", {
       version: f.key.version,
       translations: { fr: "Never saved {name}" },
     }),

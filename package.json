@@ -1,5 +1,5 @@
 {
-  "name": "keylo",
+  "name": "kieli",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,7 +19,7 @@
     "seed": "node --env-file-if-exists=.env --import tsx src/scripts/seed.ts",
     "users:bootstrap": "node --env-file-if-exists=.env --import tsx src/scripts/users.ts bootstrap",
     "users:recover": "node --env-file-if-exists=.env --import tsx src/scripts/users.ts recover",
-    "cli": "node cli/keylo.mjs",
+    "cli": "node cli/kieli.mjs",
     "smoke:mcp": "node scripts/smoke-mcp.mjs",
     "package:aws": "node scripts/package-aws.mjs",
     "smoke:install": "node scripts/smoke-install.mjs",

@@ -168,7 +168,7 @@ export default function Account({
         <section className="project-history-section">
           <h2>Sessions and connections</h2>
           <p>
-            Sign out of all Keylo sessions and revoke your personal Claude Code
+            Sign out of all Kieli sessions and revoke your personal Claude Code
             connections. Project export, source-sync and mobile delivery keys
             are managed separately by project managers.
           </p>
@@ -181,7 +181,7 @@ export default function Account({
         <section className="project-history-section">
           <h2>Sign out</h2>
           <p>
-            Sign out of Keylo only, or also end your identity-provider session.
+            Sign out of Kieli only, or also end your identity-provider session.
             Provider sign-out may affect other connected apps. Independent
             integration credentials remain active.
           </p>
@@ -191,14 +191,14 @@ export default function Account({
             method="POST"
           >
             <button className="button" type="submit">
-              Sign out of Keylo
+              Sign out of Kieli
             </button>
             <button
               className="button"
               type="submit"
               formAction="/auth/logout?saml=1"
             >
-              Sign out of Keylo and identity provider
+              Sign out of Kieli and identity provider
             </button>
           </form>
         </section>
@@ -213,7 +213,7 @@ export default function Account({
           <div className="dialog-body">
             <p>
               You will need to sign in again and create new MCP credentials for
-              Claude Code. This applies to all your Keylo browser sessions.
+              Claude Code. This applies to all your Kieli browser sessions.
             </p>
             {error && (
               <div className="error-box" role="alert">

@@ -27,7 +27,7 @@ import {
   type SamlSession,
 } from "./saml-session";
 
-export const samlLogoutCookie = "__Secure-keylo_saml_logout";
+export const samlLogoutCookie = "__Secure-kieli_saml_logout";
 const cookieOptions = {
   httpOnly: true,
   secure: true,

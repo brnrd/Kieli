@@ -1,19 +1,19 @@
 # Claude Code connection
 
-Keylo serves MCP over Streamable HTTP at `/mcp`. Claude Code reads project context and saves translations when you ask it to. Keylo does not call an AI provider, run translation jobs, or require an Anthropic API key. Your Claude client handles generation; copy read through the tools is shared with that client/provider.
+Kieli serves MCP over Streamable HTTP at `/mcp`. Claude Code reads project context and saves translations when you ask it to. Kieli does not call an AI provider, run translation jobs, or require an Anthropic API key. Your Claude client handles generation; copy read through the tools is shared with that client/provider.
 
 ## Connect
 
 1. Open a project's **Developers → Claude Code** section as a project manager or administrator.
 2. Choose the allowed target languages, a connection name, and expiry. Keep **Allow replacing existing target translations** off to fill missing translations only.
 3. Create the credential and copy it immediately; the full value is shown once. Store it in a trusted secret manager. This is a personal connection tied to its creator, not a service account.
-4. Merge the displayed configuration into `.mcp.json` in the consuming code repository. Set its URL to your Keylo origin plus `/mcp`. The example in [`.mcp.json.example`](../.mcp.json.example) uses an environment variable, not a literal secret.
-5. Provide `KEYLO_MCP_TOKEN` in the environment launching Claude Code, using your secret manager or a shell prompt that does not echo the input. Do not put the value in a command argument, shell history, source control, or a committed environment file.
+4. Merge the displayed configuration into `.mcp.json` in the consuming code repository. Set its URL to your Kieli origin plus `/mcp`. The example in [`.mcp.json.example`](../.mcp.json.example) uses an environment variable, not a literal secret.
+5. Provide `KIELI_MCP_TOKEN` in the environment launching Claude Code, using your secret manager or a shell prompt that does not echo the input. Do not put the value in a command argument, shell history, source control, or a committed environment file.
 6. Restart Claude Code, approve the project MCP server, and use `/mcp` to check the connection. These settings follow the [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
 
-Example request: “Translate the missing French and Dutch copy in Keylo. Read each key's context, preserve placeholders, and save the translations.” Select both languages when issuing the credential.
+Example request: “Translate the missing French and Dutch copy in Kieli. Read each key's context, preserve placeholders, and save the translations.” Select both languages when issuing the credential.
 
-For multiple projects, use separate credentials, unique server names in `mcpServers` (such as `keylo-website` and `keylo-mobile`), and separate environment variables. Each connection has access to exactly one project. The app does not configure your Claude installation or transmit copy until you connect and call tools.
+For multiple projects, use separate credentials, unique server names in `mcpServers` (such as `kieli-website` and `kieli-mobile`), and separate environment variables. Each connection has access to exactly one project. The app does not configure your Claude installation or transmit copy until you connect and call tools.
 
 ## Tools and write behavior
 

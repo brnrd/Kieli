@@ -15,7 +15,7 @@ import {
 import { checkSamlEnvelope, samlIdentity } from "./saml-xml";
 import { Sessions, sessionCookie } from "./sessions";
 
-export const samlCookie = "__Secure-keylo_saml";
+export const samlCookie = "__Secure-kieli_saml";
 const cookiePath = "/auth/saml";
 const tokenPattern = /^[a-f0-9]{64}$/;
 type Flow = {
@@ -29,7 +29,7 @@ type Flow = {
 function failure() {
   return new HttpError(
     401,
-    "SAML sign-in could not be completed. Start again from Keylo.",
+    "SAML sign-in could not be completed. Start again from Kieli.",
   );
 }
 export class SamlAuth {

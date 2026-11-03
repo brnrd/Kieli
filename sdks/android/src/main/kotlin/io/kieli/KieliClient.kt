@@ -1,4 +1,4 @@
-package io.keylo
+package io.kieli
 
 import org.json.JSONArray
 import org.json.JSONObject
@@ -14,7 +14,7 @@ import kotlin.math.abs
 import kotlin.math.floor
 
 /** One instance per locale/channel. Call refreshAsync on launch; text() is synchronous. */
-class KeyloClient(baseUrl: String, private val project: String, private val locale: String,
+class KieliClient(baseUrl: String, private val project: String, private val locale: String,
                   private val deliveryKey: String, cacheDirectory: File, channel: String = "production") {
     private val endpoint: URI
     private val cache: File
@@ -27,7 +27,7 @@ class KeyloClient(baseUrl: String, private val project: String, private val loca
         require(channel in listOf("production", "preview") && Regex("[A-Za-z0-9_.-]{20,200}").matches(deliveryKey))
         endpoint = base.resolve("/ota/$project/$locale?channel=$channel")
         require(cacheDirectory.isDirectory || cacheDirectory.mkdirs())
-        cache = File(cacheDirectory, "keylo-$project-$locale-$channel.json")
+        cache = File(cacheDirectory, "kieli-$project-$locale-$channel.json")
         try {
             val file = cache
             if (file.length() <= 3 * 1024 * 1024) {

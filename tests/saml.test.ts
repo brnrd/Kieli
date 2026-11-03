@@ -88,7 +88,7 @@ test("SP-initiated login signs the redirect request and issues a short Secure/Ht
 test("signed SAML login maps verified groups, scopes stable identities by issuer/subject, and uses revocable opaque sessions", async () => {
   const f = await start();
   const response = signedResponse(fixture, f.id, {
-    groups: ["keylo-admin", "keylo:website:user", "keylo:website:manager"],
+    groups: ["kieli-admin", "kieli:website:user", "kieli:website:manager"],
   });
   const result = await f.auth.finish(
     callbackRequest(response.encoded, f.relay),
@@ -248,7 +248,7 @@ test("hundreds of SAML assignments stay server-side and missing groups grant no 
   const f = await start();
   const groups = Array.from(
     { length: 500 },
-    (_, index) => `keylo:project-${index}:user`,
+    (_, index) => `kieli:project-${index}:user`,
   );
   const response = signedResponse(fixture, f.id, { groups });
   const result = await f.auth.finish(

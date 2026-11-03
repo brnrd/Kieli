@@ -453,7 +453,7 @@ export class Glossary {
       }),
     ]);
     return {
-      format: "keylo-glossary" as const,
+      format: "kieli-glossary" as const,
       version: 1 as const,
       sourceLanguage: project.sourceLanguage,
       terms: [...terms]

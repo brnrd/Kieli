@@ -9,7 +9,7 @@ import { Conflict, getStore, type Store } from "./store";
 
 import { samlSessionRevoked, type SamlSession } from "./saml-session";
 
-export const sessionCookie = "keylo_session";
+export const sessionCookie = "kieli_session";
 type Session = {
   version: number;
   saml?: SamlSession;

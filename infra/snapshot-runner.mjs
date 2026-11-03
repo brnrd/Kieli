@@ -7,7 +7,7 @@ exports.handler=async()=>{
   const secret=await secrets.send(new GetSecretValueCommand({SecretId:process.env.JOB_SECRET}));
   if(!secret.SecretString||secret.SecretString.length<32) throw Error('Job secret unavailable');
   async function invoke(path) {
-    const event={version:'2.0',routeKey:'POST '+path,rawPath:path,rawQueryString:'',headers:{host:'internal.keylo',authorization:'Bearer '+secret.SecretString,'content-type':'application/json'},requestContext:{accountId:'internal',apiId:'internal',domainName:'internal.keylo',domainPrefix:'internal',http:{method:'POST',path,protocol:'HTTP/1.1',sourceIp:'127.0.0.1',userAgent:'keylo-maintenance-runner'},requestId:'maintenance-job',routeKey:'POST '+path,stage:'$default',time:'',timeEpoch:Date.now()},body:'{}',isBase64Encoded:false};
+    const event={version:'2.0',routeKey:'POST '+path,rawPath:path,rawQueryString:'',headers:{host:'internal.kieli',authorization:'Bearer '+secret.SecretString,'content-type':'application/json'},requestContext:{accountId:'internal',apiId:'internal',domainName:'internal.kieli',domainPrefix:'internal',http:{method:'POST',path,protocol:'HTTP/1.1',sourceIp:'127.0.0.1',userAgent:'kieli-maintenance-runner'},requestId:'maintenance-job',routeKey:'POST '+path,stage:'$default',time:'',timeEpoch:Date.now()},body:'{}',isBase64Encoded:false};
     const response=await lambda.send(new InvokeCommand({FunctionName:process.env.APP_FUNCTION,InvocationType:'RequestResponse',Payload:Buffer.from(JSON.stringify(event))}));
     if(response.FunctionError) throw Error('Maintenance invocation failed');
     const output=JSON.parse(Buffer.from(response.Payload).toString());
@@ -29,7 +29,7 @@ export function snapshotResources() {
     SnapshotJobSecret: {
       Type: "AWS::SecretsManager::Secret",
       Properties: {
-        Description: "Keylo internal snapshot job credential",
+        Description: "Kieli internal snapshot job credential",
         GenerateSecretString: {
           PasswordLength: 48,
           ExcludePunctuation: true,
@@ -57,7 +57,7 @@ export function snapshotResources() {
         },
         Policies: [
           {
-            PolicyName: "RunKeyloSnapshots",
+            PolicyName: "RunKieliSnapshots",
             PolicyDocument: {
               Version: "2012-10-17",
               Statement: [
@@ -106,7 +106,7 @@ export function snapshotResources() {
     SnapshotSchedule: {
       Type: "AWS::Events::Rule",
       Properties: {
-        Description: "Keylo snapshot scheduler and abandoned-data cleanup",
+        Description: "Kieli snapshot scheduler and abandoned-data cleanup",
         ScheduleExpression: "rate(5 minutes)",
         State: "ENABLED",
         Targets: [

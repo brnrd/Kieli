@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-const directory = await mkdtemp(join(tmpdir(), "keylo-features-"));
+const directory = await mkdtemp(join(tmpdir(), "kieli-features-"));
 const origin = "http://127.0.0.1:4331",
   job = "a".repeat(64);
 const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
@@ -17,8 +17,8 @@ const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
     HOST: "127.0.0.1",
     PORT: "4331",
     APP_ORIGIN: origin,
-    KEYLO_SNAPSHOT_JOB_TOKEN: job,
-    KEYLO_SNAPSHOT_JOB_SECRET_ARN: "",
+    KIELI_SNAPSHOT_JOB_TOKEN: job,
+    KIELI_SNAPSHOT_JOB_SECRET_ARN: "",
   },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -61,7 +61,7 @@ try {
   await json(
     await api("/api/projects/features/keys", "POST", {
       name: "brand",
-      translations: { en: "Keylo", fr: "Keylo" },
+      translations: { en: "Kieli", fr: "Kieli" },
     }),
     201,
   );
@@ -129,7 +129,7 @@ try {
   assert.equal(delivered.status, 200);
   assert.equal(delivered.headers.get("cache-control"), "private, no-cache");
   const bundle = await delivered.json();
-  assert.equal(bundle.messages.welcome.value, "Bienvenue sur Keylo");
+  assert.equal(bundle.messages.welcome.value, "Bienvenue sur Kieli");
   assert.equal(bundle.messages.items.nodes[0].type, "plural");
   assert.ok(bundle.rules.cardinal);
   let before = await json(await api("/api/projects/features/keys/brand"));
@@ -154,7 +154,7 @@ try {
   assert.equal(
     (await json(await api("/api/projects/features/keys/brand"))).translations
       .fr,
-    "Keylo",
+    "Kieli",
   );
   delivered = await api(deliveryPath, "GET", undefined, {
     authorization: `Bearer ${credential.secret}`,
@@ -310,7 +310,7 @@ try {
     ).replayed,
     true,
   );
-  const archive = await api("/downloads/keylo-sdks.zip");
+  const archive = await api("/downloads/kieli-sdks.zip");
   assert.equal(archive.status, 200);
   assert.ok((await archive.arrayBuffer()).byteLength > 1000);
   console.log(

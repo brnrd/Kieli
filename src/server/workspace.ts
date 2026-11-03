@@ -1,7 +1,7 @@
 import type { Identity, Project, WorkspaceOverview } from "../shared";
 import { HttpError } from "./errors";
 import { config } from "./config";
-import { KeyloService } from "./service";
+import { KieliService } from "./service";
 import type { Store } from "./store";
 
 export async function workspaceOverview(
@@ -13,7 +13,7 @@ export async function workspaceOverview(
       403,
       "Only workspace admins can view workspace statistics.",
     );
-  const service = new KeyloService(store),
+  const service = new KieliService(store),
     projects = await store.list<Project>("WORKSPACE", "PROJECT#");
   const rows: WorkspaceOverview["projects"] = [];
   // Bound concurrent database work, including cold reference/plural summaries.

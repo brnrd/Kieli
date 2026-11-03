@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { sqliteStore, Conflict } from "../src/server/store";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import type { Identity } from "../src/shared";
 import { HttpError } from "../src/server/errors";
 const admin: Identity = {
@@ -14,7 +14,7 @@ const admin: Identity = {
 const user: Identity = { ...admin, admin: false, projects: { web: "user" } };
 async function fixture() {
   const store = await sqliteStore(":memory:");
-  const svc = new KeyloService(store);
+  const svc = new KieliService(store);
   await svc.createProject(admin, {
     id: "web",
     name: "Web",

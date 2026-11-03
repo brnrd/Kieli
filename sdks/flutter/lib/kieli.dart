@@ -6,16 +6,16 @@ import 'package:intl/intl.dart';
 typedef Json = Map<String, dynamic>;
 
 /// Native Flutter (iOS/Android) client. Call refresh() on launch, then rebuild UI.
-class KeyloClient {
+class KieliClient {
   final Uri _endpoint;
   final String _project, _locale, _deliveryKey;
   final File _cache;
   Json? _current;
   Future<bool>? _pending;
-  KeyloClient._(this._endpoint, this._project, this._locale, this._deliveryKey,
+  KieliClient._(this._endpoint, this._project, this._locale, this._deliveryKey,
       this._cache);
 
-  static Future<KeyloClient> open(
+  static Future<KieliClient> open(
       {required Uri baseUrl,
       required String project,
       required String locale,
@@ -33,14 +33,14 @@ class KeyloClient {
         !['production', 'preview'].contains(channel) ||
         !RegExp(r'^[A-Za-z0-9_.-]{20,200}$').hasMatch(deliveryKey)) {
       throw ArgumentError(
-          'Use an HTTPS Keylo origin, valid project, locale, channel and delivery key.');
+          'Use an HTTPS Kieli origin, valid project, locale, channel and delivery key.');
     }
     await cacheDirectory.create(recursive: true);
     final endpoint = baseUrl
         .resolve('/ota/$project/$locale')
         .replace(queryParameters: {'channel': channel});
-    final client = KeyloClient._(endpoint, project, locale, deliveryKey,
-        File('${cacheDirectory.path}/keylo-$project-$locale-$channel.json'));
+    final client = KieliClient._(endpoint, project, locale, deliveryKey,
+        File('${cacheDirectory.path}/kieli-$project-$locale-$channel.json'));
     try {
       if (await client._cache.length() <= 3 * 1024 * 1024) {
         final saved = jsonDecode(await client._cache.readAsString()) as Json;

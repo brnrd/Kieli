@@ -90,7 +90,7 @@ const result = cases.map(({ locale, messages, checks }) => ({
 await mkdir("sdks/fixtures", { recursive: true });
 const text = JSON.stringify(result, null, 2) + "\n";
 await writeFile("sdks/fixtures/messages.json", text);
-await mkdir("sdks/swift/Tests/KeyloTests/Fixtures", { recursive: true });
-await writeFile("sdks/swift/Tests/KeyloTests/Fixtures/messages.json", text);
+await mkdir("sdks/swift/Tests/KieliTests/Fixtures", { recursive: true });
+await writeFile("sdks/swift/Tests/KieliTests/Fixtures/messages.json", text);
 await mkdir("sdks/android/src/test/resources", { recursive: true });
 await writeFile("sdks/android/src/test/resources/messages.json", text);

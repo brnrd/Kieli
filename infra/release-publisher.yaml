@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Maintainer-only public Keylo release artifacts and GitHub OIDC publisher. Never stores customer data. Account-level S3 public-policy controls must permit this dedicated public artifact bucket.
+Description: Maintainer-only public Kieli release artifacts and GitHub OIDC publisher. Never stores customer data. Account-level S3 public-policy controls must permit this dedicated public artifact bucket.
 Parameters:
   GitHubRepository:
     Type: String
@@ -69,7 +69,7 @@ Resources:
                 'token.actions.githubusercontent.com:aud': sts.amazonaws.com
                 'token.actions.githubusercontent.com:sub': !Sub 'repo:${GitHubRepository}:environment:aws-release'
       Policies:
-        - PolicyName: PublishKeyloReleases
+        - PolicyName: PublishKieliReleases
           PolicyDocument:
             Version: '2012-10-17'
             Statement:

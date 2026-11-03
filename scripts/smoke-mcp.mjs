@@ -8,7 +8,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 // Real Streamable HTTP against the compiled Astro endpoint; no real project data.
-const directory = await mkdtemp(join(tmpdir(), "keylo-mcp-"));
+const directory = await mkdtemp(join(tmpdir(), "kieli-mcp-"));
 const origin = "http://127.0.0.1:4328";
 const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
   env: {
@@ -30,7 +30,7 @@ server.stdout.on("data", (data) => {
 server.stderr.on("data", (data) => {
   logs += data;
 });
-const client = new Client({ name: "keylo-http-smoke", version: "1" });
+const client = new Client({ name: "kieli-http-smoke", version: "1" });
 const api = (path, method = "GET", data, headers = {}) =>
   fetch(origin + path, {
     method,

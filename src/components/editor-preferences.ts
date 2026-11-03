@@ -8,7 +8,7 @@ export const editorDefaults: EditorPreferences = {
   language: "all",
   pageSize: 50,
 };
-export const editorPreferenceKey = "keylo.editor.preferences.v1";
+export const editorPreferenceKey = "kieli.editor.preferences.v1";
 // Whitelist enum/locale/display choices only. No search, namespace, project ID,
 // translation text or credentials may be persisted here.
 export function parseEditorPreferences(value: unknown): EditorPreferences {

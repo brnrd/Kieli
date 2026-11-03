@@ -9,13 +9,13 @@ if (
 )
   throw Error("Use HTTPS for maintenance jobs.");
 if (
-  !process.env.KEYLO_SNAPSHOT_JOB_TOKEN ||
-  process.env.KEYLO_SNAPSHOT_JOB_TOKEN.length < 32
+  !process.env.KIELI_SNAPSHOT_JOB_TOKEN ||
+  process.env.KIELI_SNAPSHOT_JOB_TOKEN.length < 32
 )
-  throw Error("Set KEYLO_SNAPSHOT_JOB_TOKEN to the server job secret.");
+  throw Error("Set KIELI_SNAPSHOT_JOB_TOKEN to the server job secret.");
 const response = await fetch(new URL(`/tasks/${task}`, origin), {
   method: "POST",
-  headers: { authorization: `Bearer ${process.env.KEYLO_SNAPSHOT_JOB_TOKEN}` },
+  headers: { authorization: `Bearer ${process.env.KIELI_SNAPSHOT_JOB_TOKEN}` },
   redirect: "error",
   signal: AbortSignal.timeout(35000),
 });

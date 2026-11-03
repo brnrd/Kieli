@@ -45,7 +45,7 @@ private final class Download:NSObject,URLSessionDataDelegate,@unchecked Sendable
 
 /// Own one client per project, language and channel. Call refresh at app launch.
 /// Delivery keys are public read credentials. Never put export or MCP tokens here.
-public actor KeyloClient {
+public actor KieliClient {
     private let endpoint:URL;private let deliveryKey:String;private let cacheURL:URL
     private let project:String;private let locale:String
     private var current:Cache?
@@ -60,7 +60,7 @@ public actor KeyloClient {
         var url=URLComponents(url:baseURL.appendingPathComponent("ota/\(project)/\(locale)"),resolvingAgainstBaseURL:false)!
         url.queryItems=[URLQueryItem(name:"channel",value:channel)];endpoint=url.url!
         try FileManager.default.createDirectory(at:cacheDirectory,withIntermediateDirectories:true)
-        cacheURL=cacheDirectory.appendingPathComponent("keylo-\(project)-\(locale)-\(channel).json")
+        cacheURL=cacheDirectory.appendingPathComponent("kieli-\(project)-\(locale)-\(channel).json")
         let size=(try? cacheURL.resourceValues(forKeys:[.fileSizeKey]).fileSize) ?? Int.max
         if size<=3*1024*1024,let data=try? Data(contentsOf:cacheURL),let cache=try? JSONDecoder().decode(Cache.self,from:data),cache.endpoint==endpoint.absoluteString,cache.bundle.schema==1,cache.bundle.project==project,cache.bundle.locale==locale {current=cache}
     }

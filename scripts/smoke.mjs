@@ -7,7 +7,7 @@ import { once } from "node:events";
 import { unzipSync, strFromU8 } from "fflate";
 
 // Exercises the compiled HTTP boundary and real CLI using a disposable database.
-const directory = await mkdtemp(join(tmpdir(), "keylo-smoke-"));
+const directory = await mkdtemp(join(tmpdir(), "kieli-smoke-"));
 const origin = "http://127.0.0.1:4325";
 const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
   env: {
@@ -203,7 +203,7 @@ try {
   const cli = spawn(
     process.execPath,
     [
-      "cli/keylo.mjs",
+      "cli/kieli.mjs",
       "pull",
       "--url",
       origin,
@@ -215,7 +215,7 @@ try {
       "nested",
     ],
     {
-      env: { ...process.env, KEYLO_TOKEN: token.secret },
+      env: { ...process.env, KIELI_TOKEN: token.secret },
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
@@ -282,7 +282,7 @@ try {
   const nativeCli = spawn(
     process.execPath,
     [
-      "cli/keylo.mjs",
+      "cli/kieli.mjs",
       "pull",
       "--url",
       origin,
@@ -296,7 +296,7 @@ try {
       "fr",
     ],
     {
-      env: { ...process.env, KEYLO_TOKEN: token.secret },
+      env: { ...process.env, KIELI_TOKEN: token.secret },
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
@@ -353,7 +353,7 @@ try {
   const strictCli = spawn(
     process.execPath,
     [
-      "cli/keylo.mjs",
+      "cli/kieli.mjs",
       "pull",
       "--url",
       origin,
@@ -366,7 +366,7 @@ try {
       join(directory, "locales"),
     ],
     {
-      env: { ...process.env, KEYLO_TOKEN: token.secret },
+      env: { ...process.env, KIELI_TOKEN: token.secret },
       stdio: ["ignore", "pipe", "pipe"],
     },
   );

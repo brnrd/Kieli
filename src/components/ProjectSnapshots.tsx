@@ -103,7 +103,7 @@ export default function ProjectSnapshots({
     );
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `${project.id}-${item.id}.keylo.json`;
+    anchor.download = `${project.id}-${item.id}.kieli.json`;
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }

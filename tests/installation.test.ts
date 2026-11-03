@@ -9,8 +9,8 @@ import { HttpError } from "../src/server/errors";
 process.env.AUTH_MODE = "local";
 process.env.NODE_ENV = "test";
 process.env.APP_ORIGIN = "http://localhost:4321";
-process.env.KEYLO_INSTALL_TOKEN = "A1".repeat(24);
-const token = process.env.KEYLO_INSTALL_TOKEN;
+process.env.KIELI_INSTALL_TOKEN = "A1".repeat(24);
+const token = process.env.KIELI_INSTALL_TOKEN;
 const input = {
   token,
   name: "Workspace owner",
@@ -27,13 +27,13 @@ async function fixture() {
 test("installation is explicitly enabled, local-only, and production requires an AWS secret", async () => {
   const f = await fixture();
   assert.equal(await f.install.available(), true);
-  delete process.env.KEYLO_INSTALL_TOKEN;
+  delete process.env.KIELI_INSTALL_TOKEN;
   assert.equal(await f.install.available(), false);
-  process.env.KEYLO_INSTALL_TOKEN = token;
+  process.env.KIELI_INSTALL_TOKEN = token;
   process.env.NODE_ENV = "production";
   process.env.APP_ORIGIN = "https://copy.example.com";
   assert.equal(await f.install.available(), false);
-  process.env.KEYLO_INSTALL_SECRET_ARN =
+  process.env.KIELI_INSTALL_SECRET_ARN =
     "arn:aws:secretsmanager:eu-west-1:123456789012:secret:fixture";
   assert.equal(await f.install.available(), true);
   process.env.AUTH_MODE = "saml";
@@ -41,7 +41,7 @@ test("installation is explicitly enabled, local-only, and production requires an
   process.env.AUTH_MODE = "local";
   process.env.NODE_ENV = "test";
   process.env.APP_ORIGIN = "http://localhost:4321";
-  delete process.env.KEYLO_INSTALL_SECRET_ARN;
+  delete process.env.KIELI_INSTALL_SECRET_ARN;
 });
 test("incorrect secrets and invalid passwords cannot claim or partially initialize a workspace", async () => {
   const f = await fixture();

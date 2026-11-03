@@ -63,7 +63,7 @@ export default function OtaDelivery({
             bundled or cached copy when offline.
           </p>
         </div>
-        <a className="button" href="/downloads/keylo-sdks.zip" download>
+        <a className="button" href="/downloads/kieli-sdks.zip" download>
           <Download size={14} />
           Client SDKs
         </a>
@@ -254,7 +254,7 @@ export default function OtaDelivery({
       </div>
       <div className="info-note">
         <p>
-          Integrate a client once, configure its Keylo URL, project ID, delivery
+          Integrate a client once, configure its Kieli URL, project ID, delivery
           key and channel, then call refresh on app launch. The SDK archive
           includes setup examples. Keep a bundled fallback for every string your
           app uses.

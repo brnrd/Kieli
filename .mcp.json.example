@@ -1,10 +1,10 @@
 {
   "mcpServers": {
-    "keylo": {
+    "kieli": {
       "type": "http",
       "url": "https://copy.example.com/mcp",
       "headers": {
-        "Authorization": "Bearer ${KEYLO_MCP_TOKEN}"
+        "Authorization": "Bearer ${KIELI_MCP_TOKEN}"
       }
     }
   }

@@ -31,6 +31,6 @@ jobs:
       - run: npm run smoke:sync
       - run: npm run smoke:mcp
       - run: npm run smoke:install
-      - run: node scripts/render-aws-template.mjs /tmp/keylo-install-template.yaml
-      - run: pipx run cfn-lint /tmp/keylo-install-template.yaml infra/release-publisher.yaml infra/template.yaml
+      - run: node scripts/render-aws-template.mjs /tmp/kieli-install-template.yaml
+      - run: pipx run cfn-lint /tmp/kieli-install-template.yaml infra/release-publisher.yaml infra/template.yaml
       - run: npm audit --omit=dev --audit-level=high

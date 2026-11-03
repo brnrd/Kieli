@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { strToU8, zipSync } from "fflate";
 import { parseBundle, parseLokalise, parseSnapshot } from "../src/lokalise";
-import { KeyloService, completedKeys } from "../src/server/service";
+import { KieliService, completedKeys } from "../src/server/service";
 import { sqliteStore } from "../src/server/store";
 import { HttpError } from "../src/server/auth";
 import type { Identity } from "../src/shared";
@@ -140,7 +140,7 @@ test("imports reject unsafe ZIP paths, invalid keys, ambiguous objects, and unsu
   );
 });
 test("imports create new projects, enforce ownership and roles, and retry batches without overwriting", async () => {
-  const svc = new KeyloService(await sqliteStore(":memory:"));
+  const svc = new KieliService(await sqliteStore(":memory:"));
   const input = { importId, project };
   const imported = await svc.startImport(admin, input);
   assert.equal((await svc.startImport(admin, input)).id, imported.id);
@@ -191,7 +191,7 @@ test("imports create new projects, enforce ownership and roles, and retry batche
   assert.equal((await svc.summary(admin, "imported")).totalKeys, 2);
 });
 test("a bad import batch is validated entirely before any keys are written", async () => {
-  const svc = new KeyloService(await sqliteStore(":memory:"));
+  const svc = new KieliService(await sqliteStore(":memory:"));
   await svc.startImport(admin, { importId, project });
   await assert.rejects(
     svc.importBatch(admin, "imported", {
@@ -203,7 +203,7 @@ test("a bad import batch is validated entirely before any keys are written", asy
   assert.deepEqual(await svc.keys(admin, "imported"), []);
 });
 test("1,100-key projects paginate on the server and search outside the first page", async () => {
-  const svc = new KeyloService(await sqliteStore(":memory:"));
+  const svc = new KieliService(await sqliteStore(":memory:"));
   await svc.startImport(admin, { importId, project });
   for (let start = 0; start < 1100; start += 20)
     await svc.importBatch(admin, "imported", {
@@ -264,7 +264,7 @@ test("1,100-key projects paginate on the server and search outside the first pag
   assert.equal((await svc.summary(admin, "imported")).totalKeys, 1099);
 });
 test("project names that match JavaScript prototype properties cannot grant implicit access", async () => {
-  const svc = new KeyloService(await sqliteStore(":memory:"));
+  const svc = new KieliService(await sqliteStore(":memory:"));
   await svc.createProject(admin, { ...project, id: "constructor" });
   await assert.rejects(
     svc.keys({ ...admin, admin: false, projects: {} }, "constructor"),

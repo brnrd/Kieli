@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { randomUUID } from "node:crypto";
-const directory = await mkdtemp(join(tmpdir(), "keylo-glossary-")),
+const directory = await mkdtemp(join(tmpdir(), "kieli-glossary-")),
   origin = "http://127.0.0.1:4334";
 const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
   env: {
@@ -152,7 +152,7 @@ try {
   const exported = await json(
     await api("/api/projects/glossary/glossary/export"),
   );
-  assert.equal(exported.format, "keylo-glossary");
+  assert.equal(exported.format, "kieli-glossary");
   assert.equal(exported.terms.length, 2);
   assert.equal(
     exported.terms.find((item) => item.source === "workspace").translations.fr,

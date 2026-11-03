@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-const directory = await mkdtemp(join(tmpdir(), "keylo-rename-"));
+const directory = await mkdtemp(join(tmpdir(), "kieli-rename-"));
 const origin = "http://127.0.0.1:4341";
 const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
   env: {

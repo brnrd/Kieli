@@ -4,7 +4,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 // The CLI is deliberately plain JavaScript so it runs without an install step.
-import { parseArgs, pull } from "../cli/keylo.mjs";
+import { parseArgs, pull } from "../cli/kieli.mjs";
 
 test("CLI validates origins, options, project IDs, and transport security", () => {
   assert.throws(
@@ -60,7 +60,7 @@ test("CLI validates origins, options, project IDs, and transport security", () =
   assert.equal("demo" in local && local.demo, true);
 });
 test("CLI sends bearer authorization and writes individual locale files atomically", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "keylo-cli-"));
+  const directory = await mkdtemp(join(tmpdir(), "kieli-cli-"));
   const originalFetch = globalThis.fetch;
   try {
     await writeFile(join(directory, "untouched.txt"), "keep");
@@ -127,7 +127,7 @@ test("CLI fails closed on HTTP errors, missing credentials, and malicious locale
     fallback: false,
   };
   try {
-    await assert.rejects(pull(options, ""), /KEYLO_TOKEN/);
+    await assert.rejects(pull(options, ""), /KIELI_TOKEN/);
     globalThis.fetch = (async () =>
       new Response("", { status: 401 })) as typeof fetch;
     await assert.rejects(pull(options, "test-token"), /HTTP 401/);
@@ -149,7 +149,7 @@ test("CLI fails closed on HTTP errors, missing credentials, and malicious locale
 });
 
 test("CLI pulls native format files and validates the whole response before writing", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "keylo-cli-native-"));
+  const directory = await mkdtemp(join(tmpdir(), "kieli-cli-native-"));
   const originalFetch = globalThis.fetch;
   const options = {
     url: "https://example.com",
@@ -197,7 +197,7 @@ test("CLI pulls native format files and validates the whole response before writ
 });
 
 test("source JSON parsing rejects executable/non-string structures, duplicates and unsafe names", async () => {
-  const { sourceKeys } = await import("../cli/keylo.mjs");
+  const { sourceKeys } = await import("../cli/kieli.mjs");
   assert.deepEqual(
     sourceKeys('{"home":{"title":"Hello"}}', "nested").map((key) => key.name),
     ["home.title"],
@@ -225,10 +225,10 @@ test("source JSON parsing rejects executable/non-string structures, duplicates a
 });
 
 test("repository config resolves explicit file mappings relative to itself and rejects stored secrets", async () => {
-  const { loadConfig, parseArgs } = await import("../cli/keylo.mjs");
-  const directory = await mkdtemp(join(tmpdir(), "keylo-config-"));
+  const { loadConfig, parseArgs } = await import("../cli/kieli.mjs");
+  const directory = await mkdtemp(join(tmpdir(), "kieli-config-"));
   try {
-    const path = join(directory, ".keylo.json");
+    const path = join(directory, ".kieli.json");
     await writeFile(
       path,
       JSON.stringify({
@@ -269,7 +269,7 @@ test("strict pull gates are explicit and cannot be mistaken for push options", (
 });
 
 test("CLI writes Apple companion files and rejects duplicate, unsafe, foreign-language and unexpected-extension payloads before writing", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "keylo-apple-cli-")),
+  const directory = await mkdtemp(join(tmpdir(), "kieli-apple-cli-")),
     originalFetch = globalThis.fetch;
   const options = {
     url: "https://example.com",

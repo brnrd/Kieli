@@ -1,6 +1,6 @@
 # Deploy on AWS
 
-For the guided **Deploy Keylo** distribution, see [AWS install button](aws-one-click.md). That path uses prebuilt versioned ZIPs, a generated HTTPS origin in one deployment, and protected web setup. It does not require a customer-side build. No public release bucket is configured yet. The instructions below remain the separate **source-built Docker/SAM path**; do not apply the ZIP template to an existing image stack without a reviewed migration.
+For the guided **Deploy Kieli** distribution, see [AWS install button](aws-one-click.md). That path uses prebuilt versioned ZIPs, a generated HTTPS origin in one deployment, and protected web setup. It does not require a customer-side build. No public release bucket is configured yet. The instructions below remain the separate **source-built Docker/SAM path**; do not apply the ZIP template to an existing image stack without a reviewed migration.
 
 The SAM stack runs the Astro Node server in Lambda using AWS Lambda Web Adapter. API Gateway provides HTTPS and throttling; DynamoDB uses on-demand billing with encryption, point-in-time recovery, and deletion protection. The runtime role can access only the app table and log group. All app assets are served by the same container.
 
@@ -32,7 +32,7 @@ sam build --template-file infra/template.yaml
 sam deploy --guided --resolve-image-repos
 ```
 
-Choose a stack name (for example `keylo`) and region, choose `AuthMode=local`, `okta`, or `saml`, and acknowledge IAM resource creation. Supply `OktaIssuer` and `OktaClientId` only for OIDC. Supply `AppSecretsArn` for either SSO mode and the SAML parameters only for SAML. If you already have a custom domain, set `AppOrigin` to it and configure API Gateway's custom domain/mapping and DNS separately. The stack does not provision Route 53 zones or certificates.
+Choose a stack name (for example `kieli`) and region, choose `AuthMode=local`, `okta`, or `saml`, and acknowledge IAM resource creation. Supply `OktaIssuer` and `OktaClientId` only for OIDC. Supply `AppSecretsArn` for either SSO mode and the SAML parameters only for SAML. If you already have a custom domain, set `AppOrigin` to it and configure API Gateway's custom domain/mapping and DNS separately. The stack does not provision Route 53 zones or certificates.
 
 For the generated API Gateway hostname, leave `AppOrigin` as `https://setup.invalid` for this first deployment. The placeholder intentionally cannot complete login. Read the stack's `Url` output, then deploy again with that exact URL as `AppOrigin`. For Okta, also register `<Url>/auth/callback`. A built-in deployment needs only these overrides (keep guided configuration for other values):
 
@@ -42,7 +42,7 @@ sam deploy --parameter-overrides \
   AppOrigin=https://YOUR-API-ID.execute-api.eu-west-1.amazonaws.com
 ```
 
-For Okta, keep `AuthMode=okta` and the issuer/client/secret parameters from the guided configuration. With built-in accounts, initialize an administrator using the deployed URL and table; with Okta, sign in as a `keylo-admin` member. Then create/import your first project. Only the health endpoint and static assets are public; project data requires authentication. Browser mutations also require a matching `APP_ORIGIN`.
+For Okta, keep `AuthMode=okta` and the issuer/client/secret parameters from the guided configuration. With built-in accounts, initialize an administrator using the deployed URL and table; with Okta, sign in as a `kieli-admin` member. Then create/import your first project. Only the health endpoint and static assets are public; project data requires authentication. Browser mutations also require a matching `APP_ORIGIN`.
 
 ## Operations
 

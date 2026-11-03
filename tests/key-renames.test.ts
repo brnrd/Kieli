@@ -6,7 +6,7 @@ import {
   type Store,
   type Change,
 } from "../src/server/store";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { KeyRenames } from "../src/server/key-renames";
 import { TranslationMemory } from "../src/server/translation-memory";
 import { HttpError } from "../src/server/errors";
@@ -22,7 +22,7 @@ const denied = (status: number) => (e: unknown) =>
   e instanceof HttpError && e.status === status;
 async function fixture(wrap: (store: Store) => Store = (store) => store) {
   const store = wrap(await sqliteStore(":memory:")),
-    svc = new KeyloService(store);
+    svc = new KieliService(store);
   await svc.createProject(admin, {
     id: "web",
     name: "Web",
@@ -195,7 +195,7 @@ test("rejects collisions, missing preview, invalid names and reference capture",
     );
   // Simulate a legacy unresolved reference without passing normal graph validation.
   const store = await sqliteStore(":memory:");
-  const wrappedSvc = new KeyloService(store);
+  const wrappedSvc = new KieliService(store);
   await wrappedSvc.createProject(admin, {
     id: "web",
     name: "Web",

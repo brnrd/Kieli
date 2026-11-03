@@ -5,7 +5,7 @@ import { sqliteStore, type Store, type Change } from "../src/server/store";
 import { ScimDirectory, handleScim } from "../src/server/scim";
 import { Sessions } from "../src/server/sessions";
 import { McpCredentials } from "../src/server/mcp-credentials";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { SsoReconciler } from "../src/server/sso-reconcile";
 import { HttpError } from "../src/server/errors";
 import type { Identity } from "../src/shared";
@@ -42,7 +42,7 @@ async function fixture() {
   const store = await sqliteStore(":memory:"),
     scim = new ScimDirectory(store),
     directory = scim.directory,
-    svc = new KeyloService(store),
+    svc = new KieliService(store),
     sessions = new Sessions(store),
     credentials = new McpCredentials(store);
   const user = await scim.saveUser({
@@ -53,7 +53,7 @@ async function fixture() {
     active: true,
   });
   const group = await scim.saveGroup({
-    displayName: "keylo:website:manager",
+    displayName: "kieli:website:manager",
     members: [{ value: user.id }],
   });
   await svc.createProject(source, {
@@ -226,7 +226,7 @@ test("MCP transaction guards block a revocation racing its final write", async (
     },
   };
   await assert.rejects(
-    new KeyloService(wrapped).setMcpTranslations(identity, "website", {
+    new KieliService(wrapped).setMcpTranslations(identity, "website", {
       updates: [
         {
           key: "welcome",
@@ -260,7 +260,7 @@ test("MCP transaction guards block a membership change racing its final write", 
     },
   };
   await assert.rejects(
-    new KeyloService(wrapped).setMcpTranslations(identity, "website", {
+    new KieliService(wrapped).setMcpTranslations(identity, "website", {
       updates: [
         {
           key: "welcome",
@@ -355,7 +355,7 @@ test("reconciliation catches missing assignments and never forwards secrets to a
   const malicious: typeof fetch = async (input) => {
     const path = new URL(String(input)).pathname;
     if (path.endsWith("/groups"))
-      return Response.json([{ profile: { name: "keylo:website:manager" } }], {
+      return Response.json([{ profile: { name: "kieli:website:manager" } }], {
         headers: { link: '<https://attacker.example/groups>; rel="next"' },
       });
     return Response.json({ id: source.subject, status: "ACTIVE" });
@@ -388,7 +388,7 @@ test("reconciliation errors retain local state and report failures for retry", a
 test("admin blocking survives profile updates and self-revocation invalidates existing access", async () => {
   const f = await fixture();
   await f.scim.saveGroup({
-    displayName: "keylo-admin",
+    displayName: "kieli-admin",
     members: [{ value: f.user.id }],
   });
   const admin = (await f.sessions.resolve(f.cookies.cookies))!;
@@ -480,7 +480,7 @@ test("reconciliation rejects disabled app assignments even when the organization
     const fetcher: typeof fetch = async (input) => {
       const path = new URL(String(input)).pathname;
       if (path.endsWith("/groups"))
-        return Response.json([{ profile: { name: "keylo:website:manager" } }]);
+        return Response.json([{ profile: { name: "kieli:website:manager" } }]);
       return Response.json({
         id: source.subject,
         status: path.includes("/apps/") ? status : "ACTIVE",
@@ -505,7 +505,7 @@ test("reconciliation rejects disabled app assignments even when the organization
 test("an administrator losing its pushed group cannot commit a competing access edit", async () => {
   const f = await fixture();
   const group = await f.scim.saveGroup({
-    displayName: "keylo-admin",
+    displayName: "kieli-admin",
     members: [{ value: f.user.id }],
   });
   const admin = (await f.sessions.resolve(f.cookies.cookies))!;

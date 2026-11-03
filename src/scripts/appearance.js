@@ -1,5 +1,5 @@
 (() => {
-  const key = "keylo:appearance";
+  const key = "kieli:appearance";
   const modes = ["auto", "light", "dark"];
   const system = window.matchMedia("(prefers-color-scheme: dark)");
   const read = () => {
@@ -19,10 +19,10 @@
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", theme === "dark" ? "#141c17" : "#fafbf9");
     window.dispatchEvent(
-      new CustomEvent("keylo:appearance-change", { detail: mode }),
+      new CustomEvent("kieli:appearance-change", { detail: mode }),
     );
   };
-  window.addEventListener("keylo:appearance-select", (event) => {
+  window.addEventListener("kieli:appearance-select", (event) => {
     if (!modes.includes(event.detail)) return;
     mode = event.detail;
     try {

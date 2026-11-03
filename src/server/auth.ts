@@ -38,7 +38,7 @@ export function identityFromClaims(claims: Record<string, unknown>): Identity {
   const projects: Record<string, Role> = Object.create(null);
   const ranks = { user: 0, manager: 1, admin: 2 };
   for (const group of groups) {
-    const match = /^keylo:([a-z0-9][a-z0-9-]{0,47}):(admin|manager|user)$/.exec(
+    const match = /^kieli:([a-z0-9][a-z0-9-]{0,47}):(admin|manager|user)$/.exec(
       group,
     );
     if (match) {
@@ -52,14 +52,14 @@ export function identityFromClaims(claims: Record<string, unknown>): Identity {
     sub: claims.sub,
     name: String(claims.name ?? claims.email ?? "Team member"),
     email: String(claims.email ?? ""),
-    admin: groups.includes("keylo-admin"),
+    admin: groups.includes("kieli-admin"),
     projects,
   };
 }
 const demoIdentity: Identity = {
   sub: "local-developer",
   name: "Alex Morgan",
-  email: "alex@keylo.local",
+  email: "alex@kieli.local",
   admin: true,
   projects: {},
   demo: true,
@@ -83,7 +83,7 @@ export async function seal(
   return new EncryptJWT(payload)
     .setProtectedHeader({ alg: "dir", enc: "A256GCM" })
     .setIssuedAt()
-    .setIssuer("keylo")
+    .setIssuer("kieli")
     .setAudience(purpose)
     .setExpirationTime(Math.floor(Date.now() / 1000) + lifetime)
     .encrypt(sessionKey());
@@ -91,7 +91,7 @@ export async function seal(
 async function unseal(value: string, purpose: string) {
   return (
     await jwtDecrypt(value, sessionKey(), {
-      issuer: "keylo",
+      issuer: "kieli",
       audience: purpose,
     })
   ).payload;
@@ -112,7 +112,7 @@ export async function authenticate(
   const authorization = request.headers.get("authorization");
   if (authorization) {
     const match =
-      /^Bearer (keylo_([a-z0-9][a-z0-9-]{0,47})\.[a-f0-9]{64})$/.exec(
+      /^Bearer (kieli_([a-z0-9][a-z0-9-]{0,47})\.[a-f0-9]{64})$/.exec(
         authorization,
       );
     if (!match) throw new HttpError(401, "Invalid export token.");
@@ -149,7 +149,7 @@ export async function beginLogin(cookies: AstroCookies) {
   const state = oidc.randomState();
   const nonce = oidc.randomNonce();
   cookies.set(
-    "keylo_login",
+    "kieli_login",
     await seal({ verifier, state, nonce }, 600, "login"),
     { ...cookieOptions(), maxAge: 600 },
   );
@@ -165,8 +165,8 @@ export async function beginLogin(cookies: AstroCookies) {
 export async function finishLogin(request: Request, cookies: AstroCookies) {
   if (config().authMode !== "okta")
     throw new HttpError(404, "Okta sign-in is not enabled.");
-  const value = cookies.get("keylo_login")?.value;
-  cookies.delete("keylo_login", { path: "/" });
+  const value = cookies.get("kieli_login")?.value;
+  cookies.delete("kieli_login", { path: "/" });
   if (!value)
     throw new HttpError(401, "Your sign-in expired. Please try again.");
   const login = await unseal(value, "login");
@@ -200,7 +200,7 @@ export async function logout(cookies: AstroCookies) {
   await (await sessions()).revoke(cookies);
 }
 export function generateToken(projectId: string) {
-  return `keylo_${projectId}.${randomBytes(32).toString("hex")}`;
+  return `kieli_${projectId}.${randomBytes(32).toString("hex")}`;
 }
 export function checkOrigin(request: Request) {
   const origin = request.headers.get("origin");
@@ -225,6 +225,6 @@ export function checkOrigin(request: Request) {
   if (origin !== expected && !local)
     throw new HttpError(
       403,
-      "Invalid request origin. Open Keylo at its configured APP_ORIGIN.",
+      "Invalid request origin. Open Kieli at its configured APP_ORIGIN.",
     );
 }

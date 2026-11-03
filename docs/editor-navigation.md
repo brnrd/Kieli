@@ -2,7 +2,7 @@
 
 Open a key name or its pencil action to work through a filtered queue in the full editor without returning to the table after every change. Clicking ordinary translation copy starts [inline editing](inline-editing.md) for quick one-locale changes; plurals and linked keys use the full editor.
 
-![Key navigation with a focused French draft, six project languages and persistent save controls](images/editor-navigation.png)
+![Key navigation with a focused French draft, English, French and Dutch and persistent save controls](images/editor-navigation.png)
 
 - **Previous key / Next key** move in key-name order across database pages.
 - **Next needing attention** finds the next missing, incomplete or outdated key within the same filters. It does not wrap to the start. A Current-only filter has no attention matches.

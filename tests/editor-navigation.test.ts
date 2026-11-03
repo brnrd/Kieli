@@ -1,7 +1,7 @@
 import { sameTranslation } from "../src/components/editor-draft";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { sqliteStore } from "../src/server/store";
 import { parseEditorPreferences } from "../src/components/editor-preferences";
 import type { Identity } from "../src/shared";
@@ -14,7 +14,7 @@ const admin: Identity = {
 };
 async function fixture(advanced = false) {
   const store = await sqliteStore(":memory:"),
-    svc = new KeyloService(store);
+    svc = new KieliService(store);
   await svc.createProject(admin, {
     id: "web",
     name: "Web",

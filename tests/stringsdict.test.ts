@@ -7,7 +7,7 @@ import { parseStringsDict, writeStringsDict } from "../src/formats/stringsdict";
 import { parseTranslationFiles } from "../src/formats/import";
 import { parseCatalog } from "../src/formats/parse";
 import { exportFiles, writeCatalog } from "../src/formats/write";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { ProjectHistory } from "../src/server/project-history";
 import { sqliteStore, Conflict } from "../src/server/store";
 import { readPlural } from "../src/messages";
@@ -51,7 +51,7 @@ const admin: Identity = {
 const user: Identity = { ...admin, admin: false, projects: { apple: "user" } };
 async function fixture() {
   const store = await sqliteStore(":memory:"),
-    service = new KeyloService(store);
+    service = new KieliService(store);
   const preview = parseTranslationFiles(
     zipSync({
       "en.lproj/Localizable.stringsdict": strToU8(english),
@@ -310,7 +310,7 @@ for (const text of [
       /Apple stringsdict/,
     ));
 
-test("native resources reject literal Keylo reference markers rather than reinterpret copy", () => {
+test("native resources reject literal Kieli reference markers rather than reinterpret copy", () => {
   assert.throws(
     () =>
       parseStringsDict(english.replace("%ld item", "[%key:greeting%] item")),

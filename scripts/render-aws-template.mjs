@@ -4,8 +4,8 @@ import { installTemplate } from "../infra/install-template.mjs";
 // Schema/lint fixture only: no launch link or deployable artifact is implied.
 const template = installTemplate({
   region: "eu-west-1",
-  bucket: "keylo-example-artifacts",
-  key: "releases/0.1.0/keylo-example.zip",
+  bucket: "kieli-example-artifacts",
+  key: "releases/0.1.0/kieli-example.zip",
   objectVersion: "EXAMPLE_NOT_PUBLISHED",
   version: "0.1.0",
 });

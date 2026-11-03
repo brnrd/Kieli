@@ -6,7 +6,7 @@ import {
   type Store,
   type Change,
 } from "../src/server/store";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { ProjectHistory } from "../src/server/project-history";
 import { Glossary } from "../src/server/glossary";
 import { KeyRenames } from "../src/server/key-renames";
@@ -41,7 +41,7 @@ const denied = (status: number) => (e: unknown) =>
   e instanceof HttpError && e.status === status;
 async function fixture(wrap: (store: Store) => Store = (store) => store) {
   const store = wrap(await sqliteStore(":memory:")),
-    svc = new KeyloService(store);
+    svc = new KieliService(store);
   const project = await svc.createProject(admin, settings);
   const key = await svc.createKey(admin, "web", {
     name: "hello",

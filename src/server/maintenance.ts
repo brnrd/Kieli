@@ -8,7 +8,7 @@ import { getStore, Conflict } from "./store";
 import { HttpError } from "./errors";
 let secretCache: { arn: string; secret: string; until: number } | undefined;
 async function secret() {
-  const arn = process.env.KEYLO_SNAPSHOT_JOB_SECRET_ARN;
+  const arn = process.env.KIELI_SNAPSHOT_JOB_SECRET_ARN;
   if (arn) {
     if (secretCache?.arn === arn && secretCache.until > Date.now())
       return secretCache.secret;
@@ -24,7 +24,7 @@ async function secret() {
     };
     return result.SecretString;
   }
-  const value = process.env.KEYLO_SNAPSHOT_JOB_TOKEN;
+  const value = process.env.KIELI_SNAPSHOT_JOB_TOKEN;
   if (!value || value.length < 32)
     throw new HttpError(503, "Automatic snapshot runner is not configured.");
   return value;
@@ -68,7 +68,7 @@ export async function runSnapshotJob(request: Request) {
     const results = await new ProjectHistory(store).maintenance({
       sub: "system:snapshots",
       name: "Automatic snapshots",
-      email: "system@keylo.invalid",
+      email: "system@kieli.invalid",
       admin: true,
       projects: {},
     });

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { canEditInline, inlineUpdate } from "../src/components/inline-edit";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { sqliteStore, Conflict } from "../src/server/store";
 import { HttpError } from "../src/server/errors";
 import type { Identity } from "../src/shared";
@@ -19,7 +19,7 @@ const user: Identity = {
   projects: { web: "user" },
 };
 async function fixture() {
-  const svc = new KeyloService(await sqliteStore(":memory:"));
+  const svc = new KieliService(await sqliteStore(":memory:"));
   const project = await svc.createProject(admin, {
     id: "web",
     name: "Web",

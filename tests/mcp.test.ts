@@ -9,7 +9,7 @@ import { HttpError, hashToken, authenticate } from "../src/server/auth";
 import { SsoDirectory } from "../src/server/sso-directory";
 import { McpCredentials } from "../src/server/mcp-credentials";
 import { handleMcp } from "../src/server/mcp";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { Conflict, sqliteStore } from "../src/server/store";
 import type { AstroCookies } from "astro";
 
@@ -42,7 +42,7 @@ const denied = (status: number) => (error: unknown) =>
   error instanceof HttpError && error.status === status;
 async function fixture(overwrite = false) {
   const store = await sqliteStore(":memory:");
-  const svc = new KeyloService(store),
+  const svc = new KieliService(store),
     credentials = new McpCredentials(store);
   await svc.createProject(admin, {
     id: "website",
@@ -97,7 +97,7 @@ test("MCP credentials are hashed, project scoped, and separate from export crede
     denied(401),
   );
   await assert.rejects(
-    f.credentials.authenticate(request("keylo_website." + "a".repeat(64))),
+    f.credentials.authenticate(request("kieli_website." + "a".repeat(64))),
     denied(401),
   );
   const listed = await f.credentials.list(admin, "website");
@@ -302,7 +302,7 @@ test("MCP boundary rejects cookies/demo fallback, bad origins/hosts, oversized a
   assert.equal(
     (
       await handleMcp(
-        request("", undefined, { cookie: "keylo_session=" + "a".repeat(64) }),
+        request("", undefined, { cookie: "kieli_session=" + "a".repeat(64) }),
         f.store,
       )
     ).status,

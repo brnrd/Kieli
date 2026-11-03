@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Glossary } from "../src/server/glossary";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { sqliteStore, Conflict } from "../src/server/store";
 import {
   matchingTermIds,
@@ -49,7 +49,7 @@ const term = {
 };
 async function fixture() {
   const store = await sqliteStore(":memory:"),
-    service = new KeyloService(store);
+    service = new KieliService(store);
   await service.createProject(admin, {
     id: "web",
     name: "Website",

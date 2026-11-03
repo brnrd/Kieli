@@ -7,7 +7,7 @@ import { hashPassword, verifyPassword } from "../src/server/passwords";
 import { authorize, HttpError } from "../src/server/auth";
 import { sqliteStore } from "../src/server/store";
 import { config } from "../src/server/config";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 
 process.env.AUTH_MODE = "local";
 process.env.APP_ORIGIN = "http://localhost:4321";
@@ -219,7 +219,7 @@ test("server-side sessions use short opaque cookies and logout prevents cookie r
 test("large membership sets stay off the cookie and role changes invalidate existing sessions", async () => {
   const f = await fixture();
   const roles: Record<string, "user"> = {};
-  const svc = new KeyloService(f.store);
+  const svc = new KieliService(f.store);
   for (let i = 0; i < 120; i++) {
     const id = `project-${i}`;
     roles[id] = "user";

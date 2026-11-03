@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { ProjectHistory } from "../src/server/project-history";
 import { sqliteStore } from "../src/server/store";
 import { workspaceOverview } from "../src/server/workspace";
@@ -26,7 +26,7 @@ const project = {
 const status = (code: number) => (error: any) => error.status === code;
 async function fixture() {
   const store = await sqliteStore(":memory:");
-  const svc = new KeyloService(store);
+  const svc = new KieliService(store);
   await svc.createProject(admin, project);
   return { store, svc };
 }

@@ -11,7 +11,7 @@ import { HttpError } from "./errors";
 import { readJSON } from "./http";
 import { McpCredentials } from "./mcp-credentials";
 import { listKeysSchema, translationBatchSchema } from "./mcp-schemas";
-import { KeyloService } from "./service";
+import { KieliService } from "./service";
 import { Conflict, InvalidCursor, getStore, type Store } from "./store";
 
 const instructions =
@@ -29,9 +29,9 @@ const readAnnotations = {
 export function translationServer(store: Store, identity: Identity) {
   const grant = identity.mcp;
   if (!grant) throw new HttpError(403, "An MCP credential is required.");
-  const svc = new KeyloService(store);
+  const svc = new KieliService(store);
   const server = new McpServer(
-    { name: "keylo", version: "0.1.0" },
+    { name: "kieli", version: "0.1.0" },
     { instructions },
   );
   const run = async (work: () => Promise<unknown>) => {
@@ -278,7 +278,7 @@ export async function handleMcp(
       {
         status: error instanceof HttpError ? error.status : 500,
         ...(error instanceof HttpError && error.status === 401
-          ? { headers: { "WWW-Authenticate": 'Bearer realm="keylo-mcp"' } }
+          ? { headers: { "WWW-Authenticate": 'Bearer realm="kieli-mcp"' } }
           : {}),
       },
     );

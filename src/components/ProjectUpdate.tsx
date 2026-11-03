@@ -232,7 +232,7 @@ export default function ProjectUpdate({
           </fieldset>
         </details>
         <p className="muted">
-          Files are parsed locally. Preview sends parsed values to Keylo;
+          Files are parsed locally. Preview sends parsed values to Kieli;
           project copy changes only when you apply. Each batch commits
           atomically. Keep this dialog open to retry an interrupted apply.
         </p>

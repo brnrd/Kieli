@@ -73,7 +73,7 @@ export default function SsoUserManagement({
           <Heading>People &amp; access</Heading>
           <p>
             SSO groups manage project roles. Block access or revoke a person's
-            Keylo sessions and personal connections here.
+            Kieli sessions and personal connections here.
           </p>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default function SsoUserManagement({
               <span>
                 {user.email || user.userName} ·{" "}
                 {user.blocked
-                  ? "Blocked in Keylo"
+                  ? "Blocked in Kieli"
                   : user.active
                     ? "Active"
                     : "Deactivated"}{" "}
@@ -204,9 +204,9 @@ export default function SsoUserManagement({
           <div className="dialog-body">
             <p>
               {confirm.action === "revoke"
-                ? "Existing Keylo sessions and personal MCP credentials will stop working. The person can sign in again if their account and SSO assignment remain active."
+                ? "Existing Kieli sessions and personal MCP credentials will stop working. The person can sign in again if their account and SSO assignment remain active."
                 : confirm.action === "block"
-                  ? "This blocks Keylo access, including future SSO sign-ins, and invalidates existing sessions and personal MCP credentials. Translation contributions are retained."
+                  ? "This blocks Kieli access, including future SSO sign-ins, and invalidates existing sessions and personal MCP credentials. Translation contributions are retained."
                   : "Confirm that this person should have access again. Current SSO provisioning and group assignments still determine their project permissions. Existing revoked credentials stay invalid."}
             </p>
             {error && (

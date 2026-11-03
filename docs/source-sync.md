@@ -8,17 +8,17 @@ Source-only credentials deliberately authorize the repository to update source c
 
 ## Repository configuration
 
-Copy [`.keylo.json.example`](../.keylo.json.example) to `.keylo.json` in the consuming repository. File mappings are explicit paths, not globs, and resolve relative to that configuration file. CLI overrides take precedence; `KEYLO_URL`, `KEYLO_PROJECT` and `KEYLO_SOURCE_LANGUAGE` can override config defaults. Credentials are environment variables, never configuration fields.
+Copy [`.kieli.json.example`](../.kieli.json.example) to `.kieli.json` in the consuming repository. File mappings are explicit paths, not globs, and resolve relative to that configuration file. CLI overrides take precedence; `KIELI_URL`, `KIELI_PROJECT` and `KIELI_SOURCE_LANGUAGE` can override config defaults. Credentials are environment variables, never configuration fields.
 
 ```sh
-# Preview only; this is the default. Uses KEYLO_SYNC_TOKEN from the environment.
-node cli/keylo.mjs push --config .keylo.json
+# Preview only; this is the default. Uses KIELI_SYNC_TOKEN from the environment.
+node cli/kieli.mjs push --config .kieli.json
 
 # Apply the version-checked source changes.
-node cli/keylo.mjs push --config .keylo.json --apply
+node cli/kieli.mjs push --config .kieli.json --apply
 
 # Or push one source file without configuration.
-node cli/keylo.mjs push --url https://copy.example.com --project website \
+node cli/kieli.mjs push --url https://copy.example.com --project website \
   --source ./locales/en.json --language en --format nested --apply
 ```
 
@@ -30,18 +30,18 @@ Push never removes absent keys or clears strings with blank values. Repeating un
 
 ## CI integration
 
-Keep the source-sync secret in the CI secret store as `KEYLO_SYNC_TOKEN`. Run write jobs only for trusted branches/workflows; untrusted pull requests must not receive write secrets. Export/pull uses a separate read-only `KEYLO_TOKEN`.
+Keep the source-sync secret in the CI secret store as `KIELI_SYNC_TOKEN`. Run write jobs only for trusted branches/workflows; untrusted pull requests must not receive write secrets. Export/pull uses a separate read-only `KIELI_TOKEN`.
 
 ```yaml
 - name: Push source copy
   env:
-    KEYLO_SYNC_TOKEN: ${{ secrets.KEYLO_SYNC_TOKEN }}
-  run: node cli/keylo.mjs push --config .keylo.json --apply
+    KIELI_SYNC_TOKEN: ${{ secrets.KIELI_SYNC_TOKEN }}
+  run: node cli/kieli.mjs push --config .kieli.json --apply
 
 - name: Pull translations
   env:
-    KEYLO_TOKEN: ${{ secrets.KEYLO_TOKEN }}
-  run: node cli/keylo.mjs pull --config .keylo.json
+    KIELI_TOKEN: ${{ secrets.KIELI_TOKEN }}
+  run: node cli/kieli.mjs pull --config .kieli.json
 ```
 
 Revoking a source-sync credential blocks subsequent requests and an in-flight write whose commit races the revocation. Browser logout, password changes and personal session revocation do not revoke project service credentials. Rotate them separately when a CI integration or repository access changes. They are independent of authentication mode; outstanding update previews are additionally bound to the mode in which they were created.
@@ -50,15 +50,15 @@ Requests require the dedicated bearer credential, matching configured public Hos
 
 Run `npm run smoke:sync` after building to verify config paths, dry-run/apply, target protection, credential separation, repeat behavior and revocation using disposable local fixtures.
 
-For a build that must contain only current, complete translations, use `node cli/keylo.mjs pull --config .keylo.json --require-current`. This also checks argument contracts in existing copy and fails before writing locale files. It can be set as `pull.requireCurrent: true` in repository configuration. Ordinary pulls retain their existing fallback/export behavior.
+For a build that must contain only current, complete translations, use `node cli/kieli.mjs pull --config .kieli.json --require-current`. This also checks argument contracts in existing copy and fails before writing locale files. It can be set as `pull.requireCurrent: true` in repository configuration. Ordinary pulls retain their existing fallback/export behavior.
 
 ## A friendlier terminal
 
-Interactive terminals show **Kip**, Keylo's little key character, with a restrained green header, short progress stages, file paths and a timed completion summary. The character is original ASCII artwork and needs no fonts, downloaded assets or extra packages.
+Interactive terminals show **Kip**, Kieli's little key character, with a restrained green header, short progress stages, file paths and a timed completion summary. The character is original ASCII artwork and needs no fonts, downloaded assets or extra packages.
 
 ```text
    .--.
-  (o  o)---+  keylo
+  (o  o)---+  kieli
    '--'   |   Your words, ready to travel.
 
   website  pull
@@ -73,8 +73,8 @@ Interactive terminals show **Kip**, Keylo's little key character, with a restrai
   Done in 0.4s.
 ```
 
-Use `node cli/keylo.mjs --help` for grouped commands and examples. Help works even if the repository configuration is malformed. This presentation does not add an interactive setup wizard, prompts, telemetry or implicit writes; source push still defaults to dry-run.
+Use `node cli/kieli.mjs --help` for grouped commands and examples. Help works even if the repository configuration is malformed. This presentation does not add an interactive setup wizard, prompts, telemetry or implicit writes; source push still defaults to dry-run.
 
 Piped output, CI and `TERM=dumb` automatically use plain output, retaining the existing pull/push result lines and nonzero failure exit codes. Add `--plain` to opt out in a terminal. `--no-color` or the presence of `NO_COLOR` disables ANSI color while keeping the interactive character and stage lines; narrow terminals use a compact header. No animation or cursor-control sequences are emitted.
 
-Displayed dynamic paths and errors have terminal control characters removed, and configured Keylo credential values are redacted. Set credentials through environment variables as described above, never in command-line arguments or configuration files. The CLI remains a single file using Node built-ins only.
+Displayed dynamic paths and errors have terminal control characters removed, and configured Kieli credential values are redacted. Set credentials through environment variables as described above, never in command-line arguments or configuration files. The CLI remains a single file using Node built-ins only.

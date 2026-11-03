@@ -200,9 +200,9 @@ export class SsoDirectory {
       if (old?.blocked || old?.active === false)
         throw new HttpError(401, "SSO account is disabled.");
       const groups = [
-        ...(identity.admin ? ["keylo-admin"] : []),
+        ...(identity.admin ? ["kieli-admin"] : []),
         ...Object.entries(identity.projects).map(
-          ([project, role]) => `keylo:${project}:${role}`,
+          ([project, role]) => `kieli:${project}:${role}`,
         ),
       ].sort();
       if (groups.length > 501)

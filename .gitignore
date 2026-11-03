@@ -19,4 +19,4 @@ sdks/**/build/
 sdks/**/pubspec.lock
 
 # Generated from SDK sources before each build
-/public/downloads/keylo-sdks.zip
+/public/downloads/kieli-sdks.zip

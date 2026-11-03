@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import { once } from "node:events";
 import { packageAws } from "./package-aws.mjs";
 
-const directory = await mkdtemp(join(tmpdir(), "keylo-install-"));
+const directory = await mkdtemp(join(tmpdir(), "kieli-install-"));
 const origin = "http://127.0.0.1:4329";
 const token = "Fixture1".repeat(6);
 const password = "Voyager-kestrel-silver-83! drawer";
@@ -30,11 +30,11 @@ const server = spawn(join(runtime, "run.sh"), [], {
   cwd: runtime,
   env: {
     ...process.env,
-    KEYLO_INSTALL_SECRET_ARN: "",
+    KIELI_INSTALL_SECRET_ARN: "",
     LAMBDA_TASK_ROOT: runtime,
     NODE_ENV: "development",
     AUTH_MODE: "local",
-    KEYLO_INSTALL_TOKEN: token,
+    KIELI_INSTALL_TOKEN: token,
     STORAGE_DRIVER: "sqlite",
     SQLITE_PATH: join(directory, "data.sqlite"),
     HOST: "127.0.0.1",

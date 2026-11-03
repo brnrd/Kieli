@@ -131,7 +131,7 @@ export class McpCredentials {
       ownerPrincipalId = identity.principalId;
       ownerAuthVersion = identity.accessVersion;
     }
-    const secret = `keylo_mcp_${projectId}.${randomBytes(32).toString("hex")}`;
+    const secret = `kieli_mcp_${projectId}.${randomBytes(32).toString("hex")}`;
     const id = hashToken(secret);
     const credential: Credential = {
       version: 1,
@@ -252,7 +252,7 @@ export class McpCredentials {
   }
   async authenticate(request: Request): Promise<Identity> {
     const match =
-      /^Bearer (keylo_mcp_([a-z0-9][a-z0-9-]{0,47})\.[a-f0-9]{64})$/.exec(
+      /^Bearer (kieli_mcp_([a-z0-9][a-z0-9-]{0,47})\.[a-f0-9]{64})$/.exec(
         request.headers.get("authorization") ?? "",
       );
     if (!match) throw invalid();

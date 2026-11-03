@@ -1,13 +1,13 @@
-# Collaborating on Keylo
+# Collaborating on Kieli
 
-Keylo is an MIT-licensed, self-hosted home for product copy and translations. Contributions should make its everyday localization workflow useful while keeping the interface purposeful, the backend small, and deployment straightforward.
+Kieli is an MIT-licensed, self-hosted home for product copy and translations. Contributions should make its everyday localization workflow useful while keeping the interface purposeful, the backend small, and deployment straightforward.
 
 ## Product scope
 
 - One organizational workspace with separate projects, source and target languages, and server-enforced roles.
 - Built-in accounts, Okta OIDC or SAML; SQLite locally and DynamoDB on AWS.
 - Manual translation, localization files, CLI/CI integration, and explicit publication of mobile translation releases.
-- An optional MCP connection lets a user's Claude client translate when requested. Keylo does not run a built-in automatic translation service.
+- An optional MCP connection lets a user's Claude client translate when requested. Kieli does not run a built-in automatic translation service.
 
 Screenshots, translation-review/approval workflows and a multi-tenant SaaS product are outside the current scope. Discuss changes to these boundaries before building them. Security audit events and translation freshness are part of the product; they do not introduce a review workflow.
 

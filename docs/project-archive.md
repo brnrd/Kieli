@@ -22,7 +22,7 @@ Stale browser pages may still show edit controls until refreshed, but the server
 
 No eager migration is needed: projects without `archivedAt` are active. Archiving adds optional `archivedAt` and `archivedBy` fields to the project record and increments its version; restoring removes those fields. Keys, native metadata, freshness, counters, history, glossary and project settings are not rewritten. Archive status is workspace lifecycle metadata, not translation-snapshot content; a snapshot restore cannot activate an archived project. Restore the project explicitly first.
 
-Restore through the settings action or API rather than editing the database. Full database backups preserve archive metadata and audit history. Older Keylo versions do not enforce archived read-only behavior; restore or account for archived projects before rolling back to an older release.
+Restore through the settings action or API rather than editing the database. Full database backups preserve archive metadata and audit history. Older Kieli versions do not enforce archived read-only behavior; restore or account for archived projects before rolling back to an older release.
 
 ## API
 

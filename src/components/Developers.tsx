@@ -42,7 +42,7 @@ export default function Developers({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [revoke, setRevoke] = useState<TokenInfo | null>(null);
-  const [origin, setOrigin] = useState("https://keylo.example.com");
+  const [origin, setOrigin] = useState("https://kieli.example.com");
   const [format, setFormat] = useState("flat");
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -51,7 +51,7 @@ export default function Developers({
         .then(setTokens)
         .catch((e) => setError(e.message));
   }, [project.id, manager]);
-  const command = `node cli/keylo.mjs pull \\\n  --url ${origin} \\\n  --project ${project.id} \\\n  --format ${format} \\\n  --out ./locales`;
+  const command = `node cli/kieli.mjs pull \\\n  --url ${origin} \\\n  --project ${project.id} \\\n  --format ${format} \\\n  --out ./locales`;
   async function copy(text: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -125,7 +125,7 @@ export default function Developers({
           </pre>
           <div className="code-card-footer">
             <span className="status-dot" />
-            Set <code>KEYLO_TOKEN</code> in your shell or CI secrets.
+            Set <code>KIELI_TOKEN</code> in your shell or CI secrets.
           </div>
         </div>
         <div className="developer-detail">
@@ -143,7 +143,7 @@ export default function Developers({
             className="text-button"
             onClick={() =>
               void copy(
-                `curl --fail --header "Authorization: Bearer $KEYLO_TOKEN" "${origin}/api/projects/${project.id}/export?format=${format}&download=zip" --output translations.zip`,
+                `curl --fail --header "Authorization: Bearer $KIELI_TOKEN" "${origin}/api/projects/${project.id}/export?format=${format}&download=zip" --output translations.zip`,
               )
             }
           >

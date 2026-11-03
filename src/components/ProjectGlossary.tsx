@@ -346,7 +346,7 @@ export default function ProjectGlossary({
         error instanceof SyntaxError
           ? "This file is not valid JSON."
           : error instanceof Error && error.name === "ZodError"
-            ? "This is not a supported Keylo glossary file. Export a glossary to see the expected format."
+            ? "This is not a supported Kieli glossary file. Export a glossary to see the expected format."
             : (error as Error).message,
       );
     }

@@ -421,5 +421,5 @@ export function getStore() {
   return (singleton ??=
     config().driver === "dynamodb"
       ? dynamoStore()
-      : sqliteStore(process.env.SQLITE_PATH ?? ".data/keylo.sqlite"));
+      : sqliteStore(process.env.SQLITE_PATH ?? ".data/kieli.sqlite"));
 }

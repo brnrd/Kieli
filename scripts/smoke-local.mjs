@@ -7,7 +7,7 @@ import { join } from "node:path";
 
 // Exercises local accounts through the compiled HTTP app and the operator CLI.
 // All credentials and the database are disposable fixtures.
-const directory = await mkdtemp(join(tmpdir(), "keylo-local-smoke-"));
+const directory = await mkdtemp(join(tmpdir(), "kieli-local-smoke-"));
 const origin = "http://127.0.0.1:4326";
 const env = {
   ...process.env,
@@ -59,7 +59,7 @@ async function bootstrap() {
 function cookie(response) {
   const match = response.headers
     .getSetCookie()
-    .find((value) => /^keylo_session=[a-f0-9]{64};/.test(value));
+    .find((value) => /^kieli_session=[a-f0-9]{64};/.test(value));
   assert.ok(match, "A successful sign-in must issue an opaque session");
   assert.match(match, /HttpOnly/i);
   assert.match(match, /SameSite=Lax/i);

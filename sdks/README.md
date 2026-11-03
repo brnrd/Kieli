@@ -1,6 +1,6 @@
-# Keylo mobile delivery
+# Kieli mobile delivery
 
-These small source SDKs fetch **published translation releases** from a self-hosted Keylo installation. Copy updates require an initial app integration; they do not update the application's code or add screens. Managers publish explicitly under **Developers → Live app delivery**; no review workflow is involved.
+These small source SDKs fetch **published translation releases** from a self-hosted Kieli installation. Copy updates require an initial app integration; they do not update the application's code or add screens. Managers publish explicitly under **Developers → Live app delivery**; no review workflow is involved.
 
 Create a delivery key for each app. These keys are public, extractable read credentials: bundle only non-confidential copy. They cannot read drafts, export data, call MCP or edit a project. Revocation stops future downloads, not access to copy already cached on a device.
 
@@ -10,12 +10,12 @@ All clients validate the project/language/schema, cap responses at 2 MiB, reject
 
 ## iOS / Swift
 
-Add `swift/` as a local Swift package, then add the Keylo library to your app (iOS 15+). Keep the actor in your application model:
+Add `swift/` as a local Swift package, then add the Kieli library to your app (iOS 15+). Keep the actor in your application model:
 
 ```swift
-import Keylo
+import Kieli
 let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-let copy = try KeyloClient(baseURL: URL(string: "https://copy.example.com")!,
+let copy = try KieliClient(baseURL: URL(string: "https://copy.example.com")!,
     project: "mobile", locale: "en", deliveryKey: "YOUR_DELIVERY_KEY", cacheDirectory: directory)
 let title = await copy.text("home.title", fallback: "Welcome")
 Task {
@@ -28,11 +28,11 @@ let items = await copy.text("cart.items", fallback: "3 items", arguments: ["coun
 
 ## Android / Kotlin
 
-Include `android/` as a library module in your Gradle project. The standalone module uses Gradle 8.11.1, AGP 8.9.2, Kotlin 2.2.21, a JDK 17 toolchain with matching Java/Kotlin JVM 17 targets, compile SDK 35 and min SDK 24. Adjust its plugin versions to your application's compatible versions when integrating; keep the Java and Kotlin compilation targets aligned. Import `io.keylo.KeyloClient`:
+Include `android/` as a library module in your Gradle project. The standalone module uses Gradle 8.11.1, AGP 8.9.2, Kotlin 2.2.21, a JDK 17 toolchain with matching Java/Kotlin JVM 17 targets, compile SDK 35 and min SDK 24. Adjust its plugin versions to your application's compatible versions when integrating; keep the Java and Kotlin compilation targets aligned. Import `io.kieli.KieliClient`:
 
 ```kotlin
-val copy = KeyloClient("https://copy.example.com", "mobile", "en",
-    "YOUR_DELIVERY_KEY", File(context.cacheDir, "keylo"))
+val copy = KieliClient("https://copy.example.com", "mobile", "en",
+    "YOUR_DELIVERY_KEY", File(context.cacheDir, "kieli"))
 val executor = Executors.newSingleThreadExecutor()
 copy.refreshAsync(executor) { changed ->
     if (changed) { /* schedule your observable UI update */ }
@@ -49,8 +49,8 @@ val items = copy.text("cart.items", "3 items", mapOf("count" to "3"))
 Add a path dependency pointing to `flutter/` in your app's `pubspec.yaml`. This is a native `dart:io` client, not a Flutter Web client. Choose a private cache directory using your app's existing storage setup (for example `path_provider`).
 
 ```dart
-import 'package:keylo/keylo.dart';
-final copy = await KeyloClient.open(
+import 'package:kieli/kieli.dart';
+final copy = await KieliClient.open(
   baseUrl: Uri.parse('https://copy.example.com'), project: 'mobile', locale: 'en',
   deliveryKey: 'YOUR_DELIVERY_KEY', cacheDirectory: cacheDirectory);
 final title = copy.text('home.title', fallback: 'Welcome');

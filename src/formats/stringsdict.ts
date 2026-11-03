@@ -46,7 +46,7 @@ const literal = (value: string) =>
 function nativeForm(value: string, type: ApplePluralType) {
   if (/\[%key(?:_id)?:/.test(value))
     fail(
-      "literal Keylo reference markers are unsupported in native resources.",
+      "literal Kieli reference markers are unsupported in native resources.",
     );
   let output = "",
     buffer = "",
@@ -190,7 +190,7 @@ export function writeStringsDict(
         .join("");
       if (/\[%key(?:_id)?:/.test(copy))
         fail(
-          `${key}: literal Keylo reference markers are unsupported in native resources.`,
+          `${key}: literal Kieli reference markers are unsupported in native resources.`,
         );
       return `      <key>${form}</key><string>${xml(copy)}</string>`;
     });

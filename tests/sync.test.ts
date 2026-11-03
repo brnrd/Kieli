@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { sqliteStore, type Store } from "../src/server/store";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { SyncCredentials } from "../src/server/sync-credentials";
 import { handleSync } from "../src/server/sync";
 import type { Identity } from "../src/shared";
@@ -35,7 +35,7 @@ const request = (
   });
 async function fixture() {
   const store = await sqliteStore(":memory:"),
-    svc = new KeyloService(store),
+    svc = new KieliService(store),
     credentials = new SyncCredentials(store);
   await svc.createProject(admin, {
     id: "web",
@@ -156,7 +156,7 @@ test("revocation racing a source-sync commit prevents all copy and history chang
     },
   };
   await assert.rejects(
-    new KeyloService(wrapped).applyUpdate(identity, "web", plan.id),
+    new KieliService(wrapped).applyUpdate(identity, "web", plan.id),
     (error) => error instanceof HttpError && error.status === 401,
   );
   assert.equal(

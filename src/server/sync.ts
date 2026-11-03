@@ -3,7 +3,7 @@ import { config } from "./config";
 import { HttpError } from "./errors";
 import { Conflict, getStore, type Store } from "./store";
 import { SyncCredentials } from "./sync-credentials";
-import { KeyloService } from "./service";
+import { KieliService } from "./service";
 import { readJSON } from "./http";
 export async function handleSync(request: Request, store?: Store) {
   try {
@@ -36,7 +36,7 @@ export async function handleSync(request: Request, store?: Store) {
       project = parts[1];
     if (parts[0] !== "sync" || project !== identity.sync.projectId)
       throw new HttpError(403, "Credential is scoped to another project.");
-    const svc = new KeyloService(storage);
+    const svc = new KieliService(storage);
     if (parts.length === 3 && parts[2] === "preview")
       return Response.json(
         await svc.previewUpdate(identity, project, {
@@ -70,7 +70,7 @@ export async function handleSync(request: Request, store?: Store) {
                 : 500,
         headers: {
           ...(error instanceof HttpError && error.status === 401
-            ? { "WWW-Authenticate": 'Bearer realm="keylo-sync"' }
+            ? { "WWW-Authenticate": 'Bearer realm="kieli-sync"' }
             : {}),
           ...(error instanceof HttpError && error.status === 429
             ? { "Retry-After": "60" }

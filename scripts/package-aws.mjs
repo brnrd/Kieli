@@ -144,8 +144,8 @@ export async function packageAws({
   const archive = zipSync(archiveFiles, { level: 6 });
   const hash = sha256(archive);
   const filename = localTest
-    ? "keylo-local-test.zip"
-    : `keylo-${pkg.version}-${hash.slice(0, 16)}.zip`;
+    ? "kieli-local-test.zip"
+    : `kieli-${pkg.version}-${hash.slice(0, 16)}.zip`;
   await writeFile(join(destination, filename), archive, { flag: "wx" });
   const manifest = {
     version: pkg.version,

@@ -25,17 +25,17 @@ export function installationEnabled() {
   return (
     config().authMode === "local" &&
     !!(
-      process.env.KEYLO_INSTALL_SECRET_ARN ||
-      (!config().production && process.env.KEYLO_INSTALL_TOKEN)
+      process.env.KIELI_INSTALL_SECRET_ARN ||
+      (!config().production && process.env.KIELI_INSTALL_TOKEN)
     )
   );
 }
 async function readSetupToken() {
-  const arn = process.env.KEYLO_INSTALL_SECRET_ARN;
+  const arn = process.env.KIELI_INSTALL_SECRET_ARN;
   if (!arn) {
     if (config().production)
       throw new Error("An AWS install secret is required.");
-    return process.env.KEYLO_INSTALL_TOKEN ?? "";
+    return process.env.KIELI_INSTALL_TOKEN ?? "";
   }
   // Read the current secret on each attempt; rotation must not leave a cached credential valid.
   const { SecretsManagerClient, GetSecretValueCommand } =
@@ -45,7 +45,7 @@ async function readSetupToken() {
   );
   const secret = z
     .object({
-      purpose: z.literal("keylo-install-v1"),
+      purpose: z.literal("kieli-install-v1"),
       token: z.string().regex(/^[A-Za-z0-9]{48}$/),
     })
     .parse(JSON.parse(response.SecretString ?? "{}"));

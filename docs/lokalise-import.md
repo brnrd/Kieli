@@ -1,6 +1,6 @@
 # Lokalise import
 
-Import is available to workspace admins from **Admin → Import from Lokalise**. It creates a new Keylo project. It never merges into an unrelated existing project or replaces existing translations. Other localization files can use **Admin → Import translation files**; see [supported adapters](file-formats.md).
+Import is available to workspace admins from **Admin → Import from Lokalise**. It creates a new Kieli project. It never merges into an unrelated existing project or replaces existing translations. Other localization files can use **Admin → Import translation files**; see [supported adapters](file-formats.md).
 
 ## JSON export ZIP
 
@@ -12,13 +12,13 @@ locale/fr.json
 locale/nl.json
 ```
 
-Both flat and nested JSON are supported. The file basename identifies the locale. Nested objects become dotted keys and can be reconstructed with Keylo's nested export. Existing dotted/nested collisions, arrays, numbers, null values, unsafe names, and duplicate normalized locales cause a clear error before project creation. Underscore locales such as `en_US` are converted to canonical BCP 47 (`en-US`) and shown as warnings. Select the source language explicitly in the preview.
+Both flat and nested JSON are supported. The file basename identifies the locale. Nested objects become dotted keys and can be reconstructed with Kieli's nested export. Existing dotted/nested collisions, arrays, numbers, null values, unsafe names, and duplicate normalized locales cause a clear error before project creation. Underscore locales such as `en_US` are converted to canonical BCP 47 (`en-US`) and shown as warnings. Select the source language explicitly in the preview.
 
 JSON translation exports do not contain all project metadata. Name the destination project in the preview. Use a snapshot if you need descriptions and tags.
 
 ## API snapshot
 
-A `.json` snapshot combines the Lokalise project, project-language list, and key list (with translations). Concatenate all API pages before creating this file; Keylo cannot infer missing pages from an incomplete snapshot.
+A `.json` snapshot combines the Lokalise project, project-language list, and key list (with translations). Concatenate all API pages before creating this file; Kieli cannot infer missing pages from an incomplete snapshot.
 
 ```json
 {
@@ -45,7 +45,7 @@ A `.json` snapshot combines the Lokalise project, project-language list, and key
 }
 ```
 
-Choose Web, iOS, Android, or Other for per-platform key names. Keys without a name for that platform are explicitly excluded with a warning requiring acknowledgement. Review settings, screenshots, automated translation providers, and comments are outside Keylo's model and are not imported. Plural objects stay as one ICU plural key with a form editor per language. Numeric reference placeholders map to the selected platform’s key names. Mixed incompatible plural encodings are rejected rather than silently converted.
+Choose Web, iOS, Android, or Other for per-platform key names. Keys without a name for that platform are explicitly excluded with a warning requiring acknowledgement. Review settings, screenshots, automated translation providers, and comments are outside Kieli's model and are not imported. Plural objects stay as one ICU plural key with a form editor per language. Numeric reference placeholders map to the selected platform’s key names. Mixed incompatible plural encodings are rejected rather than silently converted.
 
 A sample API snapshot is included at `docs/examples/lokalise-snapshot.json`.
 

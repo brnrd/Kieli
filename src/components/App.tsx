@@ -599,11 +599,11 @@ export default function App({
         <button
           className="brand"
           onClick={allProjects}
-          aria-label="Keylo projects"
+          aria-label="Kieli projects"
         >
           <img src="/favicon.svg" width="32" height="32" alt="" />
           <span>
-            keylo<span className="wordmark-dot">.</span>
+            kieli<span className="wordmark-dot">.</span>
           </span>
           <span className="open-source">OPEN SOURCE</span>
         </button>

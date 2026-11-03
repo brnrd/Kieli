@@ -130,7 +130,7 @@ export function completedKeys(stats: ProjectStats, project: Project) {
   );
 }
 
-export class KeyloService {
+export class KieliService {
   constructor(private store: Store) {}
   private async currentProject(id: string) {
     const project = await this.store.get<Project>("WORKSPACE", `PROJECT#${id}`);
@@ -1502,5 +1502,5 @@ export class KeyloService {
   }
 }
 export async function service() {
-  return new KeyloService(await getStore());
+  return new KieliService(await getStore());
 }

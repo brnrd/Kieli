@@ -13,7 +13,7 @@ import {
 
 // Generated only in disposable test directories. Never use these keys in a deployment.
 export async function samlFixture(origin = "https://copy.example.com") {
-  const directory = await mkdtemp(join(tmpdir(), "keylo-saml-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "kieli-saml-test-"));
   async function pair(name: string) {
     const key = join(directory, `${name}.key`),
       cert = join(directory, `${name}.crt`);
@@ -32,7 +32,7 @@ export async function samlFixture(origin = "https://copy.example.com") {
         "-days",
         "2",
         "-subj",
-        `/CN=Keylo ${name} TEST ONLY`,
+        `/CN=Kieli ${name} TEST ONLY`,
       ],
       { stdio: "ignore" },
     );
@@ -119,7 +119,7 @@ export function signedResponse(
     nameIDFormat: persistentNameID,
     email: "alex@example.com",
     name: "Alex Morgan",
-    groups: ["keylo:website:manager"],
+    groups: ["kieli:website:manager"],
     issued: iso(-1000),
     notBefore: iso(-60000),
     expires: iso(240000),

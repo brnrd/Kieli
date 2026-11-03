@@ -187,8 +187,8 @@ export class SsoReconciler {
       ...new Set(
         groups.filter(
           (name) =>
-            name === "keylo-admin" ||
-            /^keylo:[a-z0-9][a-z0-9-]{0,47}:(admin|manager|user)$/.test(name),
+            name === "kieli-admin" ||
+            /^kieli:[a-z0-9][a-z0-9-]{0,47}:(admin|manager|user)$/.test(name),
         ),
       ),
     ].sort();

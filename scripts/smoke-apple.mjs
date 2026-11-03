@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 import { zipSync, strToU8, unzipSync, strFromU8 } from "fflate";
 import { parseTranslationFiles } from "../src/formats/import.ts";
 import { parseStringsDict } from "../src/formats/stringsdict.ts";
-const directory = await mkdtemp(join(tmpdir(), "keylo-apple-")),
+const directory = await mkdtemp(join(tmpdir(), "kieli-apple-")),
   origin = "http://127.0.0.1:4339";
 const server = spawn(process.execPath, ["dist/server/entry.mjs"], {
   env: {
@@ -136,7 +136,7 @@ try {
   const cli = spawn(
     process.execPath,
     [
-      "cli/keylo.mjs",
+      "cli/kieli.mjs",
       "pull",
       "--url",
       origin,
@@ -150,7 +150,7 @@ try {
       join(directory, "cli"),
     ],
     {
-      env: { ...process.env, KEYLO_TOKEN: token.secret },
+      env: { ...process.env, KIELI_TOKEN: token.secret },
       stdio: ["ignore", "pipe", "pipe"],
     },
   );

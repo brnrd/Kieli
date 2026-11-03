@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { sqliteStore } from "../src/server/store";
-import { KeyloService } from "../src/server/service";
+import { KieliService } from "../src/server/service";
 import { ProjectHistory } from "../src/server/project-history";
 import type { Identity, TranslationKey, ProjectStats } from "../src/shared";
 const admin: Identity = {
@@ -23,7 +23,7 @@ const settings = {
 };
 async function fixture() {
   const store = await sqliteStore(":memory:"),
-    svc = new KeyloService(store);
+    svc = new KieliService(store);
   await svc.createProject(admin, settings);
   return { svc, store };
 }

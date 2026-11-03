@@ -6,4 +6,4 @@ import { config } from '../../server/config';
 if (config().authMode !== 'local') return Astro.redirect('/login');
 const token = Astro.url.searchParams.get('token') ?? '';
 ---
-<Layout title="Set your password · Keylo"><main class="login-page"><a href="/" class="wordmark"><img src="/favicon.svg" alt="" width="36" height="36"/>keylo<span class="wordmark-dot">.</span></a><div class="login-card local-login-card"><h1>Set your password</h1><p>Choose a password to activate your account or complete your password reset.</p><SignInForm client:load setup token={token}/></div><Appearance client:load /></main></Layout>
+<Layout title="Set your password · Kieli"><main class="login-page"><a href="/" class="wordmark"><img src="/favicon.svg" alt="" width="36" height="36"/>kieli<span class="wordmark-dot">.</span></a><div class="login-card local-login-card"><h1>Set your password</h1><p>Choose a password to activate your account or complete your password reset.</p><SignInForm client:load setup token={token}/></div><Appearance client:load /></main></Layout>

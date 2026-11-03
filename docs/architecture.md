@@ -9,7 +9,7 @@ Astro pages + React editor
 authentication + origin check
           │
           ▼
-KeyloService: roles, validation, import, export
+KieliService: roles, validation, import, export
           │
           ▼
 Store: SQLite locally / DynamoDB on AWS
@@ -27,7 +27,7 @@ Store: SQLite locally / DynamoDB on AWS
 - `src/validation.ts`: shared schemas; server validation is authoritative.
 - `src/lokalise.ts` and `src/workers/`: local import preview parsing.
 - `src/pages/api/[...path].ts`: HTTP boundary, body limits, status codes, and routing.
-- `cli/keylo.mjs`: portable Node-only translation pull.
+- `cli/kieli.mjs`: portable Node-only translation pull.
 - `infra/`: AWS SAM deployment.
 
 ## Storage and performance
@@ -62,7 +62,7 @@ Substring search still evaluates matching project records on the backend; this i
 
 ## HTTP API
 
-Data API endpoints require a browser session, except the explicitly public sign-in/activation/first-run setup endpoints. Only the export API also accepts `Authorization: Bearer <Keylo export token>`. The separate `/mcp` route requires a dedicated scoped MCP bearer credential and never accepts cookies. Browser mutation requests require an exact matching `Origin`, JSON content type, and a JSON body of at most 256 KB. Successful deletes return 204.
+Data API endpoints require a browser session, except the explicitly public sign-in/activation/first-run setup endpoints. Only the export API also accepts `Authorization: Bearer <Kieli export token>`. The separate `/mcp` route requires a dedicated scoped MCP bearer credential and never accepts cookies. Browser mutation requests require an exact matching `Origin`, JSON content type, and a JSON body of at most 256 KB. Successful deletes return 204.
 
 In SAML mode, GET `/auth/login` starts a signed request, GET `/auth/saml/metadata` publishes signed public metadata, and POST `/auth/saml/acs` accepts the bounded form-encoded IdP response. This active POST callback enforces signatures, browser binding, correlation, and atomic replay prevention instead of Origin. Optional GET/POST `/auth/saml/logout` authenticates signed SAML logout messages; app-initiated responses also require one-time browser/request binding. POST `/auth/logout?saml=1` checks Origin and revokes local access before redirecting to the configured IdP. See [SAML setup](saml.md). MCP permits an absent Origin for machine clients, rejects foreign Origins when supplied, and validates Host against `APP_ORIGIN`. All other browser writes retain exact-origin checks.
 

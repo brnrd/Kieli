@@ -86,12 +86,12 @@ test("plural read/write retains quotes, nested selectors, exact values and offse
 });
 test("inline references update recursively, report missing copy and reject cycles, missing keys and plural targets", () => {
   const keys = [
-    key("brand", { en: "Keylo", ar: "" }),
+    key("brand", { en: "Kieli", ar: "" }),
     key("title", { en: "Welcome to [%key:brand%]", ar: "[%key:brand%]" }),
     key("nested", { en: "[%key:title%]!" }),
   ];
   let resolved = resolveProject(keys, project);
-  assert.equal(resolved[2]!.resolvedTranslations!.en, "Welcome to Keylo!");
+  assert.equal(resolved[2]!.resolvedTranslations!.en, "Welcome to Kieli!");
   assert.match(resolved[1]!.referenceErrors!.ar!, /Missing/);
   keys[0]!.translations.en = "Updated";
   resolved = resolveProject(keys, project);

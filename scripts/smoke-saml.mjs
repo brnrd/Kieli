@@ -17,7 +17,7 @@ const fixture = await samlFixture();
 fixture.settings.logoutUrl = "https://idp.example.com/slo";
 fixture.settings.logoutCallbackUrl =
   "https://copy.example.com/auth/saml/logout";
-const directory = await mkdtemp(join(tmpdir(), "keylo-saml-http-"));
+const directory = await mkdtemp(join(tmpdir(), "kieli-saml-http-"));
 const origin = "http://127.0.0.1:4328";
 const env = {
   ...process.env,
@@ -68,11 +68,11 @@ function session(response, name) {
 async function begin() {
   const response = await request("/auth/login");
   assert.equal(response.status, 302, await response.clone().text());
-  const binding = session(response, "__Secure-keylo_saml");
+  const binding = session(response, "__Secure-kieli_saml");
   assert.match(
     response.headers
       .getSetCookie()
-      .find((value) => value.startsWith("__Secure-keylo_saml=")),
+      .find((value) => value.startsWith("__Secure-kieli_saml=")),
     /SameSite=None/i,
   );
   return { ...requestInfo(response.headers.get("location")), binding };
@@ -155,13 +155,13 @@ try {
     assert.equal(user.status, 201, await user.clone().text());
     provisioned = await user.json();
     const group = await provisioning("Groups", "POST", {
-      displayName: "keylo-admin",
+      displayName: "kieli-admin",
       members: [{ value: provisioned.id }],
     });
     assert.equal(group.status, 201, await group.clone().text());
   }
   const flow = await begin();
-  const signed = signedResponse(fixture, flow.id, { groups: ["keylo-admin"] });
+  const signed = signedResponse(fixture, flow.id, { groups: ["kieli-admin"] });
   // A foreign-origin POST is allowed only at ACS and only with complete protocol validation.
   assert.equal(
     (await post(signed.encoded, flow, "")).headers.get("location"),
@@ -183,8 +183,8 @@ try {
   const accepted = await post(signed.encoded, flow);
   assert.equal(accepted.status, 303, await accepted.clone().text());
   assert.equal(accepted.headers.get("location"), "/");
-  const cookie = session(accepted, "keylo_session");
-  assert.match(cookie, /^keylo_session=[a-f0-9]{64}$/);
+  const cookie = session(accepted, "kieli_session");
+  assert.match(cookie, /^kieli_session=[a-f0-9]{64}$/);
   const bootstrap = await request("/api/bootstrap", {
     headers: { Cookie: cookie },
   });
@@ -208,7 +208,7 @@ try {
   assert.equal(
     rejected.headers
       .getSetCookie()
-      .some((value) => /^keylo_session=[a-f0-9]{64}/.test(value)),
+      .some((value) => /^kieli_session=[a-f0-9]{64}/.test(value)),
     false,
   );
   const signOut = await request("/auth/logout", {
@@ -224,12 +224,12 @@ try {
   const sloLogin = await begin();
   const sloAccepted = await post(
     signedResponse(fixture, sloLogin.id, {
-      groups: ["keylo-admin"],
+      groups: ["kieli-admin"],
       sessionIndex: "http-slo-session",
     }).encoded,
     sloLogin,
   );
-  const sloSession = session(sloAccepted, "keylo_session");
+  const sloSession = session(sloAccepted, "kieli_session");
   const blockedLogout = await request("/auth/logout?saml=1", {
     method: "POST",
     headers: { Origin: "https://attacker.example.com", Cookie: sloSession },
@@ -252,7 +252,7 @@ try {
     Buffer.from(sloUrl.searchParams.get("SAMLRequest"), "base64"),
   ).toString();
   const requestId = /\bID="([^"]+)"/.exec(sloXml)[1];
-  const sloBinding = session(initiate, "__Secure-keylo_saml_logout");
+  const sloBinding = session(initiate, "__Secure-kieli_saml_logout");
   const sloResponse = signedLogout(fixture, {
     inResponseTo: requestId,
     relay: sloUrl.searchParams.get("RelayState"),
@@ -279,12 +279,12 @@ try {
   const idpLogin = await begin();
   const idpAccepted = await post(
     signedResponse(fixture, idpLogin.id, {
-      groups: ["keylo-admin"],
+      groups: ["kieli-admin"],
       sessionIndex: "idp-http-session",
     }).encoded,
     idpLogin,
   );
-  const idpSession = session(idpAccepted, "keylo_session");
+  const idpSession = session(idpAccepted, "kieli_session");
   const idpMessage = signedLogout(fixture, {
     request: true,
     indexes: ["idp-http-session"],
@@ -323,7 +323,7 @@ try {
       signedResponse(fixture, again.id, { groups: [] }).encoded,
       again,
     );
-    const activeCookie = session(acceptedAgain, "keylo_session");
+    const activeCookie = session(acceptedAgain, "kieli_session");
     const people = await browserApi("/api/sso/users", "GET", activeCookie);
     assert.equal(people.status, 200, await people.clone().text());
     assert.equal((await people.json()).items[0].id, provisioned.id);
@@ -347,7 +347,7 @@ try {
     assert.equal(
       (
         await post(
-          signedResponse(fixture, final.id, { groups: ["keylo-admin"] })
+          signedResponse(fixture, final.id, { groups: ["kieli-admin"] })
             .encoded,
           final,
         )

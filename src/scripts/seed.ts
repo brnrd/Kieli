@@ -1,4 +1,4 @@
-import { KeyloService } from "../server/service";
+import { KieliService } from "../server/service";
 import { Conflict, getStore } from "../server/store";
 import { config } from "../server/config";
 import type { Identity } from "../shared";
@@ -10,11 +10,11 @@ if (config().authMode !== "demo" || config().driver !== "sqlite")
 const identity: Identity = {
   sub: "seed",
   name: "Alex Morgan",
-  email: "alex@keylo.local",
+  email: "alex@kieli.local",
   admin: true,
   projects: {},
 };
-const svc = new KeyloService(await getStore());
+const svc = new KieliService(await getStore());
 const projects = [
   {
     id: "acme-website",
