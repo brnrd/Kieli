@@ -27,6 +27,7 @@ jobs:
       - run: npm run smoke:archive
       - run: npm run smoke:languages
       - run: npm run smoke:bulk
+      - run: npm run smoke:duplicate
       - run: npm run smoke:local
       - run: npm run smoke:saml
       - run: npm run smoke:sso

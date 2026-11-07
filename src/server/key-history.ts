@@ -9,7 +9,8 @@ export type EditOrigin =
   | "recovery"
   | "sync"
   | "rename"
-  | "metadata";
+  | "metadata"
+  | "duplicate";
 export type KeyState = Pick<
   TranslationKey,
   | "name"

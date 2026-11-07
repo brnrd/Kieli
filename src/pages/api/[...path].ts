@@ -299,6 +299,16 @@ export const ALL: APIRoute = async (context) => {
             parts[4] === "rename",
           ),
         );
+      if (parts.length === 5 && parts[4] === "duplicate" && method === "POST")
+        return Response.json(
+          await svc.duplicateKey(
+            identity,
+            id,
+            parts[3]!,
+            await readJSON(request),
+          ),
+          { status: 201 },
+        );
       if (parts.length === 5 && parts[4] === "history" && method === "GET")
         return Response.json(
           await svc.keyHistory(identity, id, parts[3]!, {

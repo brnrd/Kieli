@@ -234,6 +234,7 @@ export class KieliService {
     expectedProject?: Project,
     commitAuthorization?: () => Promise<Change[]>,
     origin: EditOrigin = "browser",
+    expectedStatsVersion?: number,
   ) {
     for (let attempt = 0; attempt < 8; attempt++) {
       const project = await this.currentProject(id);
@@ -242,6 +243,11 @@ export class KieliService {
         throw new Conflict();
       const prefix = dataPrefix(project);
       const previous = await this.stats(id);
+      if (
+        expectedStatsVersion !== undefined &&
+        previous.version !== expectedStatsVersion
+      )
+        throw new Conflict();
       const next = structuredClone(previous);
       next.version++;
       const lifecycle: Change[] = [];
@@ -389,6 +395,18 @@ export class KieliService {
             change.translatedLocales ??
               (!change.old ? Object.keys(change.next.translations) : []),
           );
+          if (change.duplicateFrom) {
+            const original = change.duplicateFrom;
+            change.next.translationSources = Object.fromEntries(
+              Object.keys(change.next.translations).map((code) => [
+                code,
+                code !== project.sourceLanguage &&
+                original.outdatedLanguages?.includes(code)
+                  ? "duplicated-outdated"
+                  : contexts.get(change.next!.name)!.token,
+              ]),
+            );
+          }
           candidates.set(change.next.name, change.next);
         }
       }
@@ -1044,6 +1062,92 @@ export class KieliService {
     });
     await this.persistKeys(identity, id, [{ next: key }], [], project);
     return this.key(identity, id, key.name);
+  }
+  async duplicateKey(
+    identity: Identity,
+    id: string,
+    name: string,
+    input: unknown,
+  ) {
+    if (identity.mcp || identity.sync || identity.tokenProject)
+      throw new HttpError(403, "Sign in to duplicate keys.");
+    authorize(identity, id, "manager");
+    const data = z
+      .object({
+        name: keyNameSchema,
+        version: z.number().int().positive(),
+        copyContext: z.boolean().default(true),
+        copyTargets: z.boolean().default(false),
+      })
+      .strict()
+      .parse(input);
+    const project = await this.project(identity, id);
+    assertProjectEditable(project);
+    const stats = await this.summary(identity, id);
+    const original = await this.key(identity, id, name);
+    if (original.version !== data.version) throw new Conflict();
+    if (data.name === name)
+      throw new HttpError(400, "Choose a different key name.");
+    const codes = new Set(
+      enabledLanguages(project)
+        .filter(
+          (locale) =>
+            data.copyTargets || locale.code === project.sourceLanguage,
+        )
+        .map((locale) => locale.code),
+    );
+    const parsed = keySchema.parse({
+      name: data.name,
+      plural: original.plural,
+      description: data.copyContext ? original.description : "",
+      namespace: data.copyContext ? original.namespace : "general",
+      tags: data.copyContext ? original.tags : [],
+      translations: Object.fromEntries(
+        Object.entries(original.translations).filter(([code]) =>
+          codes.has(code),
+        ),
+      ),
+      ...(original.applePluralTypes
+        ? {
+            applePluralTypes: Object.fromEntries(
+              Object.entries(original.applePluralTypes).filter(([code]) =>
+                codes.has(code),
+              ),
+            ),
+          }
+        : {}),
+    });
+    const next = indexed({
+      ...parsed,
+      version: 1,
+      createdAt: now(),
+      updatedAt: now(),
+      updatedBy: identity.name,
+    });
+    await this.persistKeys(
+      identity,
+      id,
+      [
+        {
+          next,
+          duplicateFrom: original,
+          translatedLocales: Object.keys(parsed.translations),
+        },
+      ],
+      [
+        {
+          pk: `PROJECT#${id}`,
+          sk: `${dataPrefix(project)}KEY#${name}`,
+          check: true,
+          expectedVersion: data.version,
+        },
+      ],
+      project,
+      undefined,
+      "duplicate",
+      stats.version,
+    );
+    return this.key(identity, id, data.name);
   }
   async updateKey(
     identity: Identity,

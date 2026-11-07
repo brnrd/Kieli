@@ -33,6 +33,7 @@ Kieli gives product teams and developers a shared place to manage the words in t
 - **Translation freshness.** See what is missing, current or outdated when source copy changes. Existing translations stay available for editing.
 - **Plurals and linked copy.** Unicode cardinal/ordinal forms, project-level overrides and reusable `[%key:other.key%]` references.
 - **Safer changes.** Argument checks, version conflicts, per-translation history, recoverable key deletion and project snapshots help protect your work.
+- **Duplicate keys.** Create an independent key with optional context and target copy, preserving outdated status. [Key duplication](docs/key-duplication.md).
 - **Rename keys safely.** Preview linked keys, update references together, and retain translations, freshness and history. [Key renaming](docs/key-renaming.md).
 
 ![Kieli project directory with separate product projects](docs/images/projects.png)

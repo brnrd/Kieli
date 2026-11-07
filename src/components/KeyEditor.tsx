@@ -1,3 +1,4 @@
+import DuplicateKey from "./DuplicateKey";
 import {
   forwardRef,
   useEffect,
@@ -56,6 +57,7 @@ export default forwardRef<
     [notice, setNotice] = useState(""),
     [pending, setPending] = useState<(() => void) | null>(null);
   const [formGeneration, setFormGeneration] = useState(0);
+  const [duplicating, setDuplicating] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const actions = useRef({
     move: (_direction: "previous" | "next" | "attention") => {},
@@ -269,6 +271,13 @@ export default forwardRef<
         focusLanguage={initialLanguage ?? filters.language}
         onDirtyChange={setDirty}
         onSubmit={(data, advance) => void save(data, advance)}
+        onDuplicate={() =>
+          guard(() => {
+            setDirty(false);
+            setFormGeneration((value) => value + 1);
+            setDuplicating(true);
+          })
+        }
         onRename={() =>
           guard(() => {
             setDirty(false);
@@ -284,6 +293,21 @@ export default forwardRef<
           notify("Translation restored.");
         }}
       />
+      {duplicating && current && (
+        <DuplicateKey
+          project={project}
+          editing={current}
+          onClose={() => setDuplicating(false)}
+          onBusyChange={working}
+          onCreated={async (key) => {
+            setCurrent(key);
+            setDirty(false);
+            setDuplicating(false);
+            await onSaved();
+            notify("Key duplicated.");
+          }}
+        />
+      )}
       {renaming && current && (
         <RenameKey
           project={project}

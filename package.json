@@ -34,7 +34,8 @@
     "smoke:rename": "node scripts/smoke-rename.mjs",
     "smoke:archive": "node scripts/smoke-archive.mjs",
     "smoke:languages": "node scripts/smoke-languages.mjs",
-    "smoke:bulk": "node scripts/smoke-bulk.mjs"
+    "smoke:bulk": "node scripts/smoke-bulk.mjs",
+    "smoke:duplicate": "node scripts/smoke-duplicate.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",

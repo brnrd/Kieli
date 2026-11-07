@@ -20,6 +20,7 @@ export default function KeyForm({
   onReload,
   onRestored,
   onRename,
+  onDuplicate,
   onDirtyChange,
   focusLanguage = "all",
 }: {
@@ -35,6 +36,7 @@ export default function KeyForm({
   onReload: () => Promise<void>;
   onRestored: () => Promise<void>;
   onRename?: () => void;
+  onDuplicate?: () => void;
 }) {
   const languages = enabledLanguages(project);
   const [name, setName] = useState(editing?.name ?? "");
@@ -185,6 +187,11 @@ export default function KeyForm({
               </button>
             )}
           </label>
+          {editing && manager && onDuplicate && (
+            <button type="button" className="text-button" onClick={onDuplicate}>
+              Duplicate key…
+            </button>
+          )}
           <div className="field-grid">
             <label className="field-label">
               Namespace

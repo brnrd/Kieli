@@ -27,6 +27,7 @@ import { keyState, type KeyState, type EditOrigin } from "./key-history";
 import { validateKeyQuality } from "./translation-quality";
 import { config } from "./config";
 export type KeyChange = {
+  duplicateFrom?: TranslationKey;
   old?: TranslationKey;
   next?: TranslationKey;
   expectedVersion?: number;
