@@ -53,6 +53,7 @@ type Modal =
   | "key"
   | "project"
   | "export"
+  | "metadata"
   | "delete"
   | "help"
   | null;
@@ -66,6 +67,7 @@ const initials = (name: string) =>
 
 import { api } from "./api";
 import { IconButton, ModalShell, Empty, LanguageMark } from "./ui";
+import BulkMetadata from "./BulkMetadata";
 import ProjectUpdate from "./ProjectUpdate";
 import ProjectForm from "./ProjectForm";
 import InlineTranslation from "./InlineTranslation";
@@ -248,6 +250,8 @@ export default function App({
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const metadataOperation = useRef({ open: false, busy: false });
+  metadataOperation.current = { open: modal === "metadata", busy };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const requestVersion = useRef(0);
   const identity = bootstrap.identity;
@@ -355,6 +359,13 @@ export default function App({
   }
   useEffect(() => {
     const handler = () => {
+      if (metadataOperation.current.open) {
+        if (metadataOperation.current.busy) {
+          window.history.pushState({}, "", lastPath.current);
+          return;
+        }
+        finishEditorClose();
+      }
       const navigationGuard =
         inlineRef.current ?? editorRef.current ?? glossaryRef.current;
       if (navigationGuard && !allowHistory.current) {
@@ -511,7 +522,12 @@ export default function App({
     availableLanguages.some((locale) =>
       key.outdatedLanguages?.includes(locale.code),
     );
-  const namespaces = Object.keys(stats.namespaces).sort();
+  const namespaces = [
+    ...new Set([
+      ...Object.keys(stats.namespaces),
+      ...(namespace !== "all" ? [namespace] : []),
+    ]),
+  ].sort();
   const sidebarProjects = projects
     .filter((p) => !p.archivedAt)
     .filter((p) =>
@@ -1239,6 +1255,15 @@ export default function App({
                         </button>
                         {editable && (
                           <button
+                            className="text-button"
+                            onClick={() => openModal("metadata")}
+                          >
+                            <Pencil size={14} />
+                            Edit tags & namespace
+                          </button>
+                        )}
+                        {editable && (
+                          <button
                             className="text-button danger-text"
                             onClick={() => openModal("delete")}
                           >
@@ -1815,6 +1840,31 @@ export default function App({
       {modal === "export" && project && (
         <ModalShell title="Export translations" onClose={closeModal}>
           <ExportForm project={project} onClose={closeModal} notify={notify} />
+        </ModalShell>
+      )}
+      {modal === "metadata" && project && editable && (
+        <ModalShell
+          className="metadata-dialog"
+          title="Edit tags & namespace"
+          subtitle={project.name}
+          onClose={closeModal}
+          wide
+        >
+          <BulkMetadata
+            project={project}
+            selected={keys.filter((key) => selected.has(key.name))}
+            onBusyChange={setBusy}
+            onClose={closeModal}
+            onSettled={async (processed) => {
+              setSelected(
+                (current) =>
+                  new Set(
+                    [...current].filter((name) => !processed.includes(name)),
+                  ),
+              );
+              await refreshKeys();
+            }}
+          />
         </ModalShell>
       )}
       {modal === "delete" && (

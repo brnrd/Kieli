@@ -33,7 +33,8 @@
     "smoke:apple": "node --import tsx scripts/smoke-apple.mjs",
     "smoke:rename": "node scripts/smoke-rename.mjs",
     "smoke:archive": "node scripts/smoke-archive.mjs",
-    "smoke:languages": "node scripts/smoke-languages.mjs"
+    "smoke:languages": "node scripts/smoke-languages.mjs",
+    "smoke:bulk": "node scripts/smoke-bulk.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",

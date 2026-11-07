@@ -2,7 +2,14 @@ import { createHash, randomUUID } from "node:crypto";
 import type { Identity, TranslationKey } from "../shared";
 import type { Change } from "./store";
 export type EditOrigin =
-  "browser" | "mcp" | "import" | "restore" | "recovery" | "sync" | "rename";
+  | "browser"
+  | "mcp"
+  | "import"
+  | "restore"
+  | "recovery"
+  | "sync"
+  | "rename"
+  | "metadata";
 export type KeyState = Pick<
   TranslationKey,
   | "name"

@@ -1,3 +1,4 @@
+import { BulkMetadata } from "../../server/bulk-metadata";
 import { Glossary } from "../../server/glossary";
 import { KeyRenames } from "../../server/key-renames";
 import { workspaceOverview } from "../../server/workspace";
@@ -57,6 +58,25 @@ export const ALL: APIRoute = async (context) => {
       return Response.json(
         await svc.setProjectArchived(identity, id, await readJSON(request)),
       );
+    if (parts[2] === "metadata") {
+      const metadata = new BulkMetadata(await getStore(), svc);
+      if (parts.length === 4 && parts[3] === "preview" && method === "POST")
+        return Response.json(
+          await metadata.preview(identity, id, await readJSON(request)),
+        );
+      if (parts.length === 4 && method === "GET")
+        return Response.json(await metadata.status(identity, id, parts[3]!));
+      if (parts.length === 5 && parts[4] === "apply" && method === "POST")
+        return Response.json(
+          await metadata.apply(
+            identity,
+            id,
+            parts[3]!,
+            await readJSON(request),
+          ),
+        );
+      throw new HttpError(404, "Metadata endpoint not found.");
+    }
     if (parts[2] === "glossary") {
       const glossary = new Glossary(await getStore());
       if (parts.length === 3 && method === "GET")

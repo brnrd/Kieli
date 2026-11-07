@@ -23,6 +23,7 @@ Kieli gives product teams and developers a shared place to manage the words in t
 ### Keep every language in view
 
 - **Project-based organization.** Source and target languages, namespaces, context and tags keep copy easy to find.
+- **Organize keys in bulk.** Preview [tag and namespace changes](docs/bulk-metadata.md) for selected keys, then apply in bounded batches with clear progress.
 - **Pause target languages.** [Disable and re-enable targets](docs/project-languages.md) while retaining copy and history. Editing, completion totals and default exports follow enabled languages.
 - **Archive retired projects.** Hide projects from default navigation and make them read-only while retaining history, settings and existing exports. Managers can [restore archived projects](docs/project-archive.md).
 - **Reuse previous wording.** Find [exact source matches in project history](docs/translation-memory.md), inspect their origin and apply them to a draft before saving.
