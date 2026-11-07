@@ -185,6 +185,15 @@ export const ALL: APIRoute = async (context) => {
           await svc.updateProject(identity, id, await readJSON(request)),
         );
     }
+    if (parts[2] === "languages" && parts.length === 4 && method === "POST")
+      return Response.json(
+        await svc.setLanguageEnabled(
+          identity,
+          id,
+          parts[3]!,
+          await readJSON(request),
+        ),
+      );
     if (parts[2] === "updates") {
       if (parts.length === 4 && parts[3] === "preview" && method === "POST")
         return Response.json(

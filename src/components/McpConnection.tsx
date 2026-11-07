@@ -1,3 +1,4 @@
+import { enabledLanguages } from "../shared";
 import { useEffect, useState, type SyntheticEvent } from "react";
 import { Bot, Copy, KeyRound, Loader2, Plus, Trash2, X } from "lucide-react";
 import type { AuthMode, McpTokenView, Project } from "../shared";
@@ -15,7 +16,7 @@ export default function McpConnection({
   authMode: AuthMode;
   notify: (message: string) => void;
 }) {
-  const targets = project.languages.filter(
+  const targets = enabledLanguages(project).filter(
     (l) => l.code !== project.sourceLanguage,
   );
   const [languages, setLanguages] = useState(targets.map((l) => l.code));

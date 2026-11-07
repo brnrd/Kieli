@@ -1,4 +1,5 @@
 import type { Project, ProjectStats, TranslationKey } from "../shared";
+import { enabledLanguages } from "../shared";
 import { freshnessView } from "./freshness";
 import { translationComplete, resolveProject } from "../messages";
 export const dataPrefix = (project: Project) =>
@@ -13,7 +14,12 @@ export function viewStats(
   const outdatedByLanguage: Record<string, number> = {};
   let outdatedKeys = 0;
   for (const key of keys) {
-    if (key.outdatedLanguages?.length) outdatedKeys++;
+    if (
+      key.outdatedLanguages?.some((code) =>
+        enabledLanguages(project).some((locale) => locale.code === code),
+      )
+    )
+      outdatedKeys++;
     for (const code of key.outdatedLanguages ?? [])
       outdatedByLanguage[code] = (outdatedByLanguage[code] ?? 0) + 1;
     const filled = project.languages
@@ -61,4 +67,18 @@ export function cachedView(
   if (bytes <= 20 * 1024 * 1024)
     cache.set(key, { keys, bytes, time: Date.now() });
   return keys;
+}
+
+// Persist counters for every locale; project visibility is a cheap projection, never a key rewrite.
+export function activeStats(raw: ProjectStats, project: Project): ProjectStats {
+  const codes = new Set(enabledLanguages(project).map((locale) => locale.code));
+  return {
+    ...raw,
+    outdatedKeys: Object.entries(raw.outdatedCoverage ?? {}).reduce(
+      (sum, [signature, count]) =>
+        sum +
+        (signature.split(",").some((code) => codes.has(code)) ? count : 0),
+      0,
+    ),
+  };
 }

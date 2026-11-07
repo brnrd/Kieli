@@ -1,4 +1,5 @@
 import type { Identity, Project, WorkspaceOverview } from "../shared";
+import { enabledLanguages } from "../shared";
 import { HttpError } from "./errors";
 import { config } from "./config";
 import { KieliService } from "./service";
@@ -23,7 +24,7 @@ export async function workspaceOverview(
       while (index < projects.length) {
         const project = projects[index++]!,
           stats = await service.summary(identity, project.id);
-        const targets = project.languages.filter(
+        const targets = enabledLanguages(project).filter(
           (locale) => locale.code !== project.sourceLanguage,
         );
         const slots = stats.totalKeys * targets.length;
@@ -39,7 +40,7 @@ export async function workspaceOverview(
           id: project.id,
           name: project.name,
           keys: stats.totalKeys,
-          languages: project.languages.length,
+          languages: enabledLanguages(project).length,
           current,
           outdated,
           missing: Math.max(0, slots - current - outdated),

@@ -1,3 +1,4 @@
+import { enabledLanguages } from "../shared";
 import { useMemo, useState } from "react";
 import {
   ArrowUpRight,
@@ -106,11 +107,12 @@ export default function ProjectDirectory({
                 <td>
                   <div className="directory-locales">
                     <Globe2 size={13} />
-                    {p.languages
+                    {enabledLanguages(p)
                       .slice(0, 5)
                       .map((l) => l.code.toUpperCase())
                       .join(" · ")}
-                    {p.languages.length > 5 && ` +${p.languages.length - 5}`}
+                    {enabledLanguages(p).length > 5 &&
+                      ` +${enabledLanguages(p).length - 5}`}
                   </div>
                 </td>
                 <td>

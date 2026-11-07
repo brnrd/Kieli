@@ -32,7 +32,7 @@ Apple plural dictionaries support the bounded subset above. Xcode string catalog
 
 ## Export, API and CLI
 
-The project's **Export** dialog chooses a format, languages and optional source fallback. It downloads a ZIP with one `<locale>.<extension>` file per language; `stringsdict` writes both `<locale>.stringsdict` and `<locale>.strings` for each language. Missing translations remain empty unless fallback is selected. A keyed POT template always has empty `msgstr` values regardless of fallback.
+The project's **Export** dialog chooses a format, languages and optional source fallback. Enabled languages are selected by default; [disabled targets](project-languages.md) can be selected explicitly to retrieve their retained copy. It downloads a ZIP with one `<locale>.<extension>` file per language; `stringsdict` writes both `<locale>.stringsdict` and `<locale>.strings` for each language. Missing translations remain empty unless fallback is selected. A keyed POT template always has empty `msgstr` values regardless of fallback.
 
 ```sh
 KIELI_TOKEN=... node cli/kieli.mjs pull \

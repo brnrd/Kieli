@@ -1,3 +1,4 @@
+import { enabledLanguages } from "../shared";
 import { useState, type SyntheticEvent } from "react";
 import { ArrowDownToLine, Code2, Loader2 } from "lucide-react";
 import type { Project } from "../shared";
@@ -12,7 +13,9 @@ export default function ExportForm({
   onClose: () => void;
   notify: (message: string) => void;
 }) {
-  const [locales, setLocales] = useState(project.languages.map((l) => l.code));
+  const [locales, setLocales] = useState(
+    enabledLanguages(project).map((l) => l.code),
+  );
   const [format, setFormat] = useState("flat");
   const [fallback, setFallback] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -74,10 +77,17 @@ export default function ExportForm({
                 />
                 <LanguageMark code={l.code} small />
                 {l.name}
+                {l.disabled ? " (disabled)" : ""}
                 <small>{l.code}</small>
               </label>
             ))}
           </div>
+          {project.languages.some((locale) => locale.disabled) && (
+            <p className="muted">
+              Disabled languages are excluded by default. Select one above to
+              export its retained copy.
+            </p>
+          )}
           <FileFormatSelect value={format} onChange={setFormat} />
           <label className="checkbox-label">
             <input

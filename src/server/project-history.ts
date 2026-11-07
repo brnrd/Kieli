@@ -1,3 +1,4 @@
+import { enabledLanguages } from "../shared";
 import { projectNameChanges } from "./project-names";
 import { assertProjectEditable } from "./project-lifecycle";
 import { canonicalJSON } from "../canonical-json";
@@ -453,19 +454,19 @@ export class ProjectHistory {
     requireCurrentCopy(
       keys,
       project,
-      project.languages.map((locale) => locale.code),
+      enabledLanguages(project).map((locale) => locale.code),
     );
     const release: Release = {
       id: randomUUID(),
       label: data.label,
       createdAt: timestamp(),
       createdBy: identity.name,
-      languages: project.languages.map((locale) => locale.code),
+      languages: enabledLanguages(project).map((locale) => locale.code),
       snapshot: snapshot.id,
       version: 1,
     };
     const writes: Change[] = [];
-    for (const locale of project.languages) {
+    for (const locale of enabledLanguages(project)) {
       const messages: Record<string, unknown> = {};
       for (const key of keys) {
         if (!translationComplete(key, locale))

@@ -219,10 +219,13 @@
   padding: 0 11px;
 }
 .tabs {
+  overflow-x: auto;
+  min-width: 0;
   margin-bottom: 17px;
   gap: 25px;
 }
 .tabs > button {
+  flex-shrink: 0;
   padding-bottom: 11px;
   font-size: 10px;
 }
@@ -862,6 +865,8 @@
   gap: 14px;
 }
 .language-card {
+  display: flex;
+  flex-direction: column;
   padding: 18px;
 }
 .language-card-top .language-mark {
@@ -1436,4 +1441,29 @@
   font:
     10px ui-monospace,
     monospace;
+}
+
+.language-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  min-height: 44px;
+}
+.language-card-top > div {
+  min-width: 0;
+  flex: 1;
+}
+.language-card-top h3 {
+  overflow-wrap: anywhere;
+}
+.language-disabled {
+  border-style: dashed;
+}
+.language-card.language-disabled > p {
+  margin: 16px 0;
+  font-size: 12px;
 }

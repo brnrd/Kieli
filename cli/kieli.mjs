@@ -30,7 +30,7 @@ Connection:
 
 Pull:
   --out <directory>     Destination directory (default: ./locales)
-  --languages <codes>   Comma-separated codes; defaults to all project languages
+  --languages <codes>   Comma-separated codes; defaults to enabled project languages
   --format <format>     flat (default), nested, yaml, js, ts, php, properties,
                         ini, resx, po, pot, strings, stringsdict, plist, android, arb, xliff, csv
   --require-current     Stop if copy is missing, outdated or invalid

@@ -1,3 +1,4 @@
+import { enabledLanguages } from "../shared";
 import { useEffect, useState, type SyntheticEvent } from "react";
 import { api } from "./api";
 import { ModalShell } from "./ui";
@@ -52,7 +53,7 @@ export default function SyncConnection({
       pull: {
         out: "./locales",
         format: "nested",
-        languages: project.languages.map((locale) => locale.code),
+        languages: enabledLanguages(project).map((locale) => locale.code),
       },
     },
     null,

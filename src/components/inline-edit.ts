@@ -9,7 +9,9 @@ export function canEditInline(
 ) {
   return (
     !project.archivedAt &&
-    project.languages.some((locale) => locale.code === language) &&
+    project.languages.some(
+      (locale) => locale.code === language && !locale.disabled,
+    ) &&
     (manager || language !== project.sourceLanguage) &&
     !advancedKey(key) &&
     !Object.values(key.translations).some(looksPlural)

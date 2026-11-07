@@ -85,7 +85,7 @@ export class McpCredentials {
       data.languages.some(
         (code) =>
           code === project.sourceLanguage ||
-          !project.languages.some((l) => l.code === code),
+          !project.languages.some((l) => l.code === code && !l.disabled),
       )
     )
       throw new HttpError(
@@ -152,6 +152,12 @@ export class McpCredentials {
     };
     await this.store.transact([
       ...guards,
+      {
+        pk: "WORKSPACE",
+        sk: `PROJECT#${projectId}`,
+        check: true,
+        expectedVersion: project.version,
+      },
       { pk: `PROJECT#${projectId}`, sk: `MCP_TOKEN#${id}`, value: credential },
       mcpAudit("mcp.credential_created", identity.sub, projectId, {
         credential: id,

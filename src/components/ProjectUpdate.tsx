@@ -1,3 +1,4 @@
+import { enabledLanguages } from "../shared";
 import { useEffect, useRef, useState } from "react";
 import type { Project } from "../shared";
 import type { ImportPreview, ImportKey } from "../lokalise";
@@ -332,7 +333,7 @@ export default function ProjectUpdate({
             {selected && (
               <section className="update-diff">
                 <h3>{selected.name}</h3>
-                {project.languages
+                {enabledLanguages(project)
                   .filter((locale) =>
                     Object.hasOwn(selected.translations, locale.code),
                   )
@@ -354,7 +355,7 @@ export default function ProjectUpdate({
                       </div>
                     </div>
                   ))}
-                {project.languages
+                {enabledLanguages(project)
                   .filter(
                     (locale) =>
                       selected.before?.applePluralTypes?.[locale.code] !==

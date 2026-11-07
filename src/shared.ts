@@ -3,6 +3,7 @@ export type AuthMode = "demo" | "local" | "okta" | "saml";
 export type IdentityProvider = Exclude<AuthMode, "demo">;
 import { translationComplete, type PluralCategory } from "./messages";
 export type Locale = {
+  disabled?: boolean;
   code: string;
   name: string;
   pluralForms?: PluralCategory[];
@@ -63,6 +64,7 @@ export type ProjectStats = {
   advancedKeys?: number;
   outdatedByLanguage?: Record<string, number>;
   outdatedKeys?: number;
+  outdatedCoverage?: Record<string, number>;
   messageVersion?: number;
 };
 export type KeyPage = {
@@ -170,8 +172,11 @@ export function progress(keys: TranslationKey[], language: string) {
       )
     : 0;
 }
+export function enabledLanguages(project: Pick<Project, "languages">) {
+  return project.languages.filter((locale) => !locale.disabled);
+}
 export function isComplete(key: TranslationKey, project: Project) {
-  return project.languages.every((l) => translationComplete(key, l));
+  return enabledLanguages(project).every((l) => translationComplete(key, l));
 }
 
 export type WorkspaceOverview = {

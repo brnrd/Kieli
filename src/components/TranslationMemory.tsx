@@ -1,3 +1,4 @@
+import { enabledLanguages } from "../shared";
 import { useEffect, useRef, useState } from "react";
 import { History } from "lucide-react";
 import type { Project } from "../shared";
@@ -25,7 +26,7 @@ export default function TranslationMemory({
   manager: boolean;
   onApply: (language: string, text: string) => void;
 }) {
-  const targets = project.languages.filter(
+  const targets = enabledLanguages(project).filter(
     (locale) => locale.code !== project.sourceLanguage,
   );
   const preferred =

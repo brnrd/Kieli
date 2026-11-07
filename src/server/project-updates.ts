@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { assertProjectEditable } from "./project-lifecycle";
+import {
+  assertLanguagesEditable,
+  assertProjectEditable,
+} from "./project-lifecycle";
 import { z } from "zod";
 import { keySchema } from "../validation";
 import type {
@@ -112,6 +115,10 @@ export class ProjectUpdates {
       );
     const entries: UpdateEntry[] = [];
     for (const input of data.keys) {
+      assertLanguagesEditable(project, [
+        ...Object.keys(input.translations),
+        ...Object.keys(input.applePluralTypes ?? {}),
+      ]);
       for (const code of Object.keys(input.translations))
         if (!project.languages.some((locale) => locale.code === code))
           throw new HttpError(

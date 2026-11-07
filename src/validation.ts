@@ -10,6 +10,7 @@ const forms = z
   );
 const language = z
   .object({
+    disabled: z.boolean().optional(),
     code: z
       .string()
       .min(2)
@@ -49,6 +50,11 @@ export const projectSchema = z
       ctx.addIssue({
         code: "custom",
         message: "Source language must belong to the project.",
+      });
+    if (p.languages.some((l) => l.code === p.sourceLanguage && l.disabled))
+      ctx.addIssue({
+        code: "custom",
+        message: "The source language cannot be disabled.",
       });
     if (new Set(p.languages.map((l) => l.code)).size !== p.languages.length)
       ctx.addIssue({

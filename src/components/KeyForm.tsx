@@ -4,6 +4,7 @@ import { sameTranslation } from "./editor-draft";
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { Check, Loader2, ShieldCheck } from "lucide-react";
 import type { Project, TranslationKey } from "../shared";
+import { enabledLanguages } from "../shared";
 import KeyHistory from "./KeyHistory";
 import { LanguageMark } from "./ui";
 import PluralTranslation from "./PluralTranslation";
@@ -35,6 +36,7 @@ export default function KeyForm({
   onRestored: () => Promise<void>;
   onRename?: () => void;
 }) {
+  const languages = enabledLanguages(project);
   const [name, setName] = useState(editing?.name ?? "");
   const [description, setDescription] = useState(editing?.description ?? "");
   const [namespace, setNamespace] = useState(editing?.namespace ?? "general");
@@ -64,7 +66,7 @@ export default function KeyForm({
         plural,
       }) ||
     confirmed.size > 0 ||
-    project.languages.some(
+    languages.some(
       (locale) =>
         !sameTranslation(
           editing?.translations[locale.code] ?? "",
@@ -80,9 +82,8 @@ export default function KeyForm({
     const code =
       focusLanguage !== "all"
         ? focusLanguage
-        : (project.languages.find(
-            (locale) => locale.code !== project.sourceLanguage,
-          )?.code ?? project.sourceLanguage);
+        : (languages.find((locale) => locale.code !== project.sourceLanguage)
+            ?.code ?? project.sourceLanguage);
     const frame = requestAnimationFrame(() => {
       const section = formRef.current?.querySelector<HTMLElement>(
         `[data-language="${code}"]`,
@@ -103,7 +104,7 @@ export default function KeyForm({
       plural,
     ) ||
       plural !== !!editing.plural);
-  const draftOutdated = project.languages
+  const draftOutdated = languages
     .filter(
       (locale) =>
         locale.code !== project.sourceLanguage &&
@@ -124,6 +125,7 @@ export default function KeyForm({
     const targetTranslations = Object.fromEntries(
       Object.entries(translations).filter(
         ([code, text]) =>
+          languages.some((locale) => locale.code === code) &&
           (manager || code !== project.sourceLanguage) &&
           (!editing ||
             !sameTranslation(text, editing.translations[code] ?? "", plural) ||
@@ -219,7 +221,7 @@ export default function KeyForm({
           </label>
           <div className="form-divider">
             <span>TRANSLATIONS</span>
-            <span>{project.languages.length} languages</span>
+            <span>{languages.length} languages</span>
           </div>
           <label className="checkbox-label plural-key-toggle">
             <input
@@ -296,7 +298,7 @@ export default function KeyForm({
               }}
             />
           )}
-          {project.languages.map((l) => (
+          {languages.map((l) => (
             <div
               className="translation-field"
               key={l.code}

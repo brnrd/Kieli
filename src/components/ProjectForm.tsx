@@ -261,6 +261,7 @@ export default function ProjectForm({
                 <LanguageMark code={l.code} small />
                 <strong>{l.name}</strong>
                 <span>{l.code}</span>
+                {l.disabled && <span className="role-pill">Disabled</span>}
                 {l.code === source ? (
                   <span className="source-pill">SOURCE</span>
                 ) : (

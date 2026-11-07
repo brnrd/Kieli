@@ -1,6 +1,6 @@
 # Live app translation delivery
 
-Managers use **Developers → Live app delivery** to publish a complete project into an immutable `preview` or `production` release. Every project language and configured plural category must be complete. References resolve at capture time. Draft changes stay private to the editor until another explicit publish; there is no review or approval workflow.
+Managers use **Developers → Live app delivery** to publish a complete project into an immutable `preview` or `production` release. Every enabled project language and configured plural category must be complete. [Disabled targets](project-languages.md) are excluded from new releases; existing release bundles remain available. A channel moved to a release without a locale returns no bundle for that locale, so SDKs retain their cached/embedded fallback. References resolve at capture time. Draft changes stay private to the editor until another explicit publish; there is no review or approval workflow.
 
 The channel pointer changes conditionally, so two concurrent publishers cannot overwrite each other silently. Activate an earlier release to roll back a channel without restoring draft project data. Releases and their source snapshots are retained; failed publication never moves a channel. This is independent of project snapshot restoration.
 

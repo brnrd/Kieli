@@ -112,6 +112,7 @@ export class Glossary {
       (!project.languages.some(
         (locale) =>
           locale.code === data.language &&
+          (!identity.mcp || !locale.disabled) &&
           locale.code !== project.sourceLanguage,
       ) ||
         (identity.mcp && !identity.mcp.languages.includes(data.language)))
@@ -128,7 +129,10 @@ export class Glossary {
     ).filter(
       (code) =>
         code !== project.sourceLanguage &&
-        project.languages.some((locale) => locale.code === code),
+        project.languages.some(
+          (locale) =>
+            locale.code === code && (!identity.mcp || !locale.disabled),
+        ),
     );
     const { terms } = await this.state(id);
     const matched =

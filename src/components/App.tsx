@@ -37,7 +37,7 @@ import type {
   KeyPage,
   ProjectStats,
 } from "../shared";
-import { isComplete } from "../shared";
+import { isComplete, enabledLanguages } from "../shared";
 
 type Tab =
   | "translations"
@@ -70,6 +70,7 @@ import ProjectUpdate from "./ProjectUpdate";
 import ProjectForm from "./ProjectForm";
 import InlineTranslation from "./InlineTranslation";
 import { canEditInline } from "./inline-edit";
+import ProjectLanguages from "./ProjectLanguages";
 import ProjectArchive from "./ProjectArchive";
 import ProjectGlossary from "./ProjectGlossary";
 import KeyEditor, { type EditorHandle, type EditorFilters } from "./KeyEditor";
@@ -148,6 +149,10 @@ export default function App({
     (initialPath.split("/")[2] as Tab) || "translations",
   );
   const project = projects.find((p) => p.id === projectId);
+  const availableLanguages = project ? enabledLanguages(project) : [];
+  const availableCodes = availableLanguages
+    .map((locale) => locale.code)
+    .join(",");
   const manager = project?.role !== "user";
   const editable = manager && !project?.archivedAt;
   const [keys, setKeys] = useState<TranslationKey[]>([]);
@@ -157,7 +162,7 @@ export default function App({
   const [status, setStatus] = useState<string>(editorDefaults.status);
   const [namespace, setNamespace] = useState("all");
   const [focusLanguage, setFocusLanguage] = useState("all");
-  const filterLanguage = project?.languages.some(
+  const filterLanguage = availableLanguages.some(
     (locale) => locale.code === focusLanguage,
   )
     ? focusLanguage
@@ -427,6 +432,7 @@ export default function App({
     };
   }, [
     projectId,
+    project?.version,
     query,
     status,
     namespace,
@@ -437,8 +443,8 @@ export default function App({
     workspacePage,
   ]);
   useEffect(() => {
-    setVisibleLanguages(project?.languages.map((l) => l.code) ?? []);
-  }, [projectId, project?.languages.length]);
+    setVisibleLanguages(availableLanguages.map((l) => l.code));
+  }, [projectId, availableCodes]);
   useEffect(() => {
     if (inline || search === query) return;
     const timer = setTimeout(() => {
@@ -480,16 +486,16 @@ export default function App({
     ? Object.entries(stats.coverage).reduce(
         (sum, [filled, amount]) =>
           sum +
-          (project.languages.every((l) => filled.split(",").includes(l.code))
+          (availableLanguages.every((l) => filled.split(",").includes(l.code))
             ? amount
             : 0),
         0,
       )
     : 0;
   const countedLanguages =
-    project?.languages.filter(
+    availableLanguages.filter(
       (l) =>
-        project.languages.length === 1 || l.code !== project.sourceLanguage,
+        project?.languages.length === 1 || l.code !== project?.sourceLanguage,
     ) ?? [];
   const totalTranslations = stats.totalKeys * countedLanguages.length;
   const translated = countedLanguages.reduce(
@@ -499,12 +505,12 @@ export default function App({
   const percent = totalTranslations
     ? Math.round((translated / totalTranslations) * 100)
     : 0;
-  const languageProgress = (code: string) =>
-    stats.totalKeys
-      ? Math.round(((stats.byLanguage[code] ?? 0) / stats.totalKeys) * 100)
-      : 0;
   const activeLanguages =
-    project?.languages.filter((l) => visibleLanguages.includes(l.code)) ?? [];
+    availableLanguages.filter((l) => visibleLanguages.includes(l.code)) ?? [];
+  const hasOutdated = (key: TranslationKey) =>
+    availableLanguages.some((locale) =>
+      key.outdatedLanguages?.includes(locale.code),
+    );
   const namespaces = Object.keys(stats.namespaces).sort();
   const sidebarProjects = projects
     .filter((p) => !p.archivedAt)
@@ -996,7 +1002,7 @@ export default function App({
                         Languages
                       </span>
                       <div>
-                        <strong>{project.languages.length}</strong>
+                        <strong>{availableLanguages.length}</strong>
                         <small>
                           including{" "}
                           {
@@ -1107,7 +1113,7 @@ export default function App({
                             }}
                           >
                             <option value="all">All languages</option>
-                            {project.languages.map((locale) => (
+                            {availableLanguages.map((locale) => (
                               <option value={locale.code} key={locale.code}>
                                 {locale.name} ({locale.code})
                               </option>
@@ -1155,7 +1161,7 @@ export default function App({
                             className={`button filter-button ${languageMenu ? "selected" : ""}`}
                             onClick={() => setLanguageMenu(!languageMenu)}
                             aria-expanded={languageMenu}
-                            aria-label={`Visible languages: ${activeLanguages.length} of ${project.languages.length}`}
+                            aria-label={`Visible languages: ${activeLanguages.length} of ${availableLanguages.length}`}
                           >
                             <Languages size={15} />
                             <span>
@@ -1179,19 +1185,19 @@ export default function App({
                                   Choose which languages to show for each key.
                                 </p>
                                 {activeLanguages.length <
-                                  project.languages.length && (
+                                  availableLanguages.length && (
                                   <button
                                     className="text-button"
                                     onClick={() =>
                                       setVisibleLanguages(
-                                        project.languages.map((l) => l.code),
+                                        availableLanguages.map((l) => l.code),
                                       )
                                     }
                                   >
                                     Show all languages
                                   </button>
                                 )}
-                                {project.languages.map((l) => (
+                                {availableLanguages.map((l) => (
                                   <label key={l.code}>
                                     <input
                                       type="checkbox"
@@ -1335,10 +1341,10 @@ export default function App({
                                     </div>
                                     {!isComplete(key, project) && (
                                       <span
-                                        className={`key-status status-badge ${key.outdatedLanguages?.length ? "outdated" : "missing"}`}
+                                        className={`key-status status-badge ${hasOutdated(key) ? "outdated" : "missing"}`}
                                       >
                                         <span />
-                                        {key.outdatedLanguages?.length
+                                        {hasOutdated(key)
                                           ? "Outdated"
                                           : "Missing"}
                                       </span>
@@ -1575,78 +1581,31 @@ export default function App({
                 </>
               )}
               {tab === "languages" && (
-                <>
-                  <div className="section-title standalone">
-                    <div>
-                      <h2>Project languages</h2>
-                      <p>Manage the languages your project speaks.</p>
-                    </div>
-                    {editable && (
-                      <button
-                        className="button"
-                        onClick={() => navigate(projectId, "settings")}
-                      >
-                        <Plus size={16} />
-                        Add a language
-                      </button>
-                    )}
-                  </div>
-                  <div className="language-cards">
-                    {project.languages.map((l) => (
-                      <div className="language-card" key={l.code}>
-                        <div className="language-card-top">
-                          <LanguageMark code={l.code} />
-                          <div>
-                            <h3>{l.name}</h3>
-                            <span>{l.code}</span>
-                          </div>
-                          {l.code === project.sourceLanguage && (
-                            <span className="source-pill">SOURCE</span>
-                          )}
-                        </div>
-                        <div className="language-progress">
-                          <strong>
-                            {languageProgress(l.code)}
-                            <span>%</span>
-                          </strong>
-                          <span>
-                            {stats.byLanguage[l.code] ?? 0} of{" "}
-                            {stats.totalKeys.toLocaleString()} keys
-                          </span>
-                        </div>
-                        <progress value={languageProgress(l.code)} max="100" />
-                        <button
-                          className="text-button"
-                          onClick={() => {
-                            navigate(projectId);
-                            setVisibleLanguages(
-                              [project.sourceLanguage, l.code].filter(
-                                (v, i, a) => a.indexOf(v) === i,
-                              ),
-                            );
-                          }}
-                        >
-                          View translations
-                          <ArrowRight size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="info-note">
-                    <Languages size={19} />
-                    <p>
-                      Your source language is{" "}
-                      <strong>
-                        {
-                          project.languages.find(
-                            (l) => l.code === project.sourceLanguage,
-                          )?.name
-                        }
-                      </strong>
-                      . New languages start with empty translations.
-                    </p>
-                  </div>
-                </>
+                <ProjectLanguages
+                  project={project}
+                  manager={manager}
+                  stats={stats}
+                  onAdd={() => navigate(projectId, "settings")}
+                  onView={(code) => {
+                    navigate(projectId);
+                    setVisibleLanguages([
+                      ...new Set([project.sourceLanguage, code]),
+                    ]);
+                  }}
+                  onChanged={(saved) => {
+                    setProjects((current) =>
+                      current.map((item) =>
+                        item.id === saved.id
+                          ? { ...saved, role: item.role }
+                          : item,
+                      ),
+                    );
+                    setFocusLanguage("all");
+                    resetPage();
+                    setSelected(new Set());
+                    notify("Language settings saved.");
+                  }}
+                />
               )}
               {tab === "glossary" && (
                 <ProjectGlossary

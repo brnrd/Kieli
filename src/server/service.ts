@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { assertProjectEditable } from "./project-lifecycle";
+import {
+  assertLanguagesEditable,
+  assertProjectEditable,
+} from "./project-lifecycle";
 import { memoryChanges } from "./translation-memory";
 import { projectNameChanges } from "./project-names";
 import { SyncCredentials } from "./sync-credentials";
@@ -26,7 +29,7 @@ import {
   pluralSignature,
   exportPlural,
 } from "../messages";
-import { dataPrefix, cachedView, viewStats } from "./project-data";
+import { dataPrefix, cachedView, viewStats, activeStats } from "./project-data";
 import type {
   Bootstrap,
   Identity,
@@ -36,6 +39,7 @@ import type {
   Token,
   TranslationKey,
 } from "../shared";
+import { enabledLanguages } from "../shared";
 import {
   authorize,
   generateToken,
@@ -73,9 +77,10 @@ export const emptyStats = (): ProjectStats => ({
   coverage: {},
   namespaces: {},
   version: 1,
-  messageVersion: 2,
+  messageVersion: 3,
   outdatedByLanguage: {},
   outdatedKeys: 0,
+  outdatedCoverage: {},
 });
 export function indexed(key: TranslationKey): TranslationKey {
   const { resolvedTranslations, referenceErrors, ...raw } = key;
@@ -116,6 +121,11 @@ export function count(stats: ProjectStats, key: TranslationKey, delta: number) {
     increment(stats.outdatedByLanguage, code);
   stats.outdatedKeys =
     (stats.outdatedKeys ?? 0) + (key.outdatedLanguages?.length ? delta : 0);
+  stats.outdatedCoverage ??= {};
+  increment(
+    stats.outdatedCoverage,
+    [...(key.outdatedLanguages ?? [])].sort().join(",") || "-",
+  );
   increment(stats.coverage, filled.join(",") || "-");
   increment(stats.namespaces, key.namespace || "general");
 }
@@ -123,7 +133,9 @@ export function completedKeys(stats: ProjectStats, project: Project) {
   return Object.entries(stats.coverage).reduce(
     (sum, [filled, amount]) =>
       sum +
-      (project.languages.every((l) => filled.split(",").includes(l.code))
+      (enabledLanguages(project).every((l) =>
+        filled.split(",").includes(l.code),
+      )
         ? amount
         : 0),
     0,
@@ -161,13 +173,14 @@ export class KieliService {
     }
   }
   private async stats(id: string): Promise<ProjectStats> {
-    const prefix = dataPrefix(await this.currentProject(id));
+    const project = await this.currentProject(id);
+    const prefix = dataPrefix(project);
     const existing = await this.store.get<ProjectStats>(
       `PROJECT#${id}`,
       `${prefix}STATS`,
     );
-    if (existing?.messageVersion === 2) return existing;
-    // One-time migration for local workspaces created before paginated keys.
+    if (existing?.messageVersion === 3) return existing;
+    // Rebuild derived counters for older indexes; translation records are retained.
     const initial = emptyStats();
     if (existing) initial.version = existing.version + 1;
     for (const old of await this.store.list<TranslationKey>(
@@ -189,15 +202,24 @@ export class KieliService {
         }
     }
     try {
-      await this.store.put(
-        `PROJECT#${id}`,
-        `${prefix}STATS`,
-        value(initial),
-        existing?.version,
-      );
+      await this.store.transact([
+        {
+          pk: "WORKSPACE",
+          sk: `PROJECT#${id}`,
+          check: true,
+          expectedVersion: project.version,
+        },
+        {
+          pk: `PROJECT#${id}`,
+          sk: `${prefix}STATS`,
+          value: value(initial),
+          expectedVersion: existing?.version,
+        },
+      ]);
       return initial;
     } catch (e) {
       if (!(e instanceof Conflict)) throw e;
+      if ((await this.currentProject(id)).version !== project.version) throw e;
       return (await this.store.get<ProjectStats>(
         `PROJECT#${id}`,
         `${prefix}STATS`,
@@ -224,6 +246,32 @@ export class KieliService {
       next.version++;
       const lifecycle: Change[] = [];
       for (const change of changes) {
+        assertLanguagesEditable(
+          project,
+          change.translatedLocales ??
+            (change.next && !change.old
+              ? Object.keys(change.next.translations)
+              : []),
+        );
+        if (change.next && !change.old && origin !== "recovery")
+          assertLanguagesEditable(
+            project,
+            Object.keys(change.next.applePluralTypes ?? {}),
+          );
+        if (change.next && change.old)
+          assertLanguagesEditable(
+            project,
+            [
+              ...new Set([
+                ...Object.keys(change.next.applePluralTypes ?? {}),
+                ...Object.keys(change.old.applePluralTypes ?? {}),
+              ]),
+            ].filter(
+              (code) =>
+                change.next!.applePluralTypes?.[code] !==
+                change.old!.applePluralTypes?.[code],
+            ),
+          );
         for (const code of Object.keys(change.next?.applePluralTypes ?? {}))
           if (!project.languages.some((locale) => locale.code === code))
             throw new HttpError(
@@ -495,12 +543,15 @@ export class KieliService {
     return project;
   }
   async updateProject(identity: Identity, id: string, input: unknown) {
+    if (identity.mcp || identity.sync || identity.tokenProject)
+      throw new HttpError(403, "Sign in to update project settings.");
     authorize(identity, id, "manager");
     const { version, ...data } = z
       .looseObject({ version: z.number().int().positive() })
       .parse(input);
     const project = await this.project(identity, id);
     assertProjectEditable(project);
+    if (project.version !== version) throw new Conflict();
     const parsed = projectSchema.parse({ ...data, id });
     // Removing a locale is deliberately unsupported: it would silently orphan translations.
     if (
@@ -522,6 +573,21 @@ export class KieliService {
     };
     await this.store.transact([
       ...(await projectNameChanges(this.store, id, next.name, project)),
+      ...next.languages
+        .filter(
+          (locale) =>
+            !!locale.disabled !==
+            !!project.languages.find((old) => old.code === locale.code)
+              ?.disabled,
+        )
+        .map((locale) =>
+          mcpAudit(
+            locale.disabled ? "language.disabled" : "language.enabled",
+            identity.principalId ?? identity.sub,
+            id,
+            { language: locale.code },
+          ),
+        ),
       {
         pk: "WORKSPACE",
         sk: `PROJECT#${id}`,
@@ -530,6 +596,42 @@ export class KieliService {
       },
     ]);
     return next;
+  }
+  async setLanguageEnabled(
+    identity: Identity,
+    id: string,
+    code: string,
+    input: unknown,
+  ) {
+    if (identity.mcp || identity.sync || identity.tokenProject)
+      throw new HttpError(403, "Sign in to manage project languages.");
+    authorize(identity, id, "manager");
+    const data = z
+      .object({ version: z.number().int().positive(), enabled: z.boolean() })
+      .strict()
+      .parse(input);
+    const project = await this.project(identity, id);
+    assertProjectEditable(project);
+    if (project.version !== data.version) throw new Conflict();
+    const locale = project.languages.find((item) => item.code === code);
+    if (!locale) throw new HttpError(400, "Unknown project language.");
+    if (code === project.sourceLanguage && !data.enabled)
+      throw new HttpError(400, "The source language cannot be disabled.");
+    if (!locale.disabled === data.enabled) return project;
+    return this.updateProject(identity, id, {
+      id,
+      name: project.name,
+      description: project.description,
+      color: project.color,
+      sourceLanguage: project.sourceLanguage,
+      snapshotPolicy: project.snapshotPolicy,
+      version: data.version,
+      languages: project.languages.map((item) => {
+        if (item.code !== code) return item;
+        const { disabled, ...active } = item;
+        return data.enabled ? active : { ...active, disabled: true };
+      }),
+    });
   }
   async setProjectArchived(identity: Identity, id: string, input: unknown) {
     if (identity.mcp || identity.sync || identity.tokenProject)
@@ -583,8 +685,12 @@ export class KieliService {
     const stats = await this.stats(id);
     const languages = options.languages?.length
       ? options.languages
-      : (identity.mcp?.languages ??
-        project.languages.map((locale) => locale.code));
+      : enabledLanguages(project)
+          .filter(
+            (locale) =>
+              !identity.mcp || identity.mcp.languages.includes(locale.code),
+          )
+          .map((locale) => locale.code);
     if (
       languages.some(
         (code) => !project.languages.some((locale) => locale.code === code),
@@ -596,6 +702,12 @@ export class KieliService {
       languages.some((code) => !identity.mcp!.languages.includes(code))
     )
       throw new HttpError(403, "Language is outside this credential's scope.");
+    assertLanguagesEditable(project, languages);
+    if (identity.mcp && !languages.length)
+      throw new HttpError(
+        409,
+        "This connection has no enabled target languages.",
+      );
     if (stats.advancedKeys) {
       const keys = await this.effectiveKeys(project, stats);
       let after = "";
@@ -700,7 +812,7 @@ export class KieliService {
       items: freshnessView(page.items, project).map(
         ({ searchText, filledLanguages, ...key }) => key,
       ),
-      stats,
+      stats: activeStats(stats, project),
     };
   }
   async keyNeighbor(
@@ -759,7 +871,7 @@ export class KieliService {
     const stats = await this.stats(id);
     return stats.advancedKeys
       ? viewStats(stats, await this.effectiveKeys(project, stats), project)
-      : stats;
+      : activeStats(stats, project);
   }
   async key(identity: Identity, id: string, name: string) {
     const project = await this.project(identity, id);
@@ -905,6 +1017,7 @@ export class KieliService {
     project: Project,
     translations: Record<string, string>,
   ) {
+    assertLanguagesEditable(project, Object.keys(translations));
     const locales = new Set(project.languages.map((l) => l.code));
     if (Object.keys(translations).some((code) => !locales.has(code)))
       throw new HttpError(
@@ -1125,6 +1238,7 @@ export class KieliService {
     const project = await this.project(identity, id),
       current = await this.key(identity, id, name);
     if (current.version !== data.version) throw new Conflict();
+    assertLanguagesEditable(project, [data.language]);
     if (!project.languages.some((locale) => locale.code === data.language))
       throw new HttpError(400, "Unknown language.");
     if (data.language === project.sourceLanguage)
@@ -1405,7 +1519,7 @@ export class KieliService {
     }
     const selected = locales.length
       ? [...new Set(locales)]
-      : project.languages.map((l) => l.code);
+      : enabledLanguages(project).map((l) => l.code);
     if (selected.some((c) => !project.languages.some((l) => l.code === c)))
       throw new HttpError(400, "Unknown export language.");
     const rawStats = await this.stats(id);

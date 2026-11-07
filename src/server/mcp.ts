@@ -1,3 +1,4 @@
+import { enabledLanguages } from "../shared";
 import { Glossary } from "./glossary";
 import { glossaryReadSchema } from "../glossary";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -80,7 +81,7 @@ export function translationServer(store: Store, identity: Identity) {
           name: project.name,
           description: project.description,
           sourceLanguage: project.sourceLanguage,
-          targetLanguages: project.languages
+          targetLanguages: enabledLanguages(project)
             .filter((l) => grant.languages.includes(l.code))
             .map((locale) => ({
               ...locale,
@@ -109,7 +110,16 @@ export function translationServer(store: Store, identity: Identity) {
             "Language is outside this credential's scope.",
           );
         const project = await svc.project(identity, grant.projectId);
-        const languages = args.language ? [args.language] : grant.languages;
+        const languages = args.language
+          ? [args.language]
+          : enabledLanguages(project)
+              .filter((locale) => grant.languages.includes(locale.code))
+              .map((locale) => locale.code);
+        if (!languages.length)
+          throw new HttpError(
+            409,
+            "This connection has no enabled target languages.",
+          );
         const page = await svc.keyPage(identity, grant.projectId, {
           ...args,
           languages,
@@ -120,8 +130,12 @@ export function translationServer(store: Store, identity: Identity) {
             key: key.name,
             version: key.version,
             sourceContext: key.sourceContext,
-            outdatedLanguages: (key.outdatedLanguages ?? []).filter((code) =>
-              grant.languages.includes(code),
+            outdatedLanguages: (key.outdatedLanguages ?? []).filter(
+              (code) =>
+                grant.languages.includes(code) &&
+                project.languages.some(
+                  (locale) => locale.code === code && !locale.disabled,
+                ),
             ),
             description: key.description,
             namespace: key.namespace,
@@ -159,8 +173,12 @@ export function translationServer(store: Store, identity: Identity) {
           key: key.name,
           version: key.version,
           sourceContext: key.sourceContext,
-          outdatedLanguages: (key.outdatedLanguages ?? []).filter((code) =>
-            grant.languages.includes(code),
+          outdatedLanguages: (key.outdatedLanguages ?? []).filter(
+            (code) =>
+              grant.languages.includes(code) &&
+              project.languages.some(
+                (locale) => locale.code === code && !locale.disabled,
+              ),
           ),
           glossary: await new Glossary(store).list(identity, grant.projectId, {
             text:
@@ -180,7 +198,9 @@ export function translationServer(store: Store, identity: Identity) {
             key.translations[project.sourceLanguage] ??
             "",
           translations: Object.fromEntries(
-            grant.languages.map((code) => [code, key.translations[code] ?? ""]),
+            enabledLanguages(project)
+              .filter((locale) => grant.languages.includes(locale.code))
+              .map(({ code }) => [code, key.translations[code] ?? ""]),
           ),
         };
       }),

@@ -19,8 +19,9 @@ export default function KeyHistory({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [language, setLanguage] = useState(
-      project.languages.find((locale) => locale.code !== project.sourceLanguage)
-        ?.code ?? project.sourceLanguage,
+      project.languages.find(
+        (locale) => locale.code !== project.sourceLanguage && !locale.disabled,
+      )?.code ?? project.sourceLanguage,
     ),
     [confirm, setConfirm] = useState<{
       entry: KeyEdit;
@@ -67,6 +68,7 @@ export default function KeyHistory({
           {project.languages.map((locale) => (
             <option key={locale.code} value={locale.code}>
               {locale.name}
+              {locale.disabled ? " (disabled)" : ""}
             </option>
           ))}
         </select>
@@ -109,6 +111,9 @@ export default function KeyHistory({
                     disabled={
                       busy ||
                       !!project.archivedAt ||
+                      !!project.languages.find(
+                        (locale) => locale.code === language,
+                      )?.disabled ||
                       (!manager && language === project.sourceLanguage)
                     }
                     onClick={() => setConfirm({ entry, side: "before" })}
@@ -128,6 +133,9 @@ export default function KeyHistory({
                     disabled={
                       busy ||
                       !!project.archivedAt ||
+                      !!project.languages.find(
+                        (locale) => locale.code === language,
+                      )?.disabled ||
                       (!manager && language === project.sourceLanguage)
                     }
                     onClick={() => setConfirm({ entry, side: "after" })}

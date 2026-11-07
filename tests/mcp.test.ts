@@ -567,3 +567,57 @@ test("racing batches commit one complete winner, with matching counters and audi
     1,
   );
 });
+
+test("MCP tools intersect existing grants with enabled languages and resume on re-enable", async () => {
+  const f = await fixture();
+  const client = new Client({ name: "disabled-target-test", version: "1" });
+  const transport = new StreamableHTTPClientTransport(
+    new URL("http://localhost:4321/mcp"),
+    {
+      requestInit: { headers: { authorization: `Bearer ${f.issued.secret}` } },
+      fetch: async (input, init) => {
+        const req = new Request(input, init);
+        req.headers.set("host", "localhost:4321");
+        return handleMcp(req, f.store);
+      },
+    },
+  );
+  try {
+    await client.connect(transport);
+    const call = async (name: string, args = {}) => {
+      const response = await client.callTool({ name, arguments: args });
+      return {
+        data: JSON.parse((response.content as { text: string }[])[0]!.text),
+        error: response.isError,
+      };
+    };
+    await f.svc.setLanguageEnabled(admin, "website", "fr", {
+      version: 1,
+      enabled: false,
+    });
+    assert.deepEqual((await call("get_project")).data.targetLanguages, []);
+    assert.deepEqual(
+      (await call("get_key", { key: "home.cta" })).data.translations,
+      {},
+    );
+    const page = await call("list_keys");
+    assert.equal(page.error, true);
+    assert.equal(page.data.status, 409);
+    assert.equal((await call("list_keys", { language: "fr" })).error, true);
+    await f.svc.setLanguageEnabled(admin, "website", "fr", {
+      version: 2,
+      enabled: true,
+    });
+    assert.equal(
+      (await call("get_project")).data.targetLanguages[0].code,
+      "fr",
+    );
+    assert.deepEqual(
+      (await call("get_key", { key: "home.cta" })).data.translations,
+      { fr: "Commencer" },
+    );
+    assert.ok((await call("list_keys")).data.items.length);
+  } finally {
+    await client.close();
+  }
+});
