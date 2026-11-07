@@ -409,6 +409,14 @@ export const ALL: APIRoute = async (context) => {
         url.searchParams.get("format") ?? "flat",
         url.searchParams.get("fallback") === "true",
         url.searchParams.get("requireCurrent") === "true",
+        {
+          ...(url.searchParams.has("keys")
+            ? { keys: url.searchParams.get("keys")!.split(",") }
+            : {}),
+          ...(url.searchParams.has("namespace")
+            ? { namespace: url.searchParams.get("namespace")! }
+            : {}),
+        },
       );
       if (url.searchParams.get("download") === "zip") {
         const archive = zipSync(

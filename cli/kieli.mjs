@@ -33,6 +33,8 @@ Pull:
   --languages <codes>   Comma-separated codes; defaults to enabled project languages
   --format <format>     flat (default), nested, yaml, js, ts, php, properties,
                         ini, resx, po, pot, strings, stringsdict, plist, android, arb, xliff, csv
+  --keys <names>        Pull up to 100 comma-separated key names
+  --namespace <name>    Pull a namespace (cannot combine with --keys)
   --require-current     Stop if copy is missing, outdated or invalid
   --fallback            Use source copy for missing translations
 
@@ -152,7 +154,8 @@ export function parseArgs(args, defaults = {}) {
     languages: defaults.languages ?? "",
     source: "",
     language: process.env.KIELI_SOURCE_LANGUAGE ?? defaults.language ?? "en",
-    namespace: "general",
+    namespace: args[0] === "push" ? "general" : "",
+    keys: "",
     config: "",
     files: defaults.files ?? [],
     apply: false,
@@ -172,6 +175,7 @@ export function parseArgs(args, defaults = {}) {
     "source",
     "language",
     "namespace",
+    "keys",
     "config",
   ]);
   for (let i = 1; i < args.length; i++) {
@@ -222,11 +226,12 @@ export function parseArgs(args, defaults = {}) {
     throw new Error("--demo is only allowed on loopback.");
   if (!/^[a-z]{2,20}$/.test(options.format))
     throw new Error("Invalid --format. Use --help for supported formats.");
+  if (options.command === "pull" && options.keys && options.namespace) throw new Error("Choose --keys or --namespace, not both.");
   if (options.languages) Intl.getCanonicalLocales(options.languages.split(","));
   if (options.command === "push") {
     if (
       args.some((arg) =>
-        ["--out", "--languages", "--fallback", "--require-current"].includes(
+        ["--out", "--languages", "--keys", "--fallback", "--require-current"].includes(
           arg,
         ),
       )
@@ -266,6 +271,8 @@ export async function pull(
     languages: options.languages,
     fallback: String(options.fallback),
     requireCurrent: String(options["require-current"] ?? false),
+    ...(options.keys ? { keys: options.keys } : {}),
+    ...(options.namespace ? { namespace: options.namespace } : {}),
   }).toString();
   const response = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},

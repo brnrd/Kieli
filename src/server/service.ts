@@ -1614,6 +1614,7 @@ export class KieliService {
     format: string,
     fallback: boolean,
     requireCurrent = false,
+    subset: { keys?: string[]; namespace?: string } = {},
   ) {
     const project = await this.project(identity, id);
     try {
@@ -1627,11 +1628,34 @@ export class KieliService {
     if (selected.some((c) => !project.languages.some((l) => l.code === c)))
       throw new HttpError(400, "Unknown export language.");
     const rawStats = await this.stats(id);
-    const keys = (
+    const selection = z
+      .object({
+        keys: z.array(keyNameSchema).min(1).max(100).optional(),
+        namespace: keySchema.shape.namespace.unwrap().optional(),
+      })
+      .strict()
+      .refine(
+        (value) => !(value.keys && value.namespace),
+        "Choose keys or a namespace, not both.",
+      )
+      .parse(subset);
+    let keys = (
       rawStats.advancedKeys
         ? await this.effectiveKeys(project, rawStats)
         : await this.keys(identity, id)
     ).sort((a, b) => a.name.localeCompare(b.name, "en"));
+    if (selection.keys) {
+      const names = new Set(selection.keys);
+      if (keys.filter((key) => names.has(key.name)).length !== names.size)
+        throw new HttpError(
+          404,
+          "An export key no longer exists. Refresh the selection.",
+        );
+      keys = keys.filter((key) => names.has(key.name));
+    } else if (selection.namespace)
+      keys = keys.filter((key) => key.namespace === selection.namespace);
+    if ((selection.keys || selection.namespace) && !keys.length)
+      throw new HttpError(422, "No keys match this export selection.");
     if (requireCurrent) requireCurrentCopy(keys, project, selected);
     const result: Record<string, unknown> = Object.create(null);
     let size = 0;

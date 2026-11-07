@@ -42,6 +42,7 @@ Kieli gives product teams and developers a shared place to manage the words in t
 
 - **Bring existing copy.** Import Lokalise exports or supported localization files. Preview updates to existing projects and preserve populated translations by default.
 - **Use your app's formats.** JSON, YAML, JS/TS, PHP, properties, INI, RESX, keyed PO/POT, Apple strings/plist and [native plural dictionaries](docs/apple-stringsdict.md), Android XML, ARB, XLIFF and CSV. See [supported subsets and limits](docs/file-formats.md).
+- **Export the copy you need.** Download [selected keys or a namespace](docs/export-subsets.md) from the browser, API or CLI.
 - **Sync through CLI and CI.** Pull translation files or push source strings with separate scoped credentials. Use `--require-current` to stop a build when copy is missing, outdated or invalid.
 - **Connect Claude Code.** An optional MCP connection lets your Claude client read a project's context and save translations in selected target languages, with explicit overwrite permission.
 - **Deliver mobile copy updates.** Publish immutable releases for iOS, Android and Flutter, with channels, rollback and offline fallback. [Mobile SDKs and delivery](docs/ota.md).

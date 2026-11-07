@@ -57,6 +57,7 @@ After building, run the HTTP smoke checks affected by your change:
 | --------------------------------------- | ------------------------ |
 | Core API, export and CLI                | `npm run smoke`          |
 | Key renaming and reference updates      | `npm run smoke:rename`   |
+| Subset exports                          | `npm run smoke:subset`    |
 | Key duplication                         | `npm run smoke:duplicate` |
 | Bulk tag and namespace changes          | `npm run smoke:bulk`      |
 | Target language disable/enable          | `npm run smoke:languages` |

@@ -1253,6 +1253,12 @@ export default function App({
                         >
                           Clear selection
                         </button>
+                        <button
+                          className="text-button"
+                          onClick={() => openModal("export")}
+                        >
+                          Export selected
+                        </button>
                         {editable && (
                           <button
                             className="text-button"
@@ -1839,7 +1845,13 @@ export default function App({
       )}
       {modal === "export" && project && (
         <ModalShell title="Export translations" onClose={closeModal}>
-          <ExportForm project={project} onClose={closeModal} notify={notify} />
+          <ExportForm
+            project={project}
+            selectedKeys={[...selected]}
+            namespaces={Object.keys(stats.namespaces).sort()}
+            onClose={closeModal}
+            notify={notify}
+          />
         </ModalShell>
       )}
       {modal === "metadata" && project && editable && (

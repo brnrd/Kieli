@@ -6,16 +6,22 @@ import { LanguageMark } from "./ui";
 import FileFormatSelect from "./FileFormatSelect";
 export default function ExportForm({
   project,
+  selectedKeys = [],
+  namespaces = [],
   onClose,
   notify,
 }: {
   project: Project;
+  selectedKeys?: string[];
+  namespaces?: string[];
   onClose: () => void;
   notify: (message: string) => void;
 }) {
   const [locales, setLocales] = useState(
     enabledLanguages(project).map((l) => l.code),
   );
+  const [scope, setScope] = useState(selectedKeys.length ? "selected" : "all");
+  const [namespace, setNamespace] = useState(namespaces[0] ?? "");
   const [format, setFormat] = useState("flat");
   const [fallback, setFallback] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -31,6 +37,8 @@ export default function ExportForm({
         fallback: String(fallback),
         download: "zip",
       });
+      if (scope === "selected") query.set("keys", selectedKeys.join(","));
+      if (scope === "namespace") query.set("namespace", namespace);
       const response = await fetch(
         `/api/projects/${project.id}/export?${query}`,
       );
@@ -60,6 +68,36 @@ export default function ExportForm({
     <form onSubmit={download}>
       <fieldset className="form-fieldset" disabled={busy}>
         <div className="dialog-body">
+          <label className="field-label">
+            Keys to export
+            <select
+              value={scope}
+              onChange={(event) => setScope(event.target.value)}
+            >
+              <option value="all">All project keys</option>
+              {selectedKeys.length > 0 && (
+                <option value="selected">
+                  Selected keys ({selectedKeys.length})
+                </option>
+              )}
+              {namespaces.length > 0 && (
+                <option value="namespace">A namespace</option>
+              )}
+            </select>
+          </label>
+          {scope === "namespace" && (
+            <label className="field-label">
+              Namespace
+              <select
+                value={namespace}
+                onChange={(event) => setNamespace(event.target.value)}
+              >
+                {namespaces.map((name) => (
+                  <option key={name}>{name}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <span className="field-label">Languages</span>
           <div className="export-locales">
             {project.languages.map((l) => (
