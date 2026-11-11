@@ -77,7 +77,7 @@ AWS_REGION=eu-west-1
 SAML_SECRETS_ARN=arn:aws:secretsmanager:REGION:ACCOUNT:secret:kieli-saml-...
 ```
 
-On AWS, the referenced Secrets Manager JSON must contain `SAML_IDP_CERT`, `SAML_SP_PRIVATE_KEY`, and `SAML_SP_CERT`, each a PEM string. Enter them through your trusted secret-entry workflow. The runtime reads this one secret and caches it for at most five minutes. This avoids Lambda's environment-size limit for multiple PEM certificates and keys. The SAM role grants `GetSecretValue` only for that ARN. The default AWS-managed Secrets Manager encryption key needs no additional template permission; a customer-managed KMS key requires an explicitly scoped runtime decrypt grant.
+On AWS, the referenced Secrets Manager JSON must contain `SAML_IDP_CERT`, `SAML_SP_PRIVATE_KEY`, and `SAML_SP_CERT`, each a PEM string. Enter them through your trusted secret-entry workflow. The runtime reads this one secret and caches it for at most five minutes. This avoids Lambda's environment-size limit for multiple PEM certificates and keys. The Lambda role grants `GetSecretValue` only for that ARN. The default AWS-managed Secrets Manager encryption key needs no additional template permission; a customer-managed KMS key requires an explicitly scoped runtime decrypt grant.
 
 For a standalone operator/dev setup, omit `SAML_SECRETS_ARN` and set the three PEM environment values directly. Quoted `.env` values can contain escaped `\n` newlines. There is no `SESSION_SECRET` requirement in SAML mode. HTTPS is required in development too; use a trusted local HTTPS reverse proxy or a staging deployment for a real browser round trip.
 

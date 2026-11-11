@@ -35,8 +35,9 @@ jobs:
       - run: npm run smoke:sync
       - run: npm run smoke:mcp
       - run: npm run smoke:install
+      - run: systemd-analyze verify infra/standalone/kieli.service
       - run: node scripts/render-aws-template.mjs /tmp/kieli-install-template.yaml
-      - run: pipx run cfn-lint /tmp/kieli-install-template.yaml infra/release-publisher.yaml infra/template.yaml
+      - run: pipx run cfn-lint /tmp/kieli-install-template.yaml infra/release-publisher.yaml
       - run: npm audit --omit=dev --audit-level=high
   terraform-example:
     runs-on: ubuntu-latest

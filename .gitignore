@@ -6,7 +6,6 @@ dist/
 !.env.example
 .data/
 coverage/
-.aws-sam/
 .aws-release/
 *.log
 .DS_Store

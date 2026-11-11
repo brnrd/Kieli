@@ -80,7 +80,7 @@ For your team, enable **built-in accounts** or **SSO**, set `APP_ORIGIN`, and fo
 | Deployment | What you need |
 | --- | --- |
 | Local development | Node.js and SQLite, included with Node |
-| Container | The included Docker image and your authentication configuration |
+| Standalone server | [Node.js behind HTTPS](docs/standalone.md), SQLite or DynamoDB |
 | AWS | Lambda ZIP, HTTP API Gateway and DynamoDB; [Terraform example](infra/terraform/README.md), no Docker required |
 
 A guided AWS installer and first-administrator setup are implemented. **No public install button is published yet:** release hosting needs an AWS account and artifact bucket. [AWS installation and upgrades](docs/aws-one-click.md).

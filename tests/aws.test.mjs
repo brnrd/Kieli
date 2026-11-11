@@ -264,17 +264,7 @@ test("SSO provisioning and reconciliation are opt-in and use exact secret resour
     t.Resources.SnapshotRunner.Properties.Code.ZipFile,
     /tasks\/identities/,
   );
-  const sam = await readFile(
-    new URL("../infra/template.yaml", import.meta.url),
-    "utf8",
-  );
-  for (const field of [
-    "SsoProvisioningMode:",
-    "ScimSecretArn:",
-    "ReconciliationSecretArn:",
-    "SSO_PROVISIONING_MODE:",
-    "SSO_SCIM_SECRET_ARN:",
-    "SSO_RECONCILE_SECRET_ARN:",
-  ])
-    assert.ok(sam.includes(field));
+  assert.equal(t.Resources.App.Properties.Runtime, "nodejs24.x");
+  assert.equal(t.Resources.App.Properties.Handler, "run.sh");
+  assert.ok(!JSON.stringify(t).includes('"PackageType":"Image"'));
 });

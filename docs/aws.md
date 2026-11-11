@@ -1,67 +1,44 @@
-# Deploy on AWS
+# Deploy on AWS without Docker
 
-For a **Docker-free Terraform installation**, use the [Terraform ZIP example](../infra/terraform/README.md). It manages the existing ZIP installer through CloudFormation, including the application and maintenance Lambdas. Further backend separation is described in the [Lambda plan](lambda-backend-plan.md); that split is not implemented.
+Kieli runs in a Node.js 24 Lambda from a ZIP using Lambda Web Adapter. API Gateway supplies HTTPS; DynamoDB stores projects, sessions and translations. A separate scheduled Lambda runs maintenance. Both frontend rendering and backend routes currently run in the application Lambda. Further separation remains a [plan](lambda-backend-plan.md), not a requirement for Docker-free operation.
 
-For the guided **Deploy Kieli** distribution, see [AWS install button](aws-one-click.md). That path uses prebuilt versioned ZIPs, a generated HTTPS origin in one deployment, and protected web setup. It does not require a customer-side build. No public release bucket is configured yet. The instructions below remain the separate **source-built Docker/SAM path**; do not apply the ZIP template to an existing image stack without a reviewed migration.
+## Install with Terraform
 
-The SAM stack runs the Astro Node server in Lambda using AWS Lambda Web Adapter. API Gateway provides HTTPS and throttling; DynamoDB uses on-demand billing with encryption, point-in-time recovery, and deletion protection. The runtime role can access only the app table and log group. All app assets are served by the same container.
+Follow the [Terraform ZIP example](../infra/terraform/README.md). It reuses the shared CloudFormation installer, preserving authentication, scoped IAM, scheduling, backups and protected administrator setup. Terraform manages the stack, and CloudFormation owns its nested resources.
 
-Prerequisites: AWS CLI credentials for the target account, AWS SAM CLI, and Docker. Creating this stack incurs normal AWS charges. No resources are deployed by `npm run build`.
+The installer accepts `AuthMode=local|okta|saml`. Local accounts use protected first-administrator setup. OIDC/SAML require the existing IdP settings and secret ARNs described in [installer configuration](aws-one-click.md), [OIDC](okta.md) and [SAML](saml.md). Optional SCIM and reconciliation retain their [lifecycle configuration](sso-lifecycle.md). Custom HTTPS domains, certificates and DNS are operator-managed.
 
-## 1. Choose authentication
+## Build from source without Docker
 
-Set `AuthMode=local` (the default) for built-in accounts. Skip the Okta/Secrets Manager parameters, deploy, set the exact HTTPS `AppOrigin`, and bootstrap the first administrator from a trusted checkout as described in [built-in accounts](built-in-accounts.md). No identity provider or email service is required. The operator uses their existing AWS credentials to write the initial user records.
-
-For `AuthMode=okta`, create the Okta Web Application described in [Okta setup](okta.md). In AWS Secrets Manager, create a JSON secret with these fields:
-
-```json
-{
-  "OKTA_CLIENT_SECRET": "your-Okta-web-app-client-secret",
-  "SESSION_SECRET": "64-random-hex-characters-from-openssl-rand-hex-32"
-}
-```
-
-Use your approved secret-entry workflow. Do not put real secrets in a tracked file or command argument. Record the secret ARN. The deployment principal must be able to read that secret; CloudFormation resolves the values into the encrypted Lambda environment. The runtime role does not need Secrets Manager access. If you encrypt the secret with a customer-managed KMS key, give the deployment principal the required decrypt permission.
-
-For `AuthMode=saml`, use the [SAML setup guide](saml.md). Supply `SamlEntryPoint`, `SamlIdpIssuer`, `AppSecretsArn`, and optionally `SamlSpEntityId`. The referenced secret contains PEM strings in `SAML_IDP_CERT`, `SAML_SP_PRIVATE_KEY`, and `SAML_SP_CERT`. SAML loads them at runtime, avoiding Lambda's environment-size limit; the template grants read access only to that secret. For customer-managed KMS encryption, add a scoped runtime decrypt grant. OIDC credentials and `SESSION_SECRET` are not used in SAML mode.
-
-## 2. Build and deploy
-
-From the repository root:
+Use Node.js 24.2+ on Linux x64/glibc, including an ordinary Linux CI runner:
 
 ```sh
-sam build --template-file infra/template.yaml
-sam deploy --guided --resolve-image-repos
+npm ci
+npm run check
+npm test
+npm run build
+npm run package:aws
 ```
 
-Choose a stack name (for example `kieli`) and region, choose `AuthMode=local`, `okta`, or `saml`, and acknowledge IAM resource creation. Supply `OktaIssuer` and `OktaClientId` only for OIDC. Supply `AppSecretsArn` for either SSO mode and the SAML parameters only for SAML. If you already have a custom domain, set `AppOrigin` to it and configure API Gateway's custom domain/mapping and DNS separately. The stack does not provision Route 53 zones or certificates.
+The release ZIP includes the server, static frontend assets, traced dependencies and native Linux Argon2 binary. Packaging verifies architecture and records checksums in `.aws-release/release.json`. On macOS, the `--local-test` packaging option is only for local QA and is not deployable. The [AWS release workflow](../.github/workflows/aws-release.yml) packages on Linux without Docker or ECR.
 
-For the generated API Gateway hostname, leave `AppOrigin` as `https://setup.invalid` for this first deployment. The placeholder intentionally cannot complete login. Read the stack's `Url` output, then deploy again with that exact URL as `AppOrigin`. For Okta, also register `<Url>/auth/callback`. A built-in deployment needs only these overrides (keep guided configuration for other values):
+Upload a verified publishable ZIP into a versioned regional S3 bucket using your authorized release workflow, then provide its bucket/key/object version to Terraform. See the example for exact steps. No public artifact bucket or install button is published yet; the repository can build artifacts without a configured AWS account. Building and rendering templates do not deploy or publish anything.
 
-```sh
-sam deploy --parameter-overrides \
-  AuthMode=local \
-  AppOrigin=https://YOUR-API-ID.execute-api.eu-west-1.amazonaws.com
-```
+The same ZIP installer supports a guided [CloudFormation installation](aws-one-click.md) when release hosting is configured. There is no SAM image template or Dockerfile in the supported workflow.
 
-For Okta, keep `AuthMode=okta` and the issuer/client/secret parameters from the guided configuration. With built-in accounts, initialize an administrator using the deployed URL and table; with Okta, sign in as a `kieli-admin` member. Then create/import your first project. Only the health endpoint and static assets are public; project data requires authentication. Browser mutations also require a matching `APP_ORIGIN`.
+## Operations and verification
 
-## Operations
+- DynamoDB uses `pk`/`sk` strings, on-demand capacity, encryption, TTL, point-in-time recovery and deletion protection. The installer retains the table on stack deletion. Project snapshots and recoverable deleted keys provide application-level recovery too.
+- Secrets stay in Secrets Manager. Rotate values and increment `SecretsRevision` to refresh environments; revoke database sessions and integration credentials separately when required. Custom KMS keys need scoped decrypt permissions for the appropriate deployment/runtime principal.
+- The generated API URL sets the exact `APP_ORIGIN` in one deployment. Verify callbacks, cookies and origin checks under the actual public hostname. No VPC or NAT gateway is required.
+- Logs have bounded retention and omit bodies, query strings, cookies and authorization headers in access logs. Review throttling, concurrency, request sizes and export payload limits against actual usage.
+- Maintenance runs every five minutes, including optional configured identity reconciliation, with existing bounded retries and progress behavior.
+- Run real sign-in/logout, SAML SLO, offboarding, project-role, credential-revocation, concurrent-write and backup-restore checks in staging before production. Local fixtures and template lint are not live AWS or IdP verification.
 
-- **Data:** DynamoDB is authoritative. The table is retained on stack deletion and has deletion protection. Backups/PITR protect against key deletions; there is no end-user trash UI.
-- **Secrets:** rotate the Secrets Manager value, increment `SecretsRevision`, and redeploy to refresh Lambda instances. OIDC resolves its secrets into environment values; SAML reads its one secret at runtime with a five-minute cache. The `SESSION_SECRET` is OIDC-only and protects pending login-state cookies. Revoke database sessions separately when responding to an incident. Coordinate SAML certificate rotation with the IdP; the configured IdP PEM bundle supports overlap with up to three certificates.
-- **Tokens:** export tokens are project-scoped, expire within at most 365 days, and are revocable in the Developers tab. Store consuming tokens in CI secret stores and rotate before expiry.
-- **Limits:** API Gateway throttles at 20 requests/second with burst 40; Lambda reserves up to 20 concurrent executions. Raise these after load testing. Import uses requests of at most 20 keys and 220 KB, below the backend's 256 KB JSON limit.
-- **Logs:** request metadata and application errors go to 14-day CloudWatch logs. Access logs omit query strings, bodies, cookies, and authorization headers. The app logs error names/messages, not submitted copy or export tokens.
-- **Sessions:** user/session/link/attempt records live in the table. DynamoDB TTL eventually removes expired ephemeral records; the app checks expiry synchronously. Built-in deactivation and access changes revoke previous sessions immediately.
-- **Network:** the Lambda does not need a VPC; it reaches DynamoDB and, when enabled, Okta over HTTPS. No NAT gateway is required.
-- **Exports:** Lambda/API Gateway synchronous response size is finite. The CLI caps responses at 25 MB, while API Gateway/Lambda may impose a lower payload limit. Pull fewer languages for large projects. Streaming or object-storage exports would be a future extension.
-- **Verification:** run the configured sign-in flow (activation/reset for built-in mode, OIDC callback, or SAML cross-site POST), each role's permissions, a token export/revoke, a Lokalise import, and concurrent writes against the deployed stack before opening access to your organization. For SAML, also verify certificate rollover, Secrets Manager permissions, MFA policy, cookie handling through the real proxy, and the strict recipient/destination values.
+## Existing image deployments
 
-References: [Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter), [AWS SAM image functions](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-image-repositories.html), [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transactions.html).
+The legacy Docker/SAM path has been removed from the repository. Existing deployments are not modified automatically. Do not deploy a new ZIP stack over an existing image stack or point a fresh empty table at production traffic. Explicitly plan resource ownership, retained data/restore, secrets, external origin, callback settings and traffic cutover. Keep a rollback path; do not delete the old stack as a migration step without handling its retained table.
 
-Optional SAML Single Logout uses `SamlLogoutUrl` in either template. Leave it empty to retain local-only sign-out. The existing SAML signing secret and data table are reused; IAM permissions are unchanged. See [SAML logout setup and staging checks](saml.md#single-logout).
+For a non-AWS server, use [standalone Node.js](standalone.md).
 
-## Optional SSO lifecycle configuration
-
-Both templates accept `SsoProvisioningMode=jit|scim`, `ScimSecretArn` (plain provisioning token; required in SCIM mode), and `ReconciliationSecretArn` (JSON with `origin`, `appId`, `apiToken`). These options require OIDC or SAML. Secrets are operator-supplied and are never template outputs. The runtime receives read permission only for the configured secret ARNs; custom KMS keys need a separately scoped decrypt grant. When reconciliation is configured, the five-minute maintenance runner invokes it alongside snapshots, with bounded work and resumable progress. See [SSO lifecycle setup and limitations](sso-lifecycle.md) before enabling SCIM; provision an administrator and its pushed group first.
+References: [Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter), [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transactions.html).

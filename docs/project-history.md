@@ -14,7 +14,7 @@ Choose daily or weekly snapshots and retain 2–30 automatic copies (default 7) 
 
 Both AWS templates include an EventBridge schedule, a small isolated runner Lambda and a generated Secrets Manager job credential. The runner can only read that secret and invoke the application Lambda. Application requests to `POST /tasks/snapshots` require this dedicated credential; browser sessions, export tokens, MCP credentials and OTA keys do not authorize the job. Calls are serialized with a shared lease. A saved project cursor rotates work across installations with many projects; a failing project does not continually prevent later projects from being visited. Each run starts no new project after its 20-second work window. A large project that exceeds the application's Lambda timeout requires splitting the project or moving maintenance to a longer-running operator job.
 
-For Docker/Node installations, generate a random secret (`openssl rand -hex 32`) and configure `KIELI_SNAPSHOT_JOB_TOKEN` on the server and the operator scheduler. Keep it outside Git and out of URLs. Run the following every five minutes using the host's scheduler:
+For standalone Node.js installations, generate a random secret (`openssl rand -hex 32`) and configure `KIELI_SNAPSHOT_JOB_TOKEN` on the server and the operator scheduler. Keep it outside Git and out of URLs. Run the following every five minutes using the host's scheduler:
 
 ```sh
 APP_ORIGIN=https://copy.example.com npm run snapshots:run

@@ -37,9 +37,9 @@ body:
       label: Deployment
       options:
         - Local Node.js / development
-        - Docker
+        - Standalone Node.js
         - AWS ZIP installer
-        - AWS SAM container
+        - AWS Lambda ZIP / Terraform
         - Another setup
     validations:
       required: true

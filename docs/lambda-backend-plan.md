@@ -2,7 +2,7 @@
 
 ## Current implementation
 
-Kieli already runs its frontend and backend on AWS Lambda. The ZIP installer uses Node.js 24, Lambda Web Adapter and API Gateway HTTP API, with DynamoDB storage. The scheduled maintenance runner is a second Lambda that invokes authenticated maintenance endpoints on the app. Docker is optional: the older SAM image template uses it; the ZIP installer and [Terraform example](../infra/terraform/README.md) do not.
+Kieli already runs its frontend and backend on AWS Lambda. The ZIP installer uses Node.js 24, Lambda Web Adapter and API Gateway HTTP API, with DynamoDB storage. The scheduled maintenance runner is a second Lambda that invokes authenticated maintenance endpoints on the app. All supported installation paths are Docker-free: standalone Node.js or the ZIP installer and [Terraform example](../infra/terraform/README.md). The legacy SAM image template has been removed.
 
 The Terraform example is implemented. The changes below are proposed and have not been implemented. Splitting functions is not necessary to remove Docker.
 

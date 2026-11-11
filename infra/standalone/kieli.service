@@ -1,0 +1,24 @@
+[Unit]
+Description=Kieli translation workspace
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kieli
+Group=kieli
+WorkingDirectory=/opt/kieli
+EnvironmentFile=/etc/kieli.env
+ExecStart=/usr/bin/node dist/server/entry.mjs
+Restart=on-failure
+RestartSec=5
+StateDirectory=kieli
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

@@ -28,7 +28,7 @@ Store: SQLite locally / DynamoDB on AWS
 - `src/lokalise.ts` and `src/workers/`: local import preview parsing.
 - `src/pages/api/[...path].ts`: HTTP boundary, body limits, status codes, and routing.
 - `cli/kieli.mjs`: portable Node-only translation pull.
-- `infra/`: AWS SAM deployment.
+- `infra/`: Lambda ZIP/CloudFormation deployment, Terraform example and standalone Node.js service.
 
 ## Storage and performance
 
