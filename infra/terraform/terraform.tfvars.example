@@ -1,0 +1,13 @@
+region = "eu-west-1"
+name   = "kieli"
+release = {
+  version        = "0.1.0"
+  bucket         = "YOUR-VERSIONED-RELEASE-BUCKET"
+  key            = "releases/0.1.0/YOUR-VERIFIED-LINUX-ZIP.zip"
+  object_version = "YOUR-S3-OBJECT-VERSION"
+}
+parameters = {
+  AuthMode = "local"
+  # For SSO, use AuthMode = "okta" or "saml" and the documented installer parameters.
+  # AppSecretsArn = "arn:aws:secretsmanager:eu-west-1:123456789012:secret:your-sso-secret"
+}

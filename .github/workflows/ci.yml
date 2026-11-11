@@ -38,3 +38,21 @@ jobs:
       - run: node scripts/render-aws-template.mjs /tmp/kieli-install-template.yaml
       - run: pipx run cfn-lint /tmp/kieli-install-template.yaml infra/release-publisher.yaml infra/template.yaml
       - run: npm audit --omit=dev --audit-level=high
+  terraform-example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: node scripts/render-terraform-template.mjs
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.13.5"
+      - run: terraform -chdir=infra/terraform init -backend=false -lockfile=readonly
+      - run: terraform -chdir=infra/terraform fmt -check -recursive
+      - run: terraform -chdir=infra/terraform validate
+      - run: terraform -chdir=infra/terraform test
+      - run: pipx run cfn-lint infra/terraform/.generated/install.json

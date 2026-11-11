@@ -1,5 +1,7 @@
 # Deploy on AWS
 
+For a **Docker-free Terraform installation**, use the [Terraform ZIP example](../infra/terraform/README.md). It manages the existing ZIP installer through CloudFormation, including the application and maintenance Lambdas. Further backend separation is described in the [Lambda plan](lambda-backend-plan.md); that split is not implemented.
+
 For the guided **Deploy Kieli** distribution, see [AWS install button](aws-one-click.md). That path uses prebuilt versioned ZIPs, a generated HTTPS origin in one deployment, and protected web setup. It does not require a customer-side build. No public release bucket is configured yet. The instructions below remain the separate **source-built Docker/SAM path**; do not apply the ZIP template to an existing image stack without a reviewed migration.
 
 The SAM stack runs the Astro Node server in Lambda using AWS Lambda Web Adapter. API Gateway provides HTTPS and throttling; DynamoDB uses on-demand billing with encryption, point-in-time recovery, and deletion protection. The runtime role can access only the app table and log group. All app assets are served by the same container.
